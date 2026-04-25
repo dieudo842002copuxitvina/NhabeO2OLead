@@ -99,7 +99,7 @@ export default function GiaiPhapPage() {
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/65 via-white/20 to-transparent" />
                   <div className="absolute left-3 top-3 rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-semibold">
                     {item.badge}
                   </div>

@@ -14,7 +14,7 @@ export interface BlockConfig {
   accentHsl?: string;
 }
 
-export type MapMode = 'light' | 'dark' | 'satellite';
+export type MapMode = 'light' | 'satellite';
 
 export interface PromoBanner {
   id: string;

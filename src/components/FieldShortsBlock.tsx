@@ -26,7 +26,7 @@ const FIELD_VIDEOS: FieldVideo[] = [
     views: '12.4K',
     gradient: 'from-emerald-800 via-green-700 to-teal-800',
     emoji: '💧',
-    overlayFrom: 'from-black/70',
+    overlayFrom: 'from-white/70',
   },
   {
     id: 'fv2',
@@ -36,7 +36,7 @@ const FIELD_VIDEOS: FieldVideo[] = [
     views: '8.9K',
     gradient: 'from-blue-900 via-indigo-800 to-violet-900',
     emoji: '⚡',
-    overlayFrom: 'from-black/75',
+    overlayFrom: 'from-white/75',
   },
   {
     id: 'fv3',
@@ -46,7 +46,7 @@ const FIELD_VIDEOS: FieldVideo[] = [
     views: '6.2K',
     gradient: 'from-amber-900 via-orange-800 to-red-900',
     emoji: '🔩',
-    overlayFrom: 'from-black/70',
+    overlayFrom: 'from-white/70',
   },
   {
     id: 'fv4',
@@ -56,7 +56,7 @@ const FIELD_VIDEOS: FieldVideo[] = [
     views: '21.1K',
     gradient: 'from-violet-900 via-purple-800 to-indigo-900',
     emoji: '📱',
-    overlayFrom: 'from-black/80',
+    overlayFrom: 'from-white/80',
   },
   {
     id: 'fv5',
@@ -66,7 +66,7 @@ const FIELD_VIDEOS: FieldVideo[] = [
     views: '5.7K',
     gradient: 'from-yellow-800 via-amber-700 to-orange-800',
     emoji: '🥭',
-    overlayFrom: 'from-black/65',
+    overlayFrom: 'from-white/65',
   },
   {
     id: 'fv6',
@@ -76,7 +76,7 @@ const FIELD_VIDEOS: FieldVideo[] = [
     views: '9.3K',
     gradient: 'from-green-900 via-emerald-800 to-teal-900',
     emoji: '🌱',
-    overlayFrom: 'from-black/70',
+    overlayFrom: 'from-white/70',
   },
 ];
 
@@ -117,12 +117,12 @@ function VideoCard({ video, index }: { video: FieldVideo; index: number }) {
         </div>
 
         {/* Duration badge — top right */}
-        <div className="absolute top-2.5 right-2.5 text-[10px] font-bold text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">
+        <div className="absolute top-2.5 right-2.5 text-[10px] font-bold text-white bg-white/50 backdrop-blur px-2 py-0.5 rounded-full">
           {video.duration}
         </div>
 
         {/* Views badge — top left */}
-        <div className="absolute top-2.5 left-2.5 text-[10px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full flex items-center gap-1">
+        <div className="absolute top-2.5 left-2.5 text-[10px] font-semibold text-white bg-white/40 backdrop-blur px-2 py-0.5 rounded-full flex items-center gap-1">
           <span className="w-1 h-1 bg-red-500 rounded-full animate-pulse" />
           {video.views}
         </div>

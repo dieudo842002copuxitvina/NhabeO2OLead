@@ -473,7 +473,7 @@ export default function AdminNervousSystemPage() {
         </div>
       </div>
 
-      {/* Flow canvas — dark techno look */}
+      {/* Flow canvas — clean techno look */}
       <Card className="overflow-hidden border-slate-800">
         <CardContent className="p-0">
           <div

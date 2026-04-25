@@ -206,7 +206,7 @@ export default function SolutionsPage() {
                   { icon: Zap, text: "Phân bón chuẩn chuyên gia" },
                   { icon: Users, text: "Thợ vãng lai hỗ trợ tại vườn" },
                 ].map((badge, i) => (
-                  <div key={i} className="flex items-center gap-2 text-white/90 text-sm font-bold bg-black/20 px-4 py-2 rounded-full border border-white/10">
+                  <div key={i} className="flex items-center gap-2 text-white/90 text-sm font-bold bg-white/20 px-4 py-2 rounded-full border border-white/10">
                     <badge.icon className="w-4 h-4 text-[#FF6B00]" /> {badge.text}
                   </div>
                 ))}
@@ -306,7 +306,7 @@ export default function SolutionsPage() {
                   alt="Thợ kỹ thuật tại vườn" 
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white/40 to-transparent" />
                 <div className="absolute bottom-8 left-8 right-8 bg-white/20 backdrop-blur-xl border border-white/30 p-6 rounded-3xl">
                    <div className="flex items-center gap-4">
                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
@@ -438,3 +438,4 @@ export default function SolutionsPage() {
     </div>
   );
 }
+

@@ -88,7 +88,7 @@ const InputWithTooltip = ({
               <HelpCircle className="w-4 h-4 text-slate-500 hover:text-emerald-400 transition-colors cursor-help" />
             </button>
           </TooltipTrigger>
-          <TooltipContent className="bg-slate-900 border border-white/10 text-slate-200 p-3 max-w-[250px] shadow-2xl z-[100]">
+          <TooltipContent className="bg-white border border-slate-200 text-slate-700 p-3 max-w-[250px] shadow-2xl z-[100]">
             <p className="text-xs leading-relaxed">{helpText}</p>
           </TooltipContent>
         </Tooltip>
@@ -201,7 +201,7 @@ function DuToanTuoiContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050a05] text-white pb-20">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#1A1A1A] pb-20">
       <SeoMeta 
         title="Công cụ Dự toán Hệ thống Tưới - AgriFlow"
         description="Tính toán thủy lực, bóc tách vật tư và gợi ý thiết bị tưới Rivulis/Pentax chính xác cho trang trại của bạn."
@@ -250,7 +250,7 @@ function DuToanTuoiContent() {
                     <SelectTrigger className="bg-white/5 border-white/10 h-12 text-white rounded-xl">
                       <SelectValue placeholder="Chọn loại cây" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-white border-slate-200 text-slate-900">
                       {Object.entries(CROP_DEFAULTS).map(([key, val]) => (
                         <SelectItem key={key} value={key}>{val.name}</SelectItem>
                       ))}
@@ -457,7 +457,7 @@ function DuToanTuoiContent() {
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-xl border-t border-white/10 md:hidden z-50">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-white/10 md:hidden z-50">
         <Button 
           onClick={handleSendToDealer}
           className="w-full h-12 bg-emerald-500 text-white font-bold rounded-xl border-none"
@@ -471,7 +471,7 @@ function DuToanTuoiContent() {
 
 export default function DuToanTuoiPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#050a05] flex items-center justify-center text-white">Đang tải dữ liệu...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center text-[#1A1A1A]">Đang tải dữ liệu...</div>}>
       <DuToanTuoiContent />
     </Suspense>
   );

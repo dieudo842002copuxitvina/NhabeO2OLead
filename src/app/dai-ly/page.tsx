@@ -109,7 +109,7 @@ export default function DaiLyPage() {
   }, [dealers, searchQuery, userLocation]);
 
   return (
-    <div className="min-h-screen bg-[#050a05] text-white">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#1A1A1A]">
       <SeoMeta 
         title="Mạng lưới Đại lý AgriFlow - Geo Matching"
         description="Tìm kiếm đại lý Nhà Bè Agri gần bạn nhất bằng công nghệ GPS. Hỗ trợ lắp đặt và cung ứng vật tư nông nghiệp."
@@ -118,7 +118,7 @@ export default function DaiLyPage() {
       <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
         
         {/* Left Panel: List */}
-        <div className="w-full lg:w-[450px] flex flex-col border-r border-white/10 bg-black/40 backdrop-blur-xl z-20">
+        <div className="w-full lg:w-[450px] flex flex-col border-r border-white/10 bg-white/40 backdrop-blur-xl z-20">
           <div className="p-6 border-b border-white/10">
             <Link href="/" className="inline-flex items-center gap-2 text-emerald-400 text-sm mb-6 hover:text-emerald-300 transition-colors">
               <ArrowLeft className="w-4 h-4" /> Quay lại Trang chủ
@@ -160,7 +160,7 @@ export default function DaiLyPage() {
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
                           {dealer.distance && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-md text-[10px] text-center py-0.5 text-emerald-400 font-bold">
+                            <div className="absolute bottom-0 left-0 right-0 bg-white/60 backdrop-blur-md text-[10px] text-center py-0.5 text-emerald-400 font-bold">
                               {dealer.distance.toFixed(1)} km
                             </div>
                           )}

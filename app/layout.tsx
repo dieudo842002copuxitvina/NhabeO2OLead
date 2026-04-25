@@ -52,15 +52,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className="bg-white">
-      <body className={`${beVietnamPro.className} bg-white text-slate-950`}>
+    <html lang="vi" className="bg-[#FFFFFF]">
+      <body className={`${beVietnamPro.className} bg-[#FFFFFF] text-[#1A1A1A]`}>
         <Providers>
           <Suspense fallback={null}>
             <GA4RouteTracker />
           </Suspense>
           <AIRulePopup />
           <TopNav />
-          <main className="bg-white">{children}</main>
+          <main className="bg-[#FFFFFF] text-[#1A1A1A]">{children}</main>
           <SiteFooter />
           <Toaster />
           <Sonner />

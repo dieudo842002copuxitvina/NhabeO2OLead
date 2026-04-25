@@ -39,11 +39,11 @@ export default function DealerAdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050a05] text-white flex">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#1A1A1A] flex">
       <SeoMeta title="Dealer Admin - AgriFlow" description="Giao diện quản lý tồn kho và trạng thái đại lý Nhà Bè Agri." />
 
       {/* Sidebar */}
-      <aside className="w-64 border-r border-white/10 hidden md:flex flex-col bg-black/40 backdrop-blur-xl">
+      <aside className="w-64 border-r border-white/10 hidden md:flex flex-col bg-white/40 backdrop-blur-xl">
         <div className="p-8 border-b border-white/10 flex items-center gap-2">
           <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
             <Zap className="w-5 h-5 text-white" />

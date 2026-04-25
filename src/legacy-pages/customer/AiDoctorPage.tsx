@@ -178,7 +178,7 @@ export default function AiDoctorPage() {
               </>
             ) : (
               <div className="relative">
-                <div className="relative rounded-2xl overflow-hidden aspect-square md:aspect-video bg-black/5 flex items-center justify-center group">
+                <div className="relative rounded-2xl overflow-hidden aspect-square md:aspect-video bg-white/5 flex items-center justify-center group">
                   <img src={imageSrc} alt="Cây bệnh" className="w-full h-full object-cover" />
                   
                   {/* Scanning Animation */}

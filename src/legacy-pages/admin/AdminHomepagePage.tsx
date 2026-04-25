@@ -268,7 +268,6 @@ export default function AdminHomepagePage() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="light">☀️ Sáng (Voyager)</SelectItem>
-                      <SelectItem value="dark">🌙 Tối (Dark Matter)</SelectItem>
                       <SelectItem value="satellite">🛰️ Vệ tinh</SelectItem>
                     </SelectContent>
                   </Select>

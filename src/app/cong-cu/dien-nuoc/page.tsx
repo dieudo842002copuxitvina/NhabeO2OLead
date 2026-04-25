@@ -58,7 +58,7 @@ const InputWithTooltip = ({
               <HelpCircle className="w-4 h-4 text-slate-500 hover:text-emerald-400 transition-colors cursor-help" />
             </button>
           </TooltipTrigger>
-          <TooltipContent className="bg-slate-900 border border-white/10 text-slate-200 p-3 max-w-[250px] shadow-2xl z-[100]">
+          <TooltipContent className="bg-white border border-slate-200 text-slate-700 p-3 max-w-[250px] shadow-2xl z-[100]">
             <p className="text-xs leading-relaxed">{helpText}</p>
           </TooltipContent>
         </Tooltip>
@@ -106,7 +106,7 @@ function DienNuocContent() {
   }, [powerHP, head, flow, hoursPerDay, electricityPrice]);
 
   return (
-    <div className="min-h-screen bg-[#050a05] text-white pb-24">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#1A1A1A] pb-24">
       <SeoMeta 
         title="Máy tính Điện Nước AgriFlow - Tối ưu chi phí vận hành"
         description="Tính toán chi phí tiền điện máy bơm, đánh giá hiệu quả năng lượng và tư vấn nâng cấp hệ thống tiết kiệm điện."
@@ -362,7 +362,7 @@ function DienNuocContent() {
 
 export default function DienNuocPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#050a05] flex items-center justify-center text-white">Khởi động Máy tính điện nước...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center text-[#1A1A1A]">Khởi động Máy tính điện nước...</div>}>
       <DienNuocContent />
     </Suspense>
   );

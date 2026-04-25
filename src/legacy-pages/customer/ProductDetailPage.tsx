@@ -116,7 +116,7 @@ export default function ProductDetailPage() {
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                <div className="absolute inset-0 bg-white/5 group-hover:bg-transparent transition-colors" />
                 <button className="absolute bottom-6 right-6 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
                   <Zap className="w-4 h-4 text-orange-500" /> Xem video thực tế tại rẫy
                 </button>
@@ -311,7 +311,7 @@ export default function ProductDetailPage() {
                   
                   <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sản phẩm chính hãng bởi</p>
-                    <img src="https://nhabeagri.com/wp-content/uploads/2021/04/logo-nhabeagri-dark.png" className="h-6 opacity-30 grayscale" alt="logo" />
+                    <img src="/logo.png" className="h-6 opacity-30 grayscale" alt="logo" />
                   </div>
                 </div>
               </Card>

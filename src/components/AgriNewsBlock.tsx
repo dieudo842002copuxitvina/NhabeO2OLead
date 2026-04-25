@@ -176,7 +176,7 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
             {item.tag}
           </span>
           {/* Read time */}
-          <span className="absolute bottom-3 right-3 flex items-center gap-1 text-[10px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full">
+          <span className="absolute bottom-3 right-3 flex items-center gap-1 text-[10px] font-semibold text-white bg-white/40 backdrop-blur px-2 py-0.5 rounded-full">
             <Clock className="w-3 h-3" />
             {item.readTime}
           </span>
@@ -287,3 +287,4 @@ export default function AgriNewsBlock() {
     </section>
   );
 }
+

@@ -307,7 +307,7 @@ export default function ProductEditDialog({ open, onOpenChange, product, special
                       </Button>
                     </div>
                     {yt && (
-                      <div className="aspect-video w-full max-w-xs rounded overflow-hidden bg-black">
+                      <div className="aspect-video w-full max-w-xs rounded overflow-hidden bg-white">
                         <iframe src={`https://www.youtube.com/embed/${yt}`} className="w-full h-full"
                           allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture" />
                       </div>
@@ -468,3 +468,4 @@ export default function ProductEditDialog({ open, onOpenChange, product, special
     </Dialog>
   );
 }
+

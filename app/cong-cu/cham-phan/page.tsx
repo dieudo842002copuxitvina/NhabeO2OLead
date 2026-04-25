@@ -118,7 +118,7 @@ const InputWithTooltip = ({
               <HelpCircle className="w-4 h-4 text-slate-500 hover:text-emerald-400 transition-colors cursor-help" />
             </button>
           </TooltipTrigger>
-          <TooltipContent className="bg-slate-900 border border-white/10 text-slate-200 p-3 max-w-[250px] shadow-2xl z-[100]">
+          <TooltipContent className="bg-white border border-slate-200 text-slate-700 p-3 max-w-[250px] shadow-2xl z-[100]">
             <p className="text-xs leading-relaxed">{helpText}</p>
           </TooltipContent>
         </Tooltip>
@@ -228,7 +228,7 @@ function ChamPhanContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050a05] text-white pb-24">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#1A1A1A] pb-24">
       <SeoMeta 
         title="Kỹ Sư Dinh Dưỡng AgriFlow - Tối ưu bón phân"
         description="Công cụ chẩn đoán dinh dưỡng, cảnh báo kết tủa và tính toán thời gian châm phân Venturi chính xác."
@@ -289,7 +289,7 @@ function ChamPhanContent() {
                     <SelectTrigger className="bg-white/5 border-white/10 h-12 text-white rounded-xl">
                       <SelectValue placeholder="Chọn loại cây" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-white border-slate-200 text-slate-900">
                       {CROP_LIST.map((c) => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
@@ -542,7 +542,7 @@ function ChamPhanContent() {
 
       {/* Floating Action Bar */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-lg px-4 z-50">
-        <div className="bg-black/60 backdrop-blur-2xl border border-white/20 p-4 rounded-3xl flex items-center justify-between shadow-2xl">
+        <div className="bg-white/60 backdrop-blur-2xl border border-white/20 p-4 rounded-3xl flex items-center justify-between shadow-2xl">
           <div className="flex -space-x-2">
             {selectedFertilizers.map(id => {
               const f = FERTILIZERS.find(item => item.id === id);
@@ -571,7 +571,7 @@ function ChamPhanContent() {
 
 export default function ChamPhanPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#050a05] flex items-center justify-center text-white">Khởi động Kỹ Sư Dinh Dưỡng...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center text-[#1A1A1A]">Khởi động Kỹ Sư Dinh Dưỡng...</div>}>
       <ChamPhanContent />
     </Suspense>
   );

@@ -158,7 +158,7 @@ export default function AiDoctorExpert() {
                           className="absolute left-0 right-0 h-1 bg-blue-500 shadow-[0_0_15px_#3b82f6] z-10"
                         />
                       )}
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="absolute inset-0 bg-white/20 group-hover:bg-white/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                         <p className="text-white font-bold flex items-center gap-2">
                           <Search className="w-5 h-5" /> Thay đổi ảnh
                         </p>
@@ -372,3 +372,4 @@ export default function AiDoctorExpert() {
     </div>
   );
 }
+

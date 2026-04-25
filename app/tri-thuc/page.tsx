@@ -390,7 +390,7 @@ export default function KnowledgeHubPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
              <div className="relative aspect-video rounded-[24px] md:rounded-[30px] overflow-hidden group cursor-pointer shadow-xl active:scale-[0.98] transition-transform">
                 <SafeImage src="https://images.unsplash.com/photo-1592861343717-3bf79ab44621?w=800&q=80" className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="Video" fill />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                <div className="absolute inset-0 bg-white/40 flex items-center justify-center z-10">
                    <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform">
                       <PlayCircle className="w-8 h-8 md:w-10 md:h-10 text-white fill-white" />
                    </div>
