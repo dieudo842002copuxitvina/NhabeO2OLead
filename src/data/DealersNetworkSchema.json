@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dealers_Network",
+  "description": "Database Schema cho mạng lưới đại lý và trung tâm điều phối Nhà Bè Agri (O2O Lead Engine) với hỗ trợ PostGIS và conditional logic.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Khóa chính UUID."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Tên cửa hàng / Đại lý / Kho phân phối."
+    },
+    "region": {
+      "type": "string",
+      "enum": ["Miền Bắc", "Miền Trung", "Miền Nam", "Tây Nguyên"],
+      "description": "Khu vực địa lý."
+    },
+    "address": {
+      "type": "string",
+      "description": "Địa chỉ chi tiết đầy đủ."
+    },
+    "location": {
+      "type": "object",
+      "description": "GeoPoint (Tọa độ không gian). Trên Database vật lý sẽ được ánh xạ thành kiểu GEOMETRY(Point, 4326) của PostGIS để phục vụ thuật toán Spatial Radar 50km.",
+      "properties": {
+        "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+        "lng": { "type": "number", "minimum": -180, "maximum": 180 }
+      },
+      "required": ["lat", "lng"]
+    },
+    "phone": {
+      "type": "string",
+      "pattern": "^(0|\\+84)[0-9]{9,10}$",
+      "description": "Số điện thoại liên hệ (Format VN)."
+    },
+    "inventory_status": {
+      "type": "boolean",
+      "default": false,
+      "description": "Binary Toggle Tồn kho: true = Có sẵn hàng, false = Hết hàng/Chờ nhập."
+    },
+    "location_type": {
+      "type": "string",
+      "enum": ["HEAD_OFFICE", "REGIONAL_HUB", "DEALER"],
+      "description": "Phân loại cấp bậc điểm phân phối."
+    },
+    "is_service_enabled": {
+      "type": "boolean",
+      "description": "Kích hoạt chức năng tiếp nhận Lead Dịch vụ (Lắp đặt, tư vấn thi công)."
+    },
+    "available_services": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "Mảng danh sách các dịch vụ chuyên biệt cung cấp bởi điểm này."
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "region",
+    "address",
+    "location",
+    "phone",
+    "location_type"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "location_type": { "const": "HEAD_OFFICE" } }
+      },
+      "then": {
+        "properties": { "is_service_enabled": { "const": false } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "location_type": { "const": "DEALER" } }
+      },
+      "then": {
+        "properties": { "is_service_enabled": { "const": true } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "region": { "const": "Tây Nguyên" } }
+      },
+      "then": {
+        "properties": {
+          "available_services": {
+            "default": [
+              "Tư vấn thi công tưới nhỏ giọt",
+              "Lắp đặt châm phân tự động cho cây công nghiệp (Điều, Tiêu, Cà phê)"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "region": { "const": "Miền Nam" } }
+      },
+      "then": {
+        "properties": {
+          "available_services": {
+            "default": [
+              "Giải pháp tưới địa hình sông nước",
+              "Tưới phun mưa cây ăn trái"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

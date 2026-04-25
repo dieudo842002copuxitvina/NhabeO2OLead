@@ -1,0 +1,111 @@
+{
+  "title": "Phân bón & Thiết bị",
+  "categories": [
+    {
+      "id": "phan-bon-dinh-duong",
+      "name": "PHÂN BÓN & DINH DƯỠNG",
+      "subcategories": [
+        { "name": "Phân bón lá", "slug": "phan-bon-la" },
+        { "name": "Phân hữu cơ vi sinh", "slug": "phan-huu-co-vi-sinh" },
+        { "name": "Dinh dưỡng cây ăn trái", "slug": "dinh-duong-cay-an-trai" },
+        { "name": "Dinh dưỡng rau màu", "slug": "dinh-duong-rau-mau" }
+      ]
+    },
+    {
+      "id": "may-nong-nghiep",
+      "name": "MÁY NÔNG NGHIỆP",
+      "subcategories": [
+        { "name": "Máy bay nông nghiệp", "slug": "may-bay-nong-nghiep" },
+        { "name": "Điện mặt trời", "slug": "dien-mat-troi" },
+        { "name": "Máy bơm nước", "slug": "may-bom-nuoc" },
+        { "name": "Máy cắt cỏ", "slug": "may-cat-co" },
+        { "name": "Máy nổ - máy phát điện", "slug": "may-no-may-phat-dien" }
+      ]
+    },
+    {
+      "id": "tuoi-nho-giot",
+      "name": "TƯỚI NHỎ GIỌT",
+      "subcategories": [
+        { "name": "Ống tưới nhỏ giọt", "slug": "ong-tuoi-nho-giot" },
+        { "name": "Đầu tưới nhỏ giọt", "slug": "dau-tuoi-nho-giot" },
+        { "name": "Bộ kit tưới nhỏ giọt", "slug": "bo-kit-tuoi-nho-giot" }
+      ]
+    },
+    {
+      "id": "tuoi-phun-mua",
+      "name": "TƯỚI PHUN MƯA",
+      "subcategories": [
+        { "name": "Béc tưới phun mưa", "slug": "bec-tuoi-phun-mua" },
+        { "name": "Súng tưới phun mưa", "slug": "sung-tuoi-phun-mua" },
+        { "name": "Ống tưới phun mưa", "slug": "ong-tuoi-phun-mua" }
+      ]
+    },
+    {
+      "id": "bo-trung-tam",
+      "name": "BỘ TRUNG TÂM",
+      "subcategories": [
+        { "name": "Máy bơm tưới cây", "slug": "may-bom-tuoi-cay" },
+        { "name": "Bộ điều khiển", "slug": "bo-dieu-khien" },
+        { "name": "Hẹn giờ tưới tự động", "slug": "hen-gio-tuoi-tu-dong" },
+        { "name": "Van điện từ", "slug": "van-dien-tu" },
+        { "name": "Lọc hệ thống tưới", "slug": "loc-he-thong-tuoi" },
+        { "name": "Thiết bị châm phân", "slug": "thiet-bi-cham-phan" },
+        { "name": "Bạt lót hồ", "slug": "bat-lot-ho" }
+      ]
+    },
+    {
+      "id": "ong-dan-nuoc",
+      "name": "ỐNG DẪN NƯỚC",
+      "subcategories": [
+        { "name": "Ống PVC", "slug": "ong-pvc" },
+        { "name": "Ống HDPE", "slug": "ong-hdpe" },
+        { "name": "Ống LDPE", "slug": "ong-ldpe" },
+        { "name": "Ống xẹp", "slug": "ong-xep" }
+      ]
+    },
+    {
+      "id": "tuoi-phun-suong",
+      "name": "TƯỚI PHUN SƯƠNG",
+      "subcategories": [
+        { "name": "Béc phun sương", "slug": "bec-phun-suong" },
+        { "name": "Bộ kit phun sương", "slug": "bo-kit-phun-suong" }
+      ]
+    },
+    {
+      "id": "tuoi-canh-quan",
+      "name": "TƯỚI CẢNH QUAN",
+      "subcategories": [
+        { "name": "Bộ kit tưới cảnh quan", "slug": "bo-kit-tuoi-canh-quan" },
+        { "name": "Béc tưới cảnh quan", "slug": "bec-tuoi-canh-quan" },
+        { "name": "Đầu tưới cảnh quan", "slug": "dau-tuoi-canh-quan" },
+        { "name": "Phụ kiện tưới cảnh quan", "slug": "phu-kien-tuoi-canh-quan" },
+        { "name": "Hẹn giờ tưới tự động", "slug": "hen-gio-tuoi-tu-dong-cq" }
+      ]
+    },
+    {
+      "id": "phu-kien-duong-ong",
+      "name": "PHỤ KIỆN ĐƯỜNG ỐNG",
+      "subcategories": [
+        { "name": "Phụ kiện ống LDPE", "slug": "phu-kien-ong-ldpe" },
+        { "name": "Phụ kiện ống HDPE", "slug": "phu-kien-ong-hdpe" },
+        { "name": "Phụ kiện ống PVC", "slug": "phu-kien-ong-pvc" },
+        { "name": "Phụ kiện ống nhỏ giọt", "slug": "phu-kien-ong-nho-giot" },
+        { "name": "Phụ kiện đường ống khác", "slug": "phu-kien-duong-ong-khac" }
+      ]
+    },
+    {
+      "id": "thuong-hieu",
+      "name": "BRAND (THƯƠNG HIỆU TƯỚI)",
+      "isScrollable": true,
+      "subcategories": [
+        { "name": "ARKA", "slug": "thuong-hieu-arka" },
+        { "name": "AZUD", "slug": "thuong-hieu-azud" },
+        { "name": "BERMAD", "slug": "thuong-hieu-bermad" },
+        { "name": "CND", "slug": "thuong-hieu-cnd" },
+        { "name": "DUCAR", "slug": "thuong-hieu-ducar" },
+        { "name": "RIVULIS", "slug": "thuong-hieu-rivulis" },
+        { "name": "NETAFIM", "slug": "thuong-hieu-netafim" }
+      ]
+    }
+  ]
+}

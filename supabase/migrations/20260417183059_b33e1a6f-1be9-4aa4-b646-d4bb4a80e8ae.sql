@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Service role inserts market prices" ON public.market_prices;
