@@ -32,3 +32,9 @@ out/
 *.njsproj
 *.sln
 *.sw?
+
+node_modules/
+.next/
+out/
+build/
+.env*.local
