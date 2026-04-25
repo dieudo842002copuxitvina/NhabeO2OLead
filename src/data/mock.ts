@@ -1,6 +1,11 @@
 import { Product, Dealer, DealerProduct, Order, AnalyticsInsight, Customer, NewsArticle, CommodityPrice, WeatherData, MarketAlert } from './types';
+import { PRODUCTS_DATA } from './productsData';
 
-export const products: Product[] = [
+export { PRODUCTS_DATA };
+
+export const products: Product[] = PRODUCTS_DATA;
+
+export const legacyProducts: Product[] = [
   {
     id: 'p-1', name: 'Hệ thống tưới nhỏ giọt Netafim Pro', slug: 'tuoi-nho-giot-netafim-pro',
     sku: 'NET-PRO-01', category_id: 'Hệ thống tưới', brand_id: 'netafim',
