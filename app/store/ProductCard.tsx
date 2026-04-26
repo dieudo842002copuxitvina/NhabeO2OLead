@@ -15,6 +15,8 @@ function formatVnd(price: number) {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const thumbnail = product.images?.[0] ?? 'https://placehold.co/800x600?text=Product';
+
   return (
     <Link
       href={`/store/${product.slug}`}
@@ -24,7 +26,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Vùng ảnh chiếm 50% chiều cao thẻ */}
         <div className="relative h-full w-full overflow-hidden bg-gray-50">
           <Image
-            src={product.image}
+            src={thumbnail}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"

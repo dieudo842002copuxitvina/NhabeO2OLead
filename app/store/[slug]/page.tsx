@@ -7,7 +7,7 @@ import ProductGallery from "./_components/ProductGallery";
 import ProductDetailTabs from "./_components/ProductDetailTabs";
 import DroneRoiCalculator from "./_components/DroneRoiCalculator";
 import LeadCaptureForm from "./_components/LeadCaptureForm";
-import { PRODUCTS_DATA, findProductBySlug } from "@/data/products";
+import { PRODUCTS_DATA } from "@/data/products";
 
 type PageProps = {
   params: {
@@ -21,6 +21,10 @@ const formatVnd = (value: number) =>
     currency: "VND",
     maximumFractionDigits: 0,
   }).format(value);
+
+function findProductBySlug(slug: string) {
+  return PRODUCTS_DATA.find((product) => product.slug === slug);
+}
 
 export function generateStaticParams() {
   return PRODUCTS_DATA.map((product) => ({ slug: product.slug }));
@@ -71,7 +75,7 @@ export default function StoreProductDetailPage({ params }: PageProps) {
             Cua hang
           </Link>
           <ChevronRight className="h-4 w-4" />
-          <span>{product.categoryLabel}</span>
+          <span>{product.subCategory || product.category}</span>
           <ChevronRight className="h-4 w-4" />
           <span className="font-medium text-gray-900">{product.name}</span>
         </nav>
