@@ -1,61 +1,78 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { Navigation } from "lucide-react";
-import type { DealerResult } from "./page";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import type { DealerWithDistance } from "./page";
 
 type DaiLyMapProps = {
-  dealers: DealerResult[];
-  hoveredId: string | null;
-  selectedId: string | null;
+  dealers: DealerWithDistance[];
+  selectedDealerId: string | null;
   userLocation: { lat: number; lng: number } | null;
   onSelectDealer: (dealerId: string) => void;
 };
 
-function createDealerIcon(dealer: DealerResult, active: boolean) {
-  const isOffice = dealer.type === "office";
-  const fill = isOffice ? "#F59E0B" : "#4CAF50";
-  const ring = isOffice ? "rgba(245,158,11,0.2)" : "rgba(76,175,80,0.2)";
-  const label = isOffice ? "VP" : "DL";
+function createDealerIcon(active: boolean, isOpen: boolean) {
+  const coreColor = isOpen ? "#4CAF50" : "#9CA3AF";
+  const ringColor = isOpen ? "rgba(76,175,80,0.2)" : "rgba(156,163,175,0.22)";
+  const outerSize = active ? 46 : 38;
+  const innerSize = active ? 34 : 28;
 
   return L.divIcon({
     className: "",
     html: `
       <div style="
-        width:${active ? "46px" : "38px"};
-        height:${active ? "46px" : "38px"};
-        border-radius:999px;
-        background:${ring};
+        width:${outerSize}px;
+        height:${outerSize}px;
+        border-radius:9999px;
+        background:${ringColor};
         display:flex;
         align-items:center;
         justify-content:center;
-        transform:${active ? "translateY(-8px)" : "translateY(0)"};
+        transform:${active ? "translateY(-6px)" : "translateY(0px)"};
         transition:all 180ms ease;
       ">
         <div style="
-          width:${active ? "34px" : "30px"};
-          height:${active ? "34px" : "30px"};
-          border-radius:999px;
-          background:${fill};
-          color:white;
-          border:3px solid white;
-          box-shadow:0 10px 22px rgba(17,24,39,0.25);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          font-size:11px;
-          font-weight:800;
-          font-family:Arial, sans-serif;
-        ">${label}</div>
+          width:${innerSize}px;
+          height:${innerSize}px;
+          border-radius:9999px;
+          background:${coreColor};
+          border:3px solid #FFFFFF;
+          box-shadow:0 10px 20px rgba(17,24,39,0.22);
+        "></div>
       </div>
     `,
-    iconSize: active ? [46, 46] : [38, 38],
-    iconAnchor: active ? [23, 43] : [19, 35],
-    popupAnchor: [0, -34],
+    iconSize: [outerSize, outerSize],
+    iconAnchor: [outerSize / 2, outerSize - 2],
+  });
+}
+
+function createClusterIcon(count: number) {
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width:42px;
+        height:42px;
+        border-radius:9999px;
+        background:#4CAF50;
+        border:3px solid #FFFFFF;
+        box-shadow:0 10px 20px rgba(17,24,39,0.2);
+        color:#FFFFFF;
+        font-weight:800;
+        font-size:13px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-family:Arial, sans-serif;
+      ">${count}</div>
+    `,
+    iconSize: [42, 42],
+    iconAnchor: [21, 21],
   });
 }
 
@@ -65,52 +82,97 @@ const userIcon = L.divIcon({
     <div style="
       width:22px;
       height:22px;
-      border-radius:999px;
+      border-radius:9999px;
       background:#2563EB;
-      border:4px solid white;
-      box-shadow:0 0 0 8px rgba(37,99,235,0.18), 0 10px 20px rgba(17,24,39,0.22);
+      border:4px solid #FFFFFF;
+      box-shadow:0 0 0 7px rgba(37,99,235,0.2), 0 10px 18px rgba(17,24,39,0.2);
     "></div>
   `,
   iconSize: [22, 22],
   iconAnchor: [11, 11],
 });
 
+function DealerClusterLayer({
+  dealers,
+  selectedDealerId,
+  onSelectDealer,
+}: {
+  dealers: DealerWithDistance[];
+  selectedDealerId: string | null;
+  onSelectDealer: (dealerId: string) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    const clusterGroup = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      spiderfyOnMaxZoom: true,
+      disableClusteringAtZoom: 12,
+      iconCreateFunction: (cluster) => createClusterIcon(cluster.getChildCount()),
+    });
+
+    dealers.forEach((dealer) => {
+      const marker = L.marker([dealer.lat, dealer.lng], {
+        icon: createDealerIcon(selectedDealerId === dealer.id, dealer.status === "Mở cửa"),
+      });
+      marker.on("click", () => onSelectDealer(dealer.id));
+      clusterGroup.addLayer(marker);
+    });
+
+    map.addLayer(clusterGroup);
+
+    return () => {
+      clusterGroup.clearLayers();
+      map.removeLayer(clusterGroup);
+    };
+  }, [dealers, map, onSelectDealer, selectedDealerId]);
+
+  return null;
+}
+
 function MapFocus({
   dealers,
-  selectedId,
+  selectedDealerId,
   userLocation,
 }: {
-  dealers: DealerResult[];
-  selectedId: string | null;
+  dealers: DealerWithDistance[];
+  selectedDealerId: string | null;
   userLocation: { lat: number; lng: number } | null;
 }) {
   const map = useMap();
 
   useEffect(() => {
+    const selected = dealers.find((dealer) => dealer.id === selectedDealerId);
+    if (selected) {
+      map.flyTo([selected.lat, selected.lng], 12, { duration: 0.75 });
+      return;
+    }
+
     if (userLocation) {
       map.flyTo([userLocation.lat, userLocation.lng], 10, { duration: 0.8 });
       return;
     }
 
-    const selected = dealers.find((dealer) => dealer.id === selectedId);
-    if (selected) {
-      map.flyTo([selected.lat, selected.lng], 10, { duration: 0.7 });
+    if (dealers.length > 0) {
+      const bounds = L.latLngBounds(
+        dealers.map((dealer) => [dealer.lat, dealer.lng] as [number, number]),
+      );
+      map.fitBounds(bounds.pad(0.25), { maxZoom: 8 });
     }
-  }, [dealers, map, selectedId, userLocation]);
+  }, [dealers, map, selectedDealerId, userLocation]);
 
   return null;
 }
 
 export default function DaiLyMap({
   dealers,
-  hoveredId,
-  selectedId,
+  selectedDealerId,
   userLocation,
   onSelectDealer,
 }: DaiLyMapProps) {
   return (
     <MapContainer
-      center={[12.2, 107.2]}
+      center={[12.2, 107.4]}
       zoom={6}
       minZoom={5}
       scrollWheelZoom
@@ -121,63 +183,14 @@ export default function DaiLyMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <MapFocus dealers={dealers} selectedId={selectedId} userLocation={userLocation} />
+      <MapFocus dealers={dealers} selectedDealerId={selectedDealerId} userLocation={userLocation} />
+      <DealerClusterLayer
+        dealers={dealers}
+        selectedDealerId={selectedDealerId}
+        onSelectDealer={onSelectDealer}
+      />
 
-      {userLocation && (
-        <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
-          <Popup>
-            <div className="min-w-[160px] bg-white text-gray-900">
-              <p className="font-bold">Vị trí của tôi</p>
-              <p className="text-sm text-gray-600">Đang dùng vị trí trình duyệt</p>
-            </div>
-          </Popup>
-        </Marker>
-      )}
-
-      {dealers.map((dealer) => {
-        const active = hoveredId === dealer.id || selectedId === dealer.id;
-        return (
-          <Marker
-            key={dealer.id}
-            position={[dealer.lat, dealer.lng]}
-            icon={createDealerIcon(dealer, active)}
-            eventHandlers={{
-              click: () => onSelectDealer(dealer.id),
-            }}
-          >
-            <Popup>
-              <div className="min-w-[230px] bg-white text-gray-900">
-                <p className="text-base font-bold leading-snug text-gray-900">{dealer.name}</p>
-                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-[#2E7D32]">{dealer.region}</p>
-                <p className="mt-2 text-sm text-gray-600">{dealer.phone}</p>
-                <p className="mt-1 text-sm text-gray-600">{dealer.time}</p>
-                {typeof dealer.distanceKm === "number" ? (
-                  <p className="mt-2 inline-flex rounded-full bg-[#4CAF50]/10 px-2.5 py-1 text-xs font-bold text-[#2E7D32]">
-                    📍 Cách {dealer.distanceKm < 10 ? dealer.distanceKm.toFixed(1) : Math.round(dealer.distanceKm)} km
-                  </p>
-                ) : null}
-                <div className="mt-3 flex items-center gap-2">
-                  <Link
-                    href={`/dai-ly/${dealer.slug}`}
-                    className="inline-flex rounded-md bg-[#4CAF50] px-3 py-2 text-sm font-bold text-white hover:bg-[#43A047]"
-                  >
-                    Xem chi tiết
-                  </Link>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${dealer.lat},${dealer.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Chỉ đường đến ${dealer.name}`}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-900 hover:border-[#4CAF50] hover:text-[#2E7D32]"
-                  >
-                    <Navigation className="h-4 w-4" />
-                  </a>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        );
-      })}
+      {userLocation ? <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} /> : null}
     </MapContainer>
   );
 }

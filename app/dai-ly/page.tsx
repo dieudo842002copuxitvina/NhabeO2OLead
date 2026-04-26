@@ -1,43 +1,126 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Building2, Clock, MapPin, Navigation, Phone, Search, Store, Target } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { DEALERS_DATA, type Dealer, type DealerType } from "@/data/dealers";
+import { LocateFixed, MapPin, Phone, Search, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+
+export type DealerStatus = "Mở cửa" | "Đóng cửa";
+
+export type Dealer = {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  province: string;
+  address: string;
+  phone: string;
+  tags: string[];
+  status: DealerStatus;
+  images: string[];
+};
+
+export type DealerWithDistance = Dealer & {
+  distanceKm?: number;
+};
+
+const DEALERS_DATA: Dealer[] = [
+  {
+    id: "dak-mil",
+    name: "Trạm Nhà Bè Agri Đắk Mil",
+    lat: 12.4579,
+    lng: 107.6231,
+    province: "Đắk Nông",
+    address: "QL14, xã Đắk Lao, huyện Đắk Mil, Đắk Nông",
+    phone: "0901234561",
+    tags: ["Kho sẵn Drone", "Chuyên gia châm phân", "Thi công thực địa"],
+    status: "Mở cửa",
+    images: ["https://placehold.co/1200x720?text=Tram+Dak+Mil"],
+  },
+  {
+    id: "buon-ma-thuot",
+    name: "Trạm Nhà Bè Agri Buôn Ma Thuột",
+    lat: 12.6797,
+    lng: 108.0443,
+    province: "Đắk Lắk",
+    address: "Đường Hà Huy Tập, TP. Buôn Ma Thuột, Đắk Lắk",
+    phone: "0901234562",
+    tags: ["Kho sẵn vật tư", "Kỹ thuật tại vườn", "Lắp đặt hệ thống tưới"],
+    status: "Mở cửa",
+    images: ["https://placehold.co/1200x720?text=Tram+Buon+Ma+Thuot"],
+  },
+  {
+    id: "gia-nghia",
+    name: "Trạm Nhà Bè Agri Gia Nghĩa",
+    lat: 11.9982,
+    lng: 107.7007,
+    province: "Đắk Nông",
+    address: "Quốc lộ 28, phường Nghĩa Tân, TP. Gia Nghĩa, Đắk Nông",
+    phone: "0901234563",
+    tags: ["Chuyên gia châm phân", "Kho phụ kiện HDPE", "Bảo trì định kỳ"],
+    status: "Mở cửa",
+    images: ["https://placehold.co/1200x720?text=Tram+Gia+Nghia"],
+  },
+  {
+    id: "bao-loc",
+    name: "Trạm Nhà Bè Agri Bảo Lộc",
+    lat: 11.5478,
+    lng: 107.8077,
+    province: "Lâm Đồng",
+    address: "Đường Trần Phú, TP. Bảo Lộc, Lâm Đồng",
+    phone: "0901234564",
+    tags: ["Trung tâm demo drone", "Đội thi công thực địa", "Hỗ trợ hồ sơ vay"],
+    status: "Đóng cửa",
+    images: ["https://placehold.co/1200x720?text=Tram+Bao+Loc"],
+  },
+  {
+    id: "cam-my",
+    name: "Trạm Nhà Bè Agri Cẩm Mỹ",
+    lat: 10.8249,
+    lng: 107.3165,
+    province: "Đồng Nai",
+    address: "Ấp Duyên Lãng, huyện Cẩm Mỹ, Đồng Nai",
+    phone: "0901234565",
+    tags: ["Kho sẵn Drone", "Chuyên gia cây ăn trái", "Bảo hành nhanh 24h"],
+    status: "Mở cửa",
+    images: ["https://placehold.co/1200x720?text=Tram+Cam+My"],
+  },
+];
 
 const DaiLyMap = dynamic(() => import("./DaiLyMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full min-h-[40vh] items-center justify-center bg-white text-sm font-semibold text-gray-600">
-      Đang tải bản đồ...
+    <div className="flex h-full items-center justify-center bg-white text-sm font-semibold text-gray-600">
+      Đang tải bản đồ đại lý...
     </div>
   ),
 });
 
-const filters: Array<{ value: "all" | DealerType; label: string }> = [
-  { value: "all", label: "Tất cả" },
-  { value: "office", label: "Văn phòng" },
-  { value: "dealer", label: "Cửa hàng vật tư" },
-];
-
-const regionFilters = ["all", ...Array.from(new Set(DEALERS_DATA.map((dealer) => dealer.region)))];
-
-export type DealerResult = Dealer & {
-  distanceKm?: number;
-};
-
-function dealerTypeLabel(type: DealerType) {
-  if (type === "office") return "Văn phòng";
-  return "Cửa hàng vật tư";
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+) {
+  const earthRadiusKm = 6371;
+  const toRad = (degree: number) => (degree * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusKm * c;
 }
 
-function dealerIcon(type: DealerType) {
-  if (type === "office") return Building2;
-  return Store;
+function formatDistance(distanceKm: number) {
+  if (distanceKm < 10) {
+    return `${distanceKm.toFixed(1)}km`;
+  }
+  return `${Math.round(distanceKm)}km`;
 }
 
 function phoneHref(phone: string) {
@@ -45,298 +128,275 @@ function phoneHref(phone: string) {
   return digits ? `tel:${digits}` : undefined;
 }
 
-function directionsHref(dealer: Dealer) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${dealer.lat},${dealer.lng}`;
-}
-
-function distanceKm(from: { lat: number; lng: number }, to: { lat: number; lng: number }) {
-  const earthRadiusKm = 6371;
-  const dLat = ((to.lat - from.lat) * Math.PI) / 180;
-  const dLng = ((to.lng - from.lng) * Math.PI) / 180;
-  const lat1 = (from.lat * Math.PI) / 180;
-  const lat2 = (to.lat * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function formatDistance(value: number) {
-  return value < 10 ? value.toFixed(1) : Math.round(value).toString();
-}
-
-function DaiLyContent() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const urlSearch = searchParams.get("search") ?? "";
-  const urlRegion = searchParams.get("region") ?? "all";
-
-  const [query, setQuery] = useState(urlSearch);
-  const [filter, setFilter] = useState<"all" | DealerType>("all");
-  const [regionFilter, setRegionFilter] = useState(urlRegion);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [locating, setLocating] = useState(false);
+export default function DaiLyPage() {
+  const [query, setQuery] = useState("");
+  const [selectedDealerId, setSelectedDealerId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState("");
 
-  useEffect(() => {
-    setQuery(urlSearch);
-    setRegionFilter(regionFilters.includes(urlRegion) ? urlRegion : "all");
-  }, [urlRegion, urlSearch]);
-
-  useEffect(() => {
-    const nextParams = new URLSearchParams(searchParams.toString());
-    const trimmedQuery = query.trim();
-
-    if (trimmedQuery) nextParams.set("search", trimmedQuery);
-    else nextParams.delete("search");
-
-    if (regionFilter !== "all") nextParams.set("region", regionFilter);
-    else nextParams.delete("region");
-
-    const current = searchParams.toString();
-    const next = nextParams.toString();
-    if (current !== next) {
-      router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
-    }
-  }, [pathname, query, regionFilter, router, searchParams]);
-
-  const filteredDealers = useMemo(() => {
+  const visibleDealers = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const result = DEALERS_DATA.filter((dealer) => {
-      const matchesFilter = filter === "all" || dealer.type === filter;
-      const matchesRegion = regionFilter === "all" || dealer.region === regionFilter;
-      const matchesQuery =
-        !needle ||
+    const bySearch = DEALERS_DATA.filter((dealer) => {
+      if (!needle) return true;
+      return (
         dealer.name.toLowerCase().includes(needle) ||
-        dealer.address.toLowerCase().includes(needle) ||
-        dealer.region.toLowerCase().includes(needle) ||
-        dealer.phone.includes(needle);
-      return matchesFilter && matchesRegion && matchesQuery;
+        dealer.province.toLowerCase().includes(needle) ||
+        dealer.address.toLowerCase().includes(needle)
+      );
     });
 
-    if (!userLocation) return result;
+    if (!userLocation) return bySearch;
 
-    return result
-      .map((dealer): DealerResult => ({
+    return bySearch
+      .map((dealer): DealerWithDistance => ({
         ...dealer,
-        distanceKm: distanceKm(userLocation, { lat: dealer.lat, lng: dealer.lng }),
+        distanceKm: calculateDistance(userLocation.lat, userLocation.lng, dealer.lat, dealer.lng),
       }))
       .sort((a, b) => (a.distanceKm ?? Number.POSITIVE_INFINITY) - (b.distanceKm ?? Number.POSITIVE_INFINITY));
-  }, [filter, query, regionFilter, userLocation]);
+  }, [query, userLocation]);
 
-  const handleLocate = () => {
-    if (!navigator.geolocation) return;
+  const nearestDealerId = userLocation && visibleDealers.length > 0 ? visibleDealers[0].id : null;
+
+  const selectedDealer = useMemo(() => {
+    const activeId = selectedDealerId ?? nearestDealerId;
+    if (!activeId) return null;
+    return visibleDealers.find((dealer) => dealer.id === activeId) ?? null;
+  }, [nearestDealerId, selectedDealerId, visibleDealers]);
+
+  const handleLocateNearest = () => {
+    if (!navigator.geolocation) {
+      setGeoError("Trình duyệt không hỗ trợ GPS.");
+      return;
+    }
+
     setLocating(true);
+    setGeoError("");
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setUserLocation({
+        const nextLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        });
+        };
+
+        const nearest = [...DEALERS_DATA]
+          .map((dealer) => ({
+            id: dealer.id,
+            distanceKm: calculateDistance(
+              nextLocation.lat,
+              nextLocation.lng,
+              dealer.lat,
+              dealer.lng,
+            ),
+          }))
+          .sort((a, b) => a.distanceKm - b.distanceKm)[0];
+
+        setUserLocation(nextLocation);
+        setSelectedDealerId(nearest?.id ?? null);
         setLocating(false);
       },
-      () => setLocating(false),
+      () => {
+        setGeoError("Không thể lấy vị trí hiện tại. Vui lòng cấp quyền GPS.");
+        setLocating(false);
+      },
       { enableHighAccuracy: true, timeout: 10000 },
     );
   };
 
   return (
-    <section className="h-[calc(100vh-96px)] min-h-[720px] bg-white text-gray-900 md:min-h-[640px]">
-      <div className="flex h-full flex-col bg-white md:flex-row">
-        <aside className="order-2 flex h-[60vh] flex-col border-r border-gray-200 bg-gray-50 md:order-1 md:h-full md:w-[40%]">
-          <div className="shrink-0 border-b border-gray-200 bg-white p-4 md:p-5">
-            <div className="mb-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-[#4CAF50]">Hệ thống đại lý</p>
-              <h1 className="mt-1 text-2xl font-bold text-gray-900">Tìm điểm hỗ trợ gần bạn</h1>
-            </div>
+    <section className="h-[calc(100vh-96px)] min-h-[700px] bg-gray-50 text-gray-900">
+      <div className="flex h-full flex-col md:flex-row">
+        <div className="flex h-[52vh] flex-col border-b border-gray-200 bg-white md:h-full md:w-[350px] md:min-w-[350px] md:border-b-0 md:border-r">
+          <div className="border-b border-gray-200 p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#4CAF50]">O2O Lead Engine</p>
+            <h1 className="mt-1 text-xl font-bold text-gray-900">Bản đồ hệ thống đại lý</h1>
 
-            <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
-              <label className="relative block">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Tìm tên đại lý, tỉnh thành, số điện thoại..."
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white pl-10 pr-3 text-sm text-gray-900 outline-none transition focus:border-[#4CAF50] focus:ring-2 focus:ring-[#4CAF50]/15"
-                />
-              </label>
-              <Button
-                type="button"
-                onClick={handleLocate}
-                className="h-11 rounded-lg bg-white px-4 font-semibold text-gray-900 shadow-none ring-1 ring-gray-200 hover:bg-gray-50"
-              >
-                <Target className={cn("mr-2 h-4 w-4 text-[#4CAF50]", locating && "animate-pulse")} />
-                {locating ? "Đang định vị" : "Sử dụng vị trí của tôi"}
-              </Button>
-            </div>
+            <label className="relative mt-4 block">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Nhập tỉnh thành hoặc tên đại lý..."
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-sm text-gray-900 outline-none transition focus:border-[#4CAF50] focus:ring-2 focus:ring-[#4CAF50]/20"
+              />
+            </label>
 
-            <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-              {regionFilters.map((region) => (
-                <button
-                  key={region}
-                  type="button"
-                  onClick={() => setRegionFilter(region)}
-                  className={cn(
-                    "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition",
-                    regionFilter === region
-                      ? "border-[#4CAF50] bg-[#4CAF50] text-white"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-[#4CAF50] hover:text-[#2E7D32]",
-                  )}
-                >
-                  {region === "all" ? "Tất cả vùng" : region}
-                </button>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={handleLocateNearest}
+              className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-900 transition hover:bg-gray-50"
+            >
+              <LocateFixed className={cn("h-4 w-4 text-[#4CAF50]", locating && "animate-pulse")} />
+              {locating ? "Đang định vị..." : "📍 TÌM TRẠM GẦN TÔI NHẤT"}
+            </button>
 
-            <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-              {filters.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => setFilter(item.value)}
-                  className={cn(
-                    "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition",
-                    filter === item.value
-                      ? "border-[#4CAF50] bg-[#4CAF50] text-white"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-[#4CAF50] hover:text-[#2E7D32]",
-                  )}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+            {geoError ? (
+              <p className="mt-2 text-xs font-medium text-orange-700">{geoError}</p>
+            ) : null}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-5">
-            <div className="mb-3 flex items-center justify-between text-sm text-gray-600">
-              <span>{filteredDealers.length} / {DEALERS_DATA.length} điểm trong khu vực</span>
-              <span className="font-semibold text-gray-900">Việt Nam</span>
-            </div>
-
-            {filteredDealers.length === 0 ? (
-              <div className="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center">
-                <p className="max-w-sm text-base font-semibold text-gray-900">
-                  Chưa có đại lý tại khu vực này. Liên hệ Hotline để nhận vật tư tận rẫy: 0983.230.879
-                </p>
-                <a
-                  href="tel:0983230879"
-                  className="mt-4 rounded-lg bg-[#4CAF50] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#43A047]"
-                >
-                  Gọi Ngay
-                </a>
+          <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            {visibleDealers.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
+                Không tìm thấy đại lý phù hợp với từ khóa.
               </div>
             ) : (
-            <div className="space-y-3">
-              {filteredDealers.map((dealer) => {
-                const Icon = dealerIcon(dealer.type);
-                const active = hoveredId === dealer.id || selectedId === dealer.id;
-                const callHref = phoneHref(dealer.phone);
-                return (
-                  <article
-                    key={dealer.id}
-                    onMouseEnter={() => setHoveredId(dealer.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    onFocus={() => setHoveredId(dealer.id)}
-                    className={cn(
-                      "rounded-xl border bg-white p-4 shadow-sm transition",
-                      active
-                        ? "border-[#4CAF50] shadow-md ring-2 ring-[#4CAF50]/10"
-                        : "border-gray-200 hover:border-[#4CAF50]",
-                    )}
-                  >
-                    <div className="flex gap-3">
-                      <div
+              <ul className="space-y-2">
+                {visibleDealers.map((dealer) => {
+                  const isSelected = selectedDealer?.id === dealer.id;
+                  const isNearest = nearestDealerId === dealer.id;
+
+                  return (
+                    <li key={dealer.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDealerId(dealer.id)}
                         className={cn(
-                          "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
-                          dealer.type === "office" ? "bg-amber-100 text-amber-700" : "bg-[#4CAF50]/10 text-[#2E7D32]",
+                          "w-full rounded-xl border bg-white p-3 text-left transition",
+                          isSelected
+                            ? "border-[#4CAF50] shadow-sm ring-2 ring-[#4CAF50]/15"
+                            : "border-gray-200 hover:border-[#4CAF50]",
                         )}
                       >
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
-                          <h2 className="text-base font-bold leading-snug text-gray-900">{dealer.name}</h2>
-                          <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
-                            {dealerTypeLabel(dealer.type)}
+                          <div>
+                            <p className="text-sm font-bold text-gray-900">{dealer.name}</p>
+                            <p className="mt-1 text-xs font-semibold text-gray-500">{dealer.province}</p>
+                          </div>
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-1 text-[11px] font-semibold",
+                              dealer.status === "Mở cửa"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-600",
+                            )}
+                          >
+                            {dealer.status}
                           </span>
                         </div>
-                        <p className="mt-1 text-xs font-bold uppercase tracking-wide text-[#2E7D32]">{dealer.region}</p>
-                        {typeof dealer.distanceKm === "number" ? (
-                          <span className="mt-2 inline-flex rounded-full bg-[#4CAF50]/10 px-2.5 py-1 text-xs font-bold text-[#2E7D32]">
-                            📍 Cách {formatDistance(dealer.distanceKm)} km
-                          </span>
-                        ) : null}
-                        <p className="mt-2 flex gap-2 text-sm text-gray-600">
-                          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#4CAF50]" />
-                          <span>{dealer.address}</span>
-                        </p>
-                        <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-gray-800">
-                          <Phone className="h-4 w-4 text-gray-500" />
-                          {dealer.phone}
-                        </p>
-                        <p className="mt-1 flex items-center gap-2 text-sm text-gray-600">
-                          <Clock className="h-4 w-4 text-gray-500" />
-                          {dealer.time}
-                        </p>
-                        <div className="mt-4 flex items-center gap-2">
-                          <Link
-                            href={`/dai-ly/${dealer.slug}`}
-                            className="rounded-lg bg-[#4CAF50] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#43A047]"
-                          >
-                            Xem chi tiết
-                          </Link>
-                          {callHref ? (
-                            <a
-                              href={callHref}
-                              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-900 transition hover:border-[#4CAF50]"
-                            >
-                              Gọi ngay
-                            </a>
+
+                        <p className="mt-2 line-clamp-2 text-xs text-gray-600">{dealer.address}</p>
+
+                        <div className="mt-2 flex items-center justify-between text-xs">
+                          {typeof dealer.distanceKm === "number" ? (
+                            <span className="font-semibold text-[#2E7D32]">
+                              Cách bạn {formatDistance(dealer.distanceKm)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-500">Chưa định vị GPS</span>
+                          )}
+                          {isNearest ? (
+                            <span className="rounded-full bg-[#4CAF50]/10 px-2 py-1 font-bold text-[#2E7D32]">
+                              Gần nhất
+                            </span>
                           ) : null}
-                          <a
-                            href={directionsHref(dealer)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Chỉ đường đến ${dealer.name}`}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-900 transition hover:border-[#4CAF50] hover:text-[#2E7D32]"
-                          >
-                            <Navigation className="h-4 w-4" />
-                          </a>
                         </div>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
-        </aside>
+        </div>
 
-        <div className="order-1 h-[40vh] bg-white md:order-2 md:h-full md:w-[60%]">
+        <div className="relative h-[48vh] min-h-[360px] flex-1 md:h-full">
           <DaiLyMap
-            dealers={filteredDealers}
-            hoveredId={hoveredId}
-            selectedId={selectedId}
+            dealers={visibleDealers}
+            selectedDealerId={selectedDealer?.id ?? null}
             userLocation={userLocation}
-            onSelectDealer={setSelectedId}
+            onSelectDealer={setSelectedDealerId}
           />
+
+          <aside
+            className={cn(
+              "absolute right-0 top-0 z-[500] h-full w-full max-w-[380px] border-l border-gray-200 bg-white shadow-xl transition-transform duration-300",
+              selectedDealer ? "translate-x-0" : "translate-x-full",
+            )}
+            aria-live="polite"
+          >
+            {selectedDealer ? (
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                  <p className="text-sm font-bold text-gray-900">Chi tiết đại lý</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDealerId(null)}
+                    className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+                    aria-label="Đóng hồ sơ đại lý"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+                  <img
+                    src={selectedDealer.images[0]}
+                    alt={`Ảnh mặt tiền ${selectedDealer.name}`}
+                    className="h-44 w-full rounded-xl object-cover"
+                    loading="lazy"
+                  />
+
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">{selectedDealer.name}</h2>
+                    <p className="mt-1 text-sm text-gray-600">{selectedDealer.province}</p>
+                  </div>
+
+                  <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                    <p className="flex items-start gap-2 text-sm text-gray-700">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#4CAF50]" />
+                      <span>{selectedDealer.address}</span>
+                    </p>
+                    <p className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                      <Phone className="h-4 w-4 text-[#4CAF50]" />
+                      {selectedDealer.phone}
+                    </p>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2 py-1 text-xs font-semibold",
+                        selectedDealer.status === "Mở cửa"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-600",
+                      )}
+                    >
+                      {selectedDealer.status}
+                    </span>
+                    {typeof selectedDealer.distanceKm === "number" ? (
+                      <p className="text-xs font-semibold text-[#2E7D32]">
+                        Cách bạn {formatDistance(selectedDealer.distanceKm)}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Năng lực chính</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedDealer.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 p-4">
+                  <a
+                    href={phoneHref(selectedDealer.phone)}
+                    className="flex h-12 w-full items-center justify-center rounded-xl bg-[#4CAF50] text-sm font-bold text-white transition hover:bg-[#43A047]"
+                  >
+                    📞 GỌI HOTLINE ĐẠI LÝ
+                  </a>
+                </div>
+              </div>
+            ) : null}
+          </aside>
         </div>
       </div>
     </section>
-  );
-}
-
-export default function DaiLyPage() {
-  return (
-    <Suspense
-      fallback={
-        <section className="h-[calc(100vh-96px)] min-h-[720px] bg-white text-gray-900 md:min-h-[640px]" />
-      }
-    >
-      <DaiLyContent />
-    </Suspense>
   );
 }

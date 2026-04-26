@@ -1,6 +1,13 @@
 import type { Metadata } from 'next';
 import MarketEncyclopediaClient from './MarketEncyclopediaClient';
 
+type PageProps = {
+  searchParams?: {
+    q?: string | string[];
+    category?: string | string[];
+  };
+};
+
 export const metadata: Metadata = {
   title: 'Bảng Giá Nông Sản Trực Tuyến | Nhà Bè Agri',
   description:
@@ -10,7 +17,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function GiaNongSanPage() {
-  return <MarketEncyclopediaClient />;
+export default function GiaNongSanPage({ searchParams }: PageProps) {
+  return <MarketEncyclopediaClient searchParams={searchParams} />;
 }
-
