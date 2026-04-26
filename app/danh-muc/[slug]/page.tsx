@@ -63,7 +63,9 @@ export default function CategoryPage({ params }: Props) {
   const { slug } = params;
 
   let filteredProducts = [];
-  if (slug === "may-bay-nong-nghiep") {
+  if (slug === "tat-ca") {
+    filteredProducts = PRODUCTS_DATA;
+  } else if (slug === "may-bay-nong-nghiep") {
     filteredProducts = PRODUCTS_DATA.filter((p) => p.category === "DRONE");
   } else if (slug === "humic-fulvic") {
     filteredProducts = PRODUCTS_DATA.filter((p) => p.subCategory === "Humic/Fulvic");
@@ -73,7 +75,7 @@ export default function CategoryPage({ params }: Props) {
     );
   }
 
-  const displayTitle = getCategoryTitle(slug);
+  const displayTitle = slug === "tat-ca" ? "Tất cả sản phẩm" : getCategoryTitle(slug);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -116,7 +118,7 @@ export default function CategoryPage({ params }: Props) {
             </p>
             <div className="mt-6">
               <Link
-                href="/store"
+                href="/danh-muc/tat-ca"
                 className="inline-flex items-center rounded-xl bg-[#4CAF50] px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-[#43A047] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all"
               >
                 Quay lại Cửa hàng

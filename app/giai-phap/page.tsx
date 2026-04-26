@@ -1,158 +1,132 @@
-"use client";
-
-import Link from "next/link";
+import type { Metadata } from "next";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { ArrowRight, Droplets, ShieldCheck, UserCheck } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Check, HelpingHand, Wrench, Headphones } from "lucide-react";
+import { SOLUTIONS_DATA } from "@/data/solutions";
 
-const solutions = [
-  {
-    title: "Giải pháp tưới Sầu riêng",
-    summary: "Thiết kế nhỏ giọt đa điểm, bù áp tốt cho vườn địa hình dốc, tối ưu lượng nước và phân.",
-    badge: "Công nghệ Israel",
-    metric: "Tiết kiệm 40% nước",
-    image:
-      "https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    title: "Giải pháp tưới Cảnh quan",
-    summary: "Phun mưa phân khu thông minh cho resort, khu đô thị và công viên, cân bằng thẩm mỹ và hiệu suất.",
-    badge: "Tưới bù áp",
-    metric: "Đồng đều lưu lượng +/-5%",
-    image:
-      "https://images.unsplash.com/photo-1598193957011-39b9f2916992?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    title: "Giải pháp Nhà màng",
-    summary: "Hệ thống tưới dinh dưỡng chính xác theo chu kỳ, tích hợp cảm biến để tối ưu môi trường canh tác.",
-    badge: "Tự động hóa thông minh",
-    metric: "Giảm 30% chi phí vận hành",
-    image:
-      "https://images.unsplash.com/photo-1444392061186-9fc38f84f726?auto=format&fit=crop&w=1200&q=80",
-  },
-];
+export const metadata: Metadata = {
+  title: "Giải Pháp Nông Nghiệp Thông Minh Theo Loại Cây Trồng | Nhà Bè Agri",
+  description:
+    "Nhà Bè Agri cung cấp hệ sinh thái thiết bị đồng bộ, từ Drone xịt thuốc đến hệ thống tưới nhỏ giọt, giúp tối ưu hóa lợi nhuận cho từng mẫu rẫy.",
+};
 
-const reasons = [
-  {
-    title: "Thiết bị chính hãng",
-    description: "Đối tác phân phối uy tín, đầy đủ chứng từ và tiêu chuẩn kỹ thuật.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Kỹ sư hiện trường",
-    description: "Khảo sát trực tiếp tại vườn, cấu hình đúng theo địa hình và cây trồng.",
-    icon: UserCheck,
-  },
-  {
-    title: "Bảo hành dài hạn",
-    description: "Cam kết đồng hành sau lắp đặt với quy trình bảo trì định kỳ rõ ràng.",
-    icon: Droplets,
-  },
-];
-
-export default function GiaiPhapPage() {
+export default function SolutionsHubPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1800&q=80"
-            alt="Hero giải pháp tưới tiêu"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/80 via-emerald-900/75 to-slate-950" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(16,185,129,0.35),transparent_40%),radial-gradient(circle_at_85%_15%,rgba(34,197,94,0.25),transparent_35%)]" />
-        </div>
-        <div className="relative container py-16 md:py-24">
-          <p className="inline-flex rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs backdrop-blur-md">
-            Premium Solution Portfolio
-          </p>
-          <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-tight md:text-5xl">
-            Kiến tạo hệ sinh thái tưới tiêu bền vững
+    <main className="min-h-screen bg-white text-gray-900">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        
+        {/* Section A: Hero (Định vị thương hiệu) */}
+        <section className="text-center mb-16">
+          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+            <span className="block">Giải Pháp Nông Nghiệp Thông Minh</span>
+            <span className="block text-[#4CAF50] mt-2">Theo Loại Cây Trồng</span>
           </h1>
-          <p className="mt-4 max-w-2xl text-sm text-emerald-50/90 md:text-base">
-            Triển khai giải pháp trọn vòng đời từ khảo sát, thiết kế, thi công đến vận hành tối ưu cho từng mô hình canh tác.
+          <p className="mt-4 mx-auto max-w-3xl text-base text-gray-500 sm:text-lg md:text-xl">
+            Nhà Bè Agri cung cấp hệ sinh thái thiết bị đồng bộ, từ Drone xịt thuốc đến hệ thống tưới nhỏ giọt, giúp tối ưu hóa lợi nhuận cho từng mẫu rẫy.
           </p>
-        </div>
-      </section>
+          <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-gray-600 font-medium">
+            <span className="bg-gray-100 px-3 py-1 rounded-full">#Giải pháp tưới sầu riêng</span>
+            <span className="bg-gray-100 px-3 py-1 rounded-full">#Kỹ thuật châm phân cà phê</span>
+          </div>
+        </section>
 
-      <section className="container py-10 md:py-14">
-        <div className="grid gap-5 md:grid-cols-3">
-          {solutions.map((item, index) => (
-            <motion.div
-              key={item.title}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.45, delay: index * 0.08 }}
-            >
-              <Card className="group overflow-hidden border-white/20 bg-white/10 backdrop-blur-xl">
-                <div className="relative h-56 w-full overflow-hidden">
+        {/* Section B: Lưới Giải Pháp (Solution Grid) */}
+        <section className="mb-20">
+          <h2 className="sr-only">Danh sách giải pháp nông nghiệp</h2>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {SOLUTIONS_DATA.map((solution) => (
+              <article
+                key={solution.id}
+                className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm transition-all duration-300 hover:shadow-md"
+              >
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-200">
                   <Image
-                    src={item.image}
-                    alt={item.title}
+                    src={solution.coverImage}
+                    alt={`Giải pháp kỹ thuật cho cây ${solution.name}`}
                     fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-300 hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/65 via-white/20 to-transparent" />
-                  <div className="absolute left-3 top-3 rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-semibold">
-                    {item.badge}
-                  </div>
-                  <div className="absolute inset-x-3 bottom-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <Button asChild size="sm" className="w-full bg-orange-500 hover:bg-orange-600">
-                      <Link href="/lien-he">Liên hệ tư vấn</Link>
-                    </Button>
-                  </div>
                 </div>
-                <CardContent className="p-5">
-                  <h2 className="text-lg font-semibold">{item.title}</h2>
-                  <p className="mt-2 text-sm text-slate-200/90">{item.summary}</p>
-                  <p className="mt-3 inline-flex rounded-md border border-emerald-300/30 bg-emerald-400/10 px-2.5 py-1 text-xs font-medium text-emerald-200">
-                    {item.metric}
-                  </p>
-                  <Button asChild variant="outline" className="mt-4 w-full border-white/35 bg-white/5 text-white hover:bg-white/15">
-                    <Link href="/lien-he">
-                      Xem quy trình kỹ thuật <ArrowRight className="ml-1 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                    {solution.name}
+                  </h3>
+                  
+                  <ul className="mb-6 space-y-3 flex-1">
+                    {solution.advantages.slice(0, 3).map((advantage, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
+                        <Check className="h-5 w-5 flex-shrink-0 text-[#4CAF50] mt-0.5" />
+                        <span>{advantage}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-      <section className="container pb-10">
-        <div className="rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur-xl md:p-8">
-          <h2 className="text-2xl font-bold md:text-3xl">Tại sao chọn chúng tôi</h2>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {reasons.map((item) => (
-              <div key={item.title} className="rounded-xl border border-white/20 bg-slate-900/40 p-4">
-                <item.icon className="h-6 w-6 text-emerald-300" />
-                <h3 className="mt-3 font-semibold">{item.title}</h3>
-                <p className="mt-1 text-sm text-slate-300">{item.description}</p>
-              </div>
+                  <Link
+                    href={`/giai-phap/${solution.cropSlug}`}
+                    className="inline-flex items-center justify-center rounded-xl bg-white border border-gray-200 py-3 px-4 text-sm font-bold text-gray-900 shadow-sm hover:bg-gray-100 transition-all"
+                  >
+                    Khám phá giải pháp
+                  </Link>
+                </div>
+              </article>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="container pb-14 md:pb-16">
-        <div className="rounded-2xl border border-emerald-200/35 bg-gradient-to-r from-emerald-600/70 to-emerald-500/60 p-6 text-white shadow-xl md:p-10">
-          <h2 className="text-2xl font-bold md:text-3xl">Bạn đang cần giải pháp riêng cho khu vườn của mình?</h2>
-          <p className="mt-2 max-w-2xl text-sm text-emerald-50/95 md:text-base">
-            Đội ngũ kỹ sư Nhà Bè Agri sẵn sàng khảo sát và đề xuất phương án phù hợp theo ngân sách và địa hình thực tế.
+        {/* Section C: Cam kết Kỹ thuật (Trust Signals) */}
+        <section className="border-t border-gray-200 py-12 mb-12">
+          <h2 className="text-center text-2xl font-bold text-gray-900 mb-10">Cam Kết Từ Đội Ngũ Nhà Bè Agri</h2>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3 text-center">
+            <div className="flex flex-col items-center p-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-[#4CAF50] mb-4">
+                <HelpingHand className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Tư vấn thiết kế miễn phí</h3>
+              <p className="text-sm text-gray-500">Lên cấu hình tối ưu, phù hợp ngân sách và địa hình khu vực rẫy.</p>
+            </div>
+
+            <div className="flex flex-col items-center p-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-[#4CAF50] mb-4">
+                <Wrench className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Lắp đặt tại vườn</h3>
+              <p className="text-sm text-gray-500">Hỗ trợ giám sát thi công trực tiếp, bàn giao trọn gói hệ thống.</p>
+            </div>
+
+            <div className="flex flex-col items-center p-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-[#4CAF50] mb-4">
+                <Headphones className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Hỗ trợ kỹ thuật 24/7</h3>
+              <p className="text-sm text-gray-500">Cam kết đồng hành cùng bà con suốt mùa vụ, xử lý nhanh sự cố.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Section D: Logic Chuyển Đổi (CTA Banner) */}
+        <section className="rounded-3xl bg-[#4CAF50] p-8 text-center text-white shadow-md md:p-12">
+          <h2 className="text-2xl font-extrabold md:text-3xl">Bạn đang bắt đầu canh tác loại cây mới?</h2>
+          <p className="mt-3 text-base text-green-50 sm:text-lg">
+            Đừng ngần ngại! Hãy liên hệ kỹ sư của chúng tôi để nhận hỗ trợ khảo sát thực địa và đưa ra mô hình thiết kế chuẩn nhất.
           </p>
-          <Button asChild className="mt-5 bg-slate-950 text-white hover:bg-slate-900">
-            <Link href="/lien-he">Gửi yêu cầu khảo sát</Link>
-          </Button>
-        </div>
-      </section>
-    </div>
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/dai-ly"
+              data-tracking="last-click"
+              className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-4 text-base font-bold text-[#4CAF50] shadow-lg hover:bg-gray-50 transition-all"
+            >
+              LIÊN HỆ TRẠM KỸ THUẬT GẦN NHẤT
+            </Link>
+          </div>
+        </section>
+
+        {/* Localized GEO Footer info */}
+        <section className="mt-16 text-center text-xs text-gray-400">
+          <p>Cung cấp trọn gói thiết bị & giải pháp tưới châm phân cho các vùng trọng điểm Tây Nguyên (Đắk Lắk, Gia Lai, Lâm Đồng, Kon Tum, Đắk Nông) và Đông Nam Bộ (Đồng Nai, Bình Phước, Tây Ninh, Bà Rịa - Vũng Tàu).</p>
+        </section>
+
+      </div>
+    </main>
   );
 }
