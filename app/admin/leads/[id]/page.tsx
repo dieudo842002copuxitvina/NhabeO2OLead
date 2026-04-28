@@ -111,7 +111,7 @@ export default function LeadDetailPage() {
   const selectedDealerName = MOCK_DEALERS.find(d => d.id === selectedDealer)?.name;
 
   return (
-    <AdminShell title={`Chi tiết Yêu cầu #${leadId}`} subtitle="Điều phối & Xử lý Yêu cầu Khách hàng (O2O Routing)">
+    <AdminShell title={"Chi tiết Yêu cầu #" + leadId} subtitle="Điều phối & Xử lý Yêu cầu Khách hàng (O2O Routing)">
       
       {/* HEADER ACTIONS */}
       <div className="flex items-center justify-between mb-6">
@@ -273,11 +273,11 @@ export default function LeadDetailPage() {
                     <div 
                       key={dealer.id}
                       onClick={() => setSelectedDealer(dealer.id)}
-                      className={\`p-3 border rounded-xl cursor-pointer transition-all flex items-center justify-between \${
+                      className={`p-3 border rounded-xl cursor-pointer transition-all flex items-center justify-between ${
                         selectedDealer === dealer.id 
                           ? 'border-[#EF6C00] bg-[#EF6C00]/5 ring-1 ring-[#EF6C00]/20' 
                           : 'border-slate-200 hover:border-slate-300 bg-white'
-                      }\`}
+                      }`}
                     >
                       <div>
                         <h4 className="font-bold text-sm text-slate-900">{dealer.name}</h4>
@@ -290,11 +290,11 @@ export default function LeadDetailPage() {
                           </span>
                         </div>
                       </div>
-                      <Badge className={\`\${
+                      <Badge className={`${
                         dealer.tier === 'Vàng' ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 
                         dealer.tier === 'Bạc' ? 'bg-slate-300 hover:bg-slate-400 text-slate-900' : 
                         'bg-amber-700 hover:bg-amber-800 text-white'
-                      }\`}>
+                      }`}>
                         {dealer.tier === 'Vàng' && <Award className="h-3 w-3 mr-1" />}
                         {dealer.tier}
                       </Badge>
