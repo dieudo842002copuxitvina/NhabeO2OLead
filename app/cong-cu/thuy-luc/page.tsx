@@ -5,12 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
+  CircleHelp,
   Droplets,
   Gauge,
   LandPlot,
   Layers3,
   Loader2,
   MapPin,
+  MessageCircle,
   PhoneCall,
   Sprout,
   Waves,
@@ -155,6 +157,20 @@ const setKeywordsMetaTag = (keywords: string[]) => {
   }
   meta.content = keywords.join(", ");
 };
+
+function LabelWithTooltip({ htmlFor, label, tip }: { htmlFor?: string; label: string; tip: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <Label htmlFor={htmlFor}>{label}</Label>
+      <span className="group relative inline-flex cursor-help text-slate-400">
+        <CircleHelp className="h-4 w-4" />
+        <span className="pointer-events-none absolute left-1/2 top-[120%] z-20 hidden w-60 -translate-x-1/2 rounded-md bg-slate-900 px-2 py-1.5 text-[11px] leading-4 text-white shadow-lg group-hover:block">
+          {tip}
+        </span>
+      </span>
+    </div>
+  );
+}
 
 const readStoredLocation = (): { lat: number; lng: number } => {
   if (typeof window === "undefined") return DEFAULT_LOCATION;
@@ -405,6 +421,12 @@ export default function ThuyLucPage() {
 
   const pressureStatus = calc.pressureMargin > 0.4 ? "On dinh" : calc.pressureMargin > -0.2 ? "Sat nguong" : "Thieu ap";
   const pressureColor = calc.pressureMargin > 0.4 ? "#0f766e" : calc.pressureMargin > -0.2 ? "#d97706" : "#dc2626";
+  const pressureBadge =
+    calc.pressureMargin > 0.4
+      ? { text: "He thong on dinh", className: "bg-emerald-100 text-emerald-800 border-emerald-200" }
+      : calc.pressureMargin > -0.2
+        ? { text: "Canh bao: Ap luc vua du", className: "bg-amber-100 text-amber-800 border-amber-200" }
+        : { text: "Canh bao: Ap luc bom khong du", className: "bg-red-100 text-red-800 border-red-200" };
 
   const switchAreaUnit = (nextUnit: AreaUnit) => {
     if (nextUnit === areaUnit) return;
@@ -593,8 +615,8 @@ export default function ThuyLucPage() {
                       className={cn(
                         "rounded-lg border px-3 py-2 text-left text-xs transition-colors",
                         step === item.id
-                          ? "border-teal-600 bg-teal-50 text-teal-800"
-                          : "border-slate-200 bg-white text-slate-500 hover:border-slate-300",
+                          ? "border-green-700 bg-green-50 text-green-800 font-semibold"
+                          : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300",
                       )}
                     >
                       <p className="font-semibold">Buoc {item.id}</p>
@@ -649,7 +671,11 @@ export default function ThuyLucPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="slope-input">Do doc dia hinh (%)</Label>
+                      <LabelWithTooltip
+                        htmlFor="slope-input"
+                        label="Do doc dia hinh (%)"
+                        tip="Do doc anh huong truc tiep den ton that ap luc o cuoi tuyen ong."
+                      />
                       <Input
                         id="slope-input"
                         type="number"
@@ -733,7 +759,11 @@ export default function ThuyLucPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="pressure-input">Ap luc bom hien co (bar)</Label>
+                      <LabelWithTooltip
+                        htmlFor="pressure-input"
+                        label="Ap luc bom hien co (bar)"
+                        tip="Ap luc hien co phai lon hon ap luc yeu cau de dam bao cac diem cuoi van du nuoc."
+                      />
                       <Input
                         id="pressure-input"
                         type="number"
@@ -769,10 +799,15 @@ export default function ThuyLucPage() {
           <section className="lg:col-span-7 flex flex-col gap-6">
             <Card className="border-slate-200 bg-white shadow-sm">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Layers3 className="h-5 w-5 text-teal-700" />
-                  Live preview thuy luc
-                </CardTitle>
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Layers3 className="h-5 w-5 text-teal-700" />
+                    Live preview thuy luc
+                  </CardTitle>
+                  <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", pressureBadge.className)}>
+                    {pressureBadge.text}
+                  </span>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -794,9 +829,11 @@ export default function ThuyLucPage() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-[#f8fbff]">
                   <svg viewBox="0 0 760 320" className="h-auto w-full">
-                    <rect x="10" y="20" width="740" height="280" rx="10" fill="#f8fafc" />
+                    <rect x="10" y="20" width="740" height="280" rx="10" fill="#f8fbff" />
+                    <path d="M10 60 H750 M10 100 H750 M10 140 H750 M10 180 H750 M10 220 H750 M10 260 H750" stroke="#e6eef7" strokeWidth="1" />
+                    <path d="M60 20 V300 M120 20 V300 M180 20 V300 M240 20 V300 M300 20 V300 M360 20 V300 M420 20 V300 M480 20 V300 M540 20 V300 M600 20 V300 M660 20 V300 M720 20 V300" stroke="#e6eef7" strokeWidth="1" />
                     <rect x="40" y="125" width="110" height="74" rx="8" fill="#e2e8f0" stroke="#94a3b8" />
                     <text x="95" y="155" textAnchor="middle" fontSize="12" fill="#334155">
                       Nguon nuoc
@@ -889,12 +926,12 @@ export default function ThuyLucPage() {
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="border-t border-slate-200 bg-slate-50">
+                    <tfoot className="border-t border-emerald-200 bg-emerald-50/70">
                       <tr>
-                        <td className="px-3 py-3 font-semibold text-slate-800" colSpan={4}>
+                        <td className="px-3 py-4 text-base font-bold text-emerald-900" colSpan={4}>
                           Tong chi phi uoc tinh
                         </td>
-                        <td className="px-3 py-3 text-right text-lg font-semibold text-slate-900">
+                        <td className="px-3 py-4 text-right text-2xl font-extrabold text-emerald-900">
                           {formatVnd(calc.totalBomCost)}
                         </td>
                       </tr>
@@ -902,50 +939,46 @@ export default function ThuyLucPage() {
                   </table>
                 </div>
 
-                <section className="rounded-xl border border-green-200 bg-green-50 p-6">
-                  <div className="mb-4">
-                    <p className="text-sm font-medium text-green-800">Tong du toan hien tai</p>
-                    <p className="mt-1 text-3xl font-extrabold tracking-tight text-green-900">{formatVnd(calc.totalBomCost)}</p>
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={handleNhanBaoGia}
-                    className="h-14 w-full bg-[#0068FF] text-base font-semibold text-white hover:bg-[#005ce6]"
-                    disabled={isMatchingDealers}
-                    data-tracking="last-click"
-                  >
-                    {isMatchingDealers ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Dang geo-matching dai ly gan nhat...
-                      </>
-                    ) : (
-                      "NHAN BAO GIA CHI TIET QUA ZALO"
-                    )}
-                  </Button>
-                </section>
-
-                <section id="lead-handoff" className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:p-5">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-lg font-semibold text-slate-900">Chot don & Tu van chuyen gia</h3>
-                    <p className="text-sm text-slate-600">
-                      Gui ngay nhu cau bao gia kem BOM de he thong tu dong chuyen toi dai ly gan nhat.
+                <section id="lead-handoff" className="space-y-5 rounded-2xl border border-green-200 bg-green-50 p-6 md:p-8">
+                  <div className="text-center">
+                    <p className="text-sm font-semibold uppercase tracking-wide text-green-800">Tong du toan hien tai</p>
+                    <p className="mt-2 text-4xl font-extrabold tracking-tight text-green-900 md:text-5xl">{formatVnd(calc.totalBomCost)}</p>
+                    <p className="mx-auto mt-3 max-w-2xl text-sm text-green-900/85">
+                      Nhan ngay danh muc vat tu BOM chi tiet va ban ve ky thuat so bo cho ray cua ban.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3">
                     <Button
                       type="button"
+                      onClick={handleNhanBaoGia}
+                      className="h-14 w-full rounded-xl bg-[#0068FF] text-base font-bold text-white hover:bg-[#0058e6]"
+                      disabled={isMatchingDealers}
+                      data-tracking="last-click"
+                    >
+                      {isMatchingDealers ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Dang geo-matching dai ly gan nhat...
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="mr-2 h-5 w-5" />
+                          NHAN BAO GIA CHI TIET QUA ZALO
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
                       variant="outline"
                       onClick={handleTuVanChuyenGia}
-                      className="h-14 w-full border-slate-300 text-slate-700 hover:bg-slate-100"
+                      className="h-12 w-full rounded-xl border-green-300 bg-white/80 text-green-900 hover:bg-white"
                     >
                       TU VAN CHUYEN GIA THIET KE
                     </Button>
                   </div>
 
-                  {zaloHint && <p className="rounded-md bg-teal-50 px-3 py-2 text-xs text-teal-800">{zaloHint}</p>}
+                  {zaloHint && <p className="rounded-md bg-white/80 px-3 py-2 text-xs text-teal-800">{zaloHint}</p>}
 
                   {matchedDealers.length > 0 && (
                     <div className="rounded-lg border border-slate-200 bg-white p-3">
