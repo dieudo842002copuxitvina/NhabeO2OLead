@@ -20,13 +20,13 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <article className="group flex flex-col h-full overflow-hidden rounded-xl border border-gray-100 bg-white transition-all hover:shadow-md">
       {/* Vùng ảnh chiếm 50% chiều cao thẻ */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-50">
+      <div className="relative h-48 w-full overflow-hidden bg-gray-100">
         <Image
           src={thumbnail}
           alt={product.name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          className="w-full h-48 object-cover bg-gray-100 transition-transform duration-300 group-hover:scale-[1.02]"
         />
 
         {product.badges.length > 0 ? (

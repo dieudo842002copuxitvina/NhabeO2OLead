@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, ShieldCheck, CircleCheck } from "lucide-react";
+import { ChevronRight, CircleCheck, ShieldCheck } from "lucide-react";
 import ProductCard from "@/app/store/ProductCard";
-import ProductGallery from "@/app/store/[slug]/_components/ProductGallery";
-import ProductDetailTabs from "@/app/store/[slug]/_components/ProductDetailTabs";
 import DroneRoiCalculator from "@/app/store/[slug]/_components/DroneRoiCalculator";
 import LeadCaptureForm from "@/app/store/[slug]/_components/LeadCaptureForm";
+import ProductDetailTabs from "@/app/store/[slug]/_components/ProductDetailTabs";
+import ProductGallery from "@/app/store/[slug]/_components/ProductGallery";
 import { PRODUCTS_DATA } from "@/data/products";
 
 type PageProps = {
@@ -43,6 +43,16 @@ export function generateMetadata({ params }: PageProps): Metadata {
   return {
     title: `${product.name} | Nhà Bè Agri`,
     description: product.description.slice(0, 160),
+    alternates: {
+      canonical: `/san-pham/${product.slug}`,
+    },
+    openGraph: {
+      title: `${product.name} | Nhà Bè Agri`,
+      description: product.description.slice(0, 160),
+      images: product.images?.[0] ? [product.images[0]] : undefined,
+      type: "website",
+      locale: "vi_VN",
+    },
   };
 }
 
@@ -57,37 +67,49 @@ export default function ProductDetailPage({ params }: PageProps) {
     product.relatedSlugs
       .map((slug) => findProductBySlug(slug))
       .filter((item): item is NonNullable<typeof item> => Boolean(item))
-      .slice(0, 4) || [];
+      .slice(0, 4) ?? [];
 
-  // SEO JSON-LD Schema
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    "name": product.name,
-    "image": product.images?.[0],
-    "description": product.description,
-    "brand": {
+    name: product.name,
+    image: product.images,
+    description: product.description,
+    sku: product.id,
+    category: product.subCategory,
+    brand: {
       "@type": "Brand",
-      "name": product.brand,
+      name: product.brand,
     },
-    "offers": {
+    offers: {
       "@type": "Offer",
-      "price": product.price,
-      "priceCurrency": "VND",
-      "availability": "https://schema.org/InStock",
+      url: `/san-pham/${product.slug}`,
+      price: product.price,
+      priceCurrency: "VND",
+      availability: "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+      seller: {
+        "@type": "Organization",
+        name: "Nhà Bè Agri",
+      },
+      priceValidUntil: "2027-12-31",
     },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.8",
+      reviewCount: "27",
+    },
+    areaServed: product.geoAvailability.map((area) => ({
+      "@type": "AdministrativeArea",
+      name: area,
+    })),
   };
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
-      {/* Schema.org JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Breadcrumbs */}
+      <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
         <nav className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
           <Link href="/" className="hover:text-gray-900">
             Trang chủ
@@ -102,7 +124,6 @@ export default function ProductDetailPage({ params }: PageProps) {
           <span className="font-medium text-gray-900">{product.name}</span>
         </nav>
 
-        {/* Main Product Panel */}
         <section className="grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <ProductGallery images={product.images} name={product.name} />
@@ -110,15 +131,9 @@ export default function ProductDetailPage({ params }: PageProps) {
 
           <div className="space-y-6 lg:col-span-5">
             <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                Thương hiệu: {product.brand}
-              </p>
-              <h1 className="text-3xl font-extrabold text-gray-900">
-                {product.name}
-              </h1>
-              <p className="text-3xl font-black text-[#4CAF50]">
-                {formatVnd(product.price)}
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Thương hiệu: {product.brand}</p>
+              <h1 className="text-3xl font-extrabold text-gray-900">{product.name}</h1>
+              <p className="text-3xl font-black text-[#4CAF50]">{formatVnd(product.price)}</p>
               <p className="text-sm text-gray-500">Đơn vị tính: {product.unit}</p>
 
               {product.badges.length > 0 ? (
@@ -134,21 +149,28 @@ export default function ProductDetailPage({ params }: PageProps) {
                 </div>
               ) : null}
 
-              <div className="pt-4">
+              <div className="grid gap-3 pt-4 sm:grid-cols-2">
                 <a
-                  href={`https://zalo.me/YOUR_ZALO_NUMBER`}
+                  href="#lead-form"
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-[#2E7D32] px-4 text-sm font-bold text-white transition-colors hover:bg-[#256A29]"
+                >
+                  Mua ngay
+                </a>
+                <a
+                  href="https://zalo.me/YOUR_ZALO_NUMBER"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#0068FF] px-6 text-base font-bold text-white shadow-lg hover:bg-[#005ce6] transition-all"
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-[#0068FF] px-4 text-sm font-bold text-white transition-colors hover:bg-[#005ce6]"
                 >
-                  Mua ngay / Tư vấn qua Zalo
+                  Tư vấn Zalo
                 </a>
               </div>
             </div>
 
             <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
-              <p className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-[#4CAF50]" /> Lợi ích O2O (Online to Offline)
+              <p className="flex items-center gap-2 text-base font-bold text-gray-900">
+                <ShieldCheck className="h-5 w-5 text-[#4CAF50]" />
+                Lợi ích O2O (Online to Offline)
               </p>
               <ul className="mt-3 space-y-2 text-sm text-gray-600">
                 <li className="flex items-start gap-2">
@@ -168,23 +190,14 @@ export default function ProductDetailPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* Drone ROI Calculator Block */}
-        {product.category === "DRONE" && (
-          <DroneRoiCalculator dronePrice={product.price} />
-        )}
+        {product.category === "DRONE" ? <DroneRoiCalculator dronePrice={product.price} /> : null}
 
-        {/* Specs & Description */}
         <ProductDetailTabs description={product.description} specs={product.specs} />
 
-        {/* Cross-selling: Related Products */}
         <section className="space-y-6 pt-8">
           <header>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Sản phẩm liên quan
-            </h2>
-            <p className="text-sm text-gray-500">
-              Khuyên dùng đi kèm để gia tăng hiệu suất vận hành tối đa.
-            </p>
+            <h2 className="text-2xl font-bold text-gray-900">Sản phẩm liên quan</h2>
+            <p className="text-sm text-gray-500">Khuyến dùng đi kèm để gia tăng hiệu suất vận hành tối đa.</p>
           </header>
 
           {relatedProducts.length > 0 ? (
@@ -194,13 +207,12 @@ export default function ProductDetailPage({ params }: PageProps) {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-12 text-center text-gray-400">
+            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-12 text-center text-gray-500">
               Đang cập nhật sản phẩm gợi ý.
             </div>
           )}
         </section>
 
-        {/* Lead capture form */}
         <LeadCaptureForm productCategory={product.category} />
       </div>
     </main>

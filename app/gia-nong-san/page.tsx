@@ -667,7 +667,7 @@ export default function GiaNongSanPage({ searchParams }: PageProps) {
 
                 {showUpgradeCta ? (
                   <Link
-                    href="/store"
+                    href="/danh-muc/tat-ca"
                     className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-[#2E7D32] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#256A29]"
                   >
                     Trúng giá! Nâng cấp ngay Hệ thống tưới tự động

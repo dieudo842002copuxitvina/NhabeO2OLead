@@ -74,8 +74,11 @@ export function generateMetadata({ params }: CategoryPageProps): Metadata {
   const categoryName = toDisplayTitle(slug, filteredProducts.length ? filteredProducts : PRODUCTS_DATA);
 
   return {
-    title: `Sản phẩm: ${categoryName} | Nhà Bè Agri`,
-    description: `Danh sách sản phẩm theo danh mục ${categoryName} tại Nhà Bè Agri.`,
+    title: `Danh mục: ${categoryName} | Nhà Bè Agri`,
+    description: `Khám phá danh mục ${categoryName} cùng các sản phẩm chính hãng tại Nhà Bè Agri.`,
+    alternates: {
+      canonical: `/danh-muc/${slug}`,
+    },
   };
 }
 
@@ -85,7 +88,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const categoryName = toDisplayTitle(slug, filteredProducts.length ? filteredProducts : PRODUCTS_DATA);
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-white">
       <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 lg:px-8">
         <header className="mb-8">
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 md:text-4xl">
@@ -112,7 +115,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
               Danh mục này đang được cập nhật sản phẩm. Vui lòng quay lại sau.
             </p>
             <Link
-              href="/store"
+              href="/danh-muc/tat-ca"
               className="mt-6 inline-flex items-center rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
             >
               Quay lại Cửa hàng

@@ -183,7 +183,7 @@ export default function MarketDetailClient({ detail }: { detail: CropMarketDetai
             </h2>
           </div>
           <Link
-            href="/store"
+            href="/danh-muc/tat-ca"
             className="inline-flex h-11 items-center justify-center rounded-md bg-green-600 px-4 text-sm font-bold text-white transition hover:bg-green-700"
           >
             Xem cửa hàng
@@ -210,7 +210,7 @@ export default function MarketDetailClient({ detail }: { detail: CropMarketDetai
                   {product.price.toLocaleString('vi-VN')} đ
                 </p>
                 <Link
-                  href="/store"
+                  href="/danh-muc/tat-ca"
                   className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-green-600 px-3 text-sm font-bold text-white transition hover:bg-green-700"
                 >
                   Xem chi tiết
@@ -279,4 +279,3 @@ export default function MarketDetailClient({ detail }: { detail: CropMarketDetai
     </>
   );
 }
-

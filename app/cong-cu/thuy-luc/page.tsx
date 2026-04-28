@@ -575,16 +575,12 @@ export default function ThuyLucPage() {
               Thiet ke nhanh, theo doi ap luc, cap nhat vat tu theo thoi gian thuc.
             </p>
           </div>
-          <div className="hidden rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-right md:block">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Tong du toan hien tai</p>
-            <p className="text-lg font-semibold text-slate-900">{formatVnd(calc.totalBomCost)}</p>
-          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
-          <section className="lg:col-span-5 flex">
+          <section className="lg:col-span-5 flex lg:sticky lg:top-24 lg:self-start">
             <Card className="h-full w-full border-slate-200 bg-white shadow-sm">
               <CardHeader className="space-y-4">
                 <CardTitle className="text-lg">Input theo buoc</CardTitle>
@@ -869,15 +865,15 @@ export default function ThuyLucPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                <div className="overflow-x-auto rounded-lg border border-slate-200">
-                  <table className="w-full min-w-[680px] text-left text-sm">
+                <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                  <table className="w-full table-fixed text-left text-sm">
                     <thead className="bg-slate-50 text-slate-600">
                       <tr>
-                        <th className="px-3 py-3 font-semibold">Hang muc</th>
-                        <th className="px-3 py-3 font-semibold">Quy cach</th>
-                        <th className="px-3 py-3 text-right font-semibold">So luong</th>
-                        <th className="px-3 py-3 text-right font-semibold">Don gia</th>
-                        <th className="px-3 py-3 text-right font-semibold">Thanh tien</th>
+                        <th className="w-[32%] px-3 py-3 font-semibold">Hang muc</th>
+                        <th className="w-[24%] px-3 py-3 font-semibold">Quy cach</th>
+                        <th className="w-[14%] px-3 py-3 text-right font-semibold">So luong</th>
+                        <th className="w-[15%] px-3 py-3 text-right font-semibold">Don gia</th>
+                        <th className="w-[15%] px-3 py-3 text-right font-semibold">Thanh tien</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white">
@@ -885,11 +881,11 @@ export default function ThuyLucPage() {
                         <tr key={item.name}>
                           <td className="px-3 py-3 text-slate-800">{item.name}</td>
                           <td className="px-3 py-3 text-slate-500">{item.spec}</td>
-                          <td className="px-3 py-3 text-right text-slate-700">
+                          <td className="px-3 py-3 text-right text-slate-700 whitespace-nowrap">
                             {item.quantity.toLocaleString("vi-VN")} {item.unit}
                           </td>
-                          <td className="px-3 py-3 text-right text-slate-700">{formatVnd(item.unitPrice)}</td>
-                          <td className="px-3 py-3 text-right font-medium text-slate-900">{formatVnd(item.total)}</td>
+                          <td className="px-3 py-3 text-right text-slate-700 whitespace-nowrap">{formatVnd(item.unitPrice)}</td>
+                          <td className="px-3 py-3 text-right font-medium text-slate-900 whitespace-nowrap">{formatVnd(item.total)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -906,6 +902,30 @@ export default function ThuyLucPage() {
                   </table>
                 </div>
 
+                <section className="rounded-xl border border-green-200 bg-green-50 p-6">
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-green-800">Tong du toan hien tai</p>
+                    <p className="mt-1 text-3xl font-extrabold tracking-tight text-green-900">{formatVnd(calc.totalBomCost)}</p>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleNhanBaoGia}
+                    className="h-14 w-full bg-[#0068FF] text-base font-semibold text-white hover:bg-[#005ce6]"
+                    disabled={isMatchingDealers}
+                    data-tracking="last-click"
+                  >
+                    {isMatchingDealers ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Dang geo-matching dai ly gan nhat...
+                      </>
+                    ) : (
+                      "NHAN BAO GIA CHI TIET QUA ZALO"
+                    )}
+                  </Button>
+                </section>
+
                 <section id="lead-handoff" className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:p-5">
                   <div className="flex flex-col gap-1">
                     <h3 className="text-lg font-semibold text-slate-900">Chot don & Tu van chuyen gia</h3>
@@ -914,23 +934,7 @@ export default function ThuyLucPage() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                    <Button
-                      type="button"
-                      onClick={handleNhanBaoGia}
-                      className="h-14 w-full bg-[#2E7D32] text-base font-semibold text-white hover:bg-[#256A29]"
-                      disabled={isMatchingDealers}
-                    >
-                      {isMatchingDealers ? (
-                        <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Dang geo-matching dai ly gan nhat...
-                        </>
-                      ) : (
-                        "NHAN BAO GIA CHI TIET QUA ZALO"
-                      )}
-                    </Button>
-
+                  <div className="grid grid-cols-1 gap-3">
                     <Button
                       type="button"
                       variant="outline"
