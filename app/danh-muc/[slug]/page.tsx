@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { PRODUCTS_DATA } from "@/data/products";
-import ProductCard from "@/app/store/ProductCard";
+import ProductCard from "../../store/ProductCard";
 
 type CategoryPageProps = {
   params: {

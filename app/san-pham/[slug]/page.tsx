@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, CircleCheck, ShieldCheck } from "lucide-react";
-import ProductCard from "@/app/store/ProductCard";
-import DroneRoiCalculator from "@/app/store/[slug]/_components/DroneRoiCalculator";
-import LeadCaptureForm from "@/app/store/[slug]/_components/LeadCaptureForm";
-import ProductDetailTabs from "@/app/store/[slug]/_components/ProductDetailTabs";
-import ProductGallery from "@/app/store/[slug]/_components/ProductGallery";
+import ProductCard from "../../store/ProductCard";
+import DroneRoiCalculator from "../../store/[slug]/_components/DroneRoiCalculator";
+import LeadCaptureForm from "../../store/[slug]/_components/LeadCaptureForm";
+import ProductDetailTabs from "../../store/[slug]/_components/ProductDetailTabs";
+import ProductGallery from "../../store/[slug]/_components/ProductGallery";
 import { PRODUCTS_DATA } from "@/data/products";
 
 type PageProps = {
