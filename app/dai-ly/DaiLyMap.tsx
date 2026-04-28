@@ -16,9 +16,9 @@ type DaiLyMapProps = {
   onSelectDealer: (dealerId: string) => void;
 };
 
-function createDealerIcon(active: boolean, isOpen: boolean) {
-  const coreColor = isOpen ? "#4CAF50" : "#9CA3AF";
-  const ringColor = isOpen ? "rgba(76,175,80,0.2)" : "rgba(156,163,175,0.22)";
+function createDealerIcon(active: boolean) {
+  const coreColor = "#4CAF50";
+  const ringColor = "rgba(76,175,80,0.2)";
   const outerSize = active ? 46 : 38;
   const innerSize = active ? 34 : 28;
 
@@ -113,7 +113,7 @@ function DealerClusterLayer({
 
     dealers.forEach((dealer) => {
       const marker = L.marker([dealer.lat, dealer.lng], {
-        icon: createDealerIcon(selectedDealerId === dealer.id, dealer.status === "Mở cửa"),
+        icon: createDealerIcon(selectedDealerId === dealer.id),
       });
       marker.on("click", () => onSelectDealer(dealer.id));
       clusterGroup.addLayer(marker);
@@ -154,9 +154,7 @@ function MapFocus({
     }
 
     if (dealers.length > 0) {
-      const bounds = L.latLngBounds(
-        dealers.map((dealer) => [dealer.lat, dealer.lng] as [number, number]),
-      );
+      const bounds = L.latLngBounds(dealers.map((dealer) => [dealer.lat, dealer.lng] as [number, number]));
       map.fitBounds(bounds.pad(0.25), { maxZoom: 8 });
     }
   }, [dealers, map, selectedDealerId, userLocation]);
@@ -164,31 +162,16 @@ function MapFocus({
   return null;
 }
 
-export default function DaiLyMap({
-  dealers,
-  selectedDealerId,
-  userLocation,
-  onSelectDealer,
-}: DaiLyMapProps) {
+export default function DaiLyMap({ dealers, selectedDealerId, userLocation, onSelectDealer }: DaiLyMapProps) {
   return (
-    <MapContainer
-      center={[12.2, 107.4]}
-      zoom={6}
-      minZoom={5}
-      scrollWheelZoom
-      className="h-full w-full bg-white"
-    >
+    <MapContainer center={[12.2, 107.4]} zoom={6} minZoom={5} scrollWheelZoom className="h-full w-full bg-white">
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
       <MapFocus dealers={dealers} selectedDealerId={selectedDealerId} userLocation={userLocation} />
-      <DealerClusterLayer
-        dealers={dealers}
-        selectedDealerId={selectedDealerId}
-        onSelectDealer={onSelectDealer}
-      />
+      <DealerClusterLayer dealers={dealers} selectedDealerId={selectedDealerId} onSelectDealer={onSelectDealer} />
 
       {userLocation ? <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} /> : null}
     </MapContainer>
