@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
-import "@/index.css";
-import TopNav from "@/components/TopNav";
-import SiteFooter from "@/components/SiteFooter";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Providers } from "./providers";
-import GA4RouteTracker from "@/components/GA4RouteTracker";
-import AIRulePopup from "@/components/AIRulePopup";
 import { Suspense } from "react";
+import "@/index.css";
+import AIRulePopup from "@/components/AIRulePopup";
+import GA4RouteTracker from "@/components/GA4RouteTracker";
+import SiteFooter from "@/components/SiteFooter";
+import TopNav from "@/components/TopNav";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { Providers } from "./providers";
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
@@ -53,6 +53,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className="bg-[#FFFFFF]">
+      <head>
+        <meta charSet="UTF-8" />
+      </head>
       <body className={`${beVietnamPro.className} bg-[#FFFFFF] text-[#1A1A1A]`}>
         <Providers>
           <Suspense fallback={null}>

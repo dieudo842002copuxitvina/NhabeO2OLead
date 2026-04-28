@@ -33,6 +33,16 @@ const nextConfig = {
         destination: '/blog/:path*',
         permanent: true,
       },
+      {
+        source: '/he-thong-dai-ly',
+        destination: '/dai-ly',
+        permanent: true,
+      },
+      {
+        source: '/mang-luoi/dai-ly',
+        destination: '/dai-ly',
+        permanent: true,
+      },
     ];
   },
 };
