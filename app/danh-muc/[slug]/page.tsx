@@ -1,16 +1,16 @@
+import Image from "next/image";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { PRODUCTS_DATA } from "@/data/products";
-import ProductCard from "../../store/ProductCard";
-import Link from "next/link";
+import ProductCard from "@/app/store/ProductCard";
 
-type Props = {
+type CategoryPageProps = {
   params: {
     slug: string;
   };
 };
 
 function slugify(text: string) {
-  if (!text) return "";
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -20,73 +20,77 @@ function slugify(text: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function getCategoryTitle(slug: string): string {
-  if (slug === "may-bay-nong-nghiep") return "Máy bay Nông nghiệp";
-  if (slug === "humic-fulvic") return "Humic/Fulvic";
+function normalizeSlug(slug: string) {
+  try {
+    return decodeURIComponent(slug).toLowerCase();
+  } catch {
+    return slug.toLowerCase();
+  }
+}
 
-  // Find in PRODUCTS_DATA
-  const matchedBySub = PRODUCTS_DATA.find((p) => slugify(p.subCategory) === slug);
-  if (matchedBySub) return matchedBySub.subCategory;
-
-  const matchedByCat = PRODUCTS_DATA.find((p) => slugify(p.category) === slug);
-  if (matchedByCat) {
-    switch (matchedByCat.category) {
-      case "DRONE":
-        return "Máy bay Nông nghiệp";
-      case "FERTILIZER":
-        return "Dinh dưỡng & Phân bón";
-      case "HARDWARE":
-        return "Vật tư & Thiết bị";
-      case "SOLAR":
-        return "Điện mặt trời";
-      default:
-        return matchedByCat.category;
-    }
+function getFilteredProducts(slug: string) {
+  if (slug === "may-bay-nong-nghiep") {
+    return PRODUCTS_DATA.filter((product) => product.category === "DRONE");
   }
 
-  // Fallback format slug
+  if (slug === "humic-fulvic") {
+    return PRODUCTS_DATA.filter((product) => product.subCategory === "Humic/Fulvic");
+  }
+
+  return PRODUCTS_DATA.filter(
+    (product) => slugify(product.subCategory) === slug || slugify(product.category) === slug,
+  );
+}
+
+function toDisplayTitle(slug: string, products: typeof PRODUCTS_DATA) {
+  if (slug === "may-bay-nong-nghiep") return "Máy bay nông nghiệp";
+  if (slug === "humic-fulvic") return "Humic/Fulvic";
+
+  const matchedSubCategory = products.find((product) => slugify(product.subCategory) === slug)?.subCategory;
+  if (matchedSubCategory) return matchedSubCategory;
+
+  const matchedCategory = products.find((product) => slugify(product.category) === slug)?.category;
+  if (matchedCategory) {
+    const categoryLabelMap: Record<string, string> = {
+      DRONE: "Máy bay nông nghiệp",
+      FERTILIZER: "Dinh dưỡng & Phân bón",
+      HARDWARE: "Vật tư & Thiết bị",
+      SOLAR: "Điện mặt trời",
+    };
+
+    return categoryLabelMap[matchedCategory] ?? matchedCategory;
+  }
+
   return slug
     .split("-")
+    .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const title = getCategoryTitle(params.slug);
+export function generateMetadata({ params }: CategoryPageProps): Metadata {
+  const slug = normalizeSlug(params.slug);
+  const filteredProducts = getFilteredProducts(slug);
+  const categoryName = toDisplayTitle(slug, filteredProducts.length ? filteredProducts : PRODUCTS_DATA);
+
   return {
-    title: `${title} | Nhà Bè Agri`,
-    description: `Xem danh sách sản phẩm thuộc danh mục ${title} tại Nhà Bè Agri. Sản phẩm chất lượng cao, giá tốt nhất.`,
+    title: `Sản phẩm: ${categoryName} | Nhà Bè Agri`,
+    description: `Danh sách sản phẩm theo danh mục ${categoryName} tại Nhà Bè Agri.`,
   };
 }
 
-export default function CategoryPage({ params }: Props) {
-  const { slug } = params;
-
-  let filteredProducts = [];
-  if (slug === "tat-ca") {
-    filteredProducts = PRODUCTS_DATA;
-  } else if (slug === "may-bay-nong-nghiep") {
-    filteredProducts = PRODUCTS_DATA.filter((p) => p.category === "DRONE");
-  } else if (slug === "humic-fulvic") {
-    filteredProducts = PRODUCTS_DATA.filter((p) => p.subCategory === "Humic/Fulvic");
-  } else {
-    filteredProducts = PRODUCTS_DATA.filter(
-      (p) => slugify(p.subCategory) === slug || slugify(p.category) === slug
-    );
-  }
-
-  const displayTitle = slug === "tat-ca" ? "Tất cả sản phẩm" : getCategoryTitle(slug);
+export default function CategoryPage({ params }: CategoryPageProps) {
+  const slug = normalizeSlug(params.slug);
+  const filteredProducts = getFilteredProducts(slug);
+  const categoryName = toDisplayTitle(slug, filteredProducts.length ? filteredProducts : PRODUCTS_DATA);
 
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 lg:px-8">
         <header className="mb-8">
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 md:text-4xl">
-            Sản phẩm: {displayTitle}
+            Sản phẩm: {categoryName}
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Tổng hợp các sản phẩm chất lượng hàng đầu tối ưu cho nhu cầu canh tác.
-          </p>
         </header>
 
         {filteredProducts.length > 0 ? (
@@ -96,38 +100,26 @@ export default function CategoryPage({ params }: Props) {
             ))}
           </section>
         ) : (
-          <section className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-16 text-center shadow-sm">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-600">
-              <svg
-                className="h-8 w-8"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                />
-              </svg>
-            </div>
-            <h2 className="text-xl font-bold text-gray-900">Danh mục đang được cập nhật</h2>
-            <p className="mt-2 text-base text-gray-500">
+          <section className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center shadow-sm">
+            <Image
+              src="/placeholder.svg"
+              alt="Danh mục đang cập nhật"
+              width={180}
+              height={180}
+              className="mb-5 opacity-80"
+            />
+            <p className="max-w-xl text-base text-gray-600 md:text-lg">
               Danh mục này đang được cập nhật sản phẩm. Vui lòng quay lại sau.
             </p>
-            <div className="mt-6">
-              <Link
-                href="/danh-muc/tat-ca"
-                className="inline-flex items-center rounded-xl bg-[#4CAF50] px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-[#43A047] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all"
-              >
-                Quay lại Cửa hàng
-              </Link>
-            </div>
+            <Link
+              href="/store"
+              className="mt-6 inline-flex items-center rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+            >
+              Quay lại Cửa hàng
+            </Link>
           </section>
         )}
       </div>
     </main>
   );
 }
-
