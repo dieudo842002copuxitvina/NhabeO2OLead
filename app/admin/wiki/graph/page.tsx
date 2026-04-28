@@ -154,7 +154,7 @@ export default function KnowledgeGraphPage() {
               nodeCanvasObject={(node: any, ctx, globalScale) => {
                 const label = node.name;
                 const fontSize = 12/globalScale;
-                ctx.font = \`\${fontSize}px Inter, sans-serif\`;
+                ctx.font = `${fontSize}px Inter, sans-serif`;
                 const textWidth = ctx.measureText(label).width;
                 const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2); 
 
