@@ -28,7 +28,7 @@ const footerGroups = [
     links: [
       { label: "25 đại lý toàn quốc", href: "/dai-ly" },
       { label: "Giá nông sản", href: "/gia-nong-san" },
-      { label: "Trung tâm tri thức", href: "/tri-thuc" },
+      { label: "Blog nông nghiệp", href: "/blog" },
       { label: "Liên hệ tư vấn", href: "/lien-he" },
     ],
   },

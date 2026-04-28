@@ -145,7 +145,7 @@ const App = () => {
                   <Route path="/thu-vien/:slug" element={<ArticleDetailPage />} />
                   <Route path="/case-studies" element={<CaseStudiesPage />} />
                   <Route path="/case-studies/:slug" element={<CaseStudyDetailPage />} />
-                  <Route path="/tri-thuc" element={<KnowledgeHubPage />} />
+                  <Route path="/blog" element={<KnowledgeHubPage />} />
                 </Route>
 
                 {/* Admin — sidebar + RBAC */}

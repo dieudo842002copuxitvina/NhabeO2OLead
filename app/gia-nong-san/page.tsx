@@ -385,7 +385,7 @@ export default function GiaNongSanPage({ searchParams }: PageProps) {
                   <Newspaper className="h-5 w-5 text-[#4CAF50]" />
                   Tin Tức Thị Trường & Phân Tích
                 </h2>
-                <Link href="/tri-thuc" className="text-sm font-semibold text-[#2E7D32] hover:underline">
+                <Link href="/blog" className="text-sm font-semibold text-[#2E7D32] hover:underline">
                   Xem tất cả
                 </Link>
               </header>

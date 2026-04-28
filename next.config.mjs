@@ -23,6 +23,16 @@ const nextConfig = {
         destination: '/san-pham/:slug',
         permanent: true,
       },
+      {
+        source: '/tri-thuc',
+        destination: '/blog',
+        permanent: true,
+      },
+      {
+        source: '/tri-thuc/:path*',
+        destination: '/blog/:path*',
+        permanent: true,
+      },
     ];
   },
 };

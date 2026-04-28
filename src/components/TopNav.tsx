@@ -31,7 +31,7 @@ const ECOSYSTEM: NavGroup = {
   items: [
     { label: 'Giải pháp', path: '/giai-phap', icon: <Lightbulb className="w-4 h-4" />, desc: 'Trọn gói theo cây trồng & địa hình' },
     { label: 'Công cụ', path: '/cong-cu', icon: <Calculator className="w-4 h-4" />, desc: 'Tính nhanh công suất bơm và hệ tưới' },
-    { label: 'Trung tâm Tri thức', path: '/tri-thuc', icon: <BookOpen className="w-4 h-4" />, desc: 'Toàn bộ bài viết, hướng dẫn & thị trường' },
+    { label: 'Blog Nông nghiệp', path: '/blog', icon: <BookOpen className="w-4 h-4" />, desc: 'Toàn bộ bài viết, hướng dẫn & thị trường' },
   ],
 };
 
