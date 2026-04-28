@@ -7,9 +7,9 @@ import ROICalculator from "./_components/ROICalculator";
 import SmartLeadForm from "./_components/SmartLeadForm";
 
 export const metadata: Metadata = {
-  title: "Giai Phap Nong Nghiep Thong Minh | All-In-One Turnkey Farm | Nha Be Agri",
+  title: "Giải Pháp Nông Nghiệp Thông Minh | All-In-One Turnkey Farm | Nhà Bè Agri",
   description:
-    "Giai phap All-In-One turnkey farm cho nguoi ban ron va giai phap ky thuat chuyen biet theo tung loai cay trong.",
+    "Giải pháp All-In-One turnkey farm cho người bận rộn và giải pháp kỹ thuật chuyên biệt theo từng loại cây trồng.",
   alternates: {
     canonical: "/giai-phap",
   },
@@ -18,38 +18,38 @@ export const metadata: Metadata = {
 const turnkeySteps = [
   {
     id: "step-1",
-    title: "Buoc 1: Khao sat & Phat quang",
+    title: "Bước 1: Khảo sát địa hình & Phát quang",
     description:
-      "Khong chi la don co, ky su Nha Be Agri se tien hanh lay mau dat tai 5 diem khac nhau de xet nghiem chi so dinh duong, do do doc bang may dinh vi GPS de lap ban ve cao do chinh xac, dam bao he thong tuoi sau nay dong deu 100%.",
+      "Không chỉ là dọn cỏ, kỹ sư Nhà Bè Agri sẽ tiến hành lấy mẫu đất tại 5 điểm khác nhau để xét nghiệm chỉ số dinh dưỡng, đo độ dốc bằng máy định vị GPS để lập bản vẽ cao độ chính xác, đảm bảo hệ thống tưới sau này đồng đều 100%.",
     icon: Scissors,
     ctaLabel: null,
     href: null,
   },
   {
     id: "step-2",
-    title: "Buoc 2: Cai tao nen dat",
+    title: "Bước 2: Xử lý nền & Dưỡng đất",
     description:
-      "Dua tren ket qua xet nghiem, chung toi thuc hien quy trinh cai tao dat 3 giai doan: Giai doc phen/huu co -> Bo sung tap doan vi sinh vat co loi -> Can bang pH dat bang voi tinh luyen va Humic nhap khau. Day la nen tang de cay ben goc, it sau benh.",
+      "Dựa trên kết quả xét nghiệm, chúng tôi thực hiện quy trình cải tạo đất 3 giai đoạn: Giải độc phèn/hữu cơ -> Bổ sung tập đoàn vi sinh vật có lợi -> Cân bằng pH đất bằng vôi tinh luyện và Humic nhập khẩu. Đây là nền tảng để cây bền gốc, ít sâu bệnh.",
     icon: Leaf,
-    ctaLabel: "Mua Phan Huu Co / Humic",
+    ctaLabel: "Mua Phân Hữu Cơ / Humic",
     href: "/danh-muc/phan-huu-co-vi-sinh",
   },
   {
     id: "step-3",
-    title: "Buoc 3: Chon giong & Lap dat tuoi",
+    title: "Bước 3: Xuống giống & Lắp đặt hệ thống tưới",
     description:
-      "Su dung giong dau dong co chung nhan. He thong tuoi su dung bec bu ap (PC) chong con trung, ket hop bo trung tam loc dia kep giup loai bo hoan toan can ban, bao ve dau tuoi khong bi tac nghen trong 10 nam.",
+      "Sử dụng giống đầu dòng có chứng nhận. Hệ thống tưới sử dụng béc bù áp (PC) chống côn trùng, kết hợp bộ trung tâm lọc đĩa kép giúp loại bỏ hoàn toàn cặn bẩn, bảo vệ đầu tưới không bị tắc nghẽn trong 10 năm.",
     icon: Sprout,
-    ctaLabel: "Tim Dai ly cap vat tu gan ray",
+    ctaLabel: "Tìm Đại lý cấp vật tư gần rẫy",
     href: "/dai-ly",
   },
   {
     id: "step-4",
-    title: "Buoc 4: Quan ly tu xa (IoT)",
+    title: "Bước 4: Chuyển giao & Vận hành thông minh",
     description:
-      "Ban giao quyen dieu khien qua App Smartphone cho chu dau tu. Thiet lap che do tuoi tu dong theo cam bien do am, giup tiet kiem 40% tien dien va 50% luong nuoc so voi tuoi truyen thong.",
+      "Bàn giao quyền điều khiển qua App Smartphone cho chủ đầu tư. Thiết lập chế độ tưới tự động theo cảm biến độ ẩm, giúp tiết kiệm 40% tiền điện và 50% lượng nước so với tưới truyền thống.",
     icon: Smartphone,
-    ctaLabel: "Xem Bo dieu khien IoT",
+    ctaLabel: "Xem Bộ điều khiển IoT",
     href: "/danh-muc/bo-dieu-khien",
   },
 ];
@@ -57,42 +57,42 @@ const turnkeySteps = [
 export default function SolutionsHubPage() {
   const packageTiers = [
     {
-      name: "Goi Khoi Tao (Silver)",
+      name: "Gói Khởi Tạo (Silver)",
       theme: "silver" as const,
       features: [
-        "Khao sat dia hinh",
-        "Cai tao nen dat co ban",
-        "Chon va xuong giong chuan",
-        "He thong tuoi van van thu cong",
+        "Khảo sát địa hình",
+        "Cải tạo nền đất cơ bản",
+        "Chọn và xuống giống chuẩn",
+        "Hệ thống tưới van vặn thủ công",
       ],
-      ctaLabel: "Nhan Bao Gia Co Ban",
+      ctaLabel: "Nhận Báo Giá Cơ Bản",
       ctaHref: "https://zalo.me/YOUR_ZALO_OA",
     },
     {
-      name: "Goi Ban Tu Dong (Gold)",
+      name: "Gói Bán Tự Động (Gold)",
       theme: "gold" as const,
-      badge: "PHO BIEN NHAT",
+      badge: "PHỔ BIẾN NHẤT",
       features: [
-        "Tat ca cua goi Khoi Tao",
-        "He thong loc trung tam",
-        "Bo cham phan tu dong (Venturi)",
-        "Hen gio tuoi co ban",
-        "Bao cao tien do Zalo hang tuan",
+        "Tất cả của gói Khởi Tạo",
+        "Hệ thống lọc trung tâm",
+        "Bộ châm phân tự động (Venturi)",
+        "Hẹn giờ tưới cơ bản",
+        "Báo cáo tiến độ Zalo hàng tuần",
       ],
-      ctaLabel: "Dang Ky Goi Pho Bien",
+      ctaLabel: "Đăng Ký Gói Phổ Biến",
       ctaHref: "https://zalo.me/YOUR_ZALO_OA",
     },
     {
-      name: "Goi Thong Minh (Diamond)",
+      name: "Gói Thông Minh (Diamond)",
       theme: "diamond" as const,
       features: [
-        "Tat ca cua goi Gold",
-        "Tram dieu khien IoT qua Smartphone",
-        "Cam bien do am dat/thoi tiet",
-        "Bay Drone dinh ky xit thuoc",
-        "Tai khoan theo doi Dashboard rieng",
+        "Tất cả của gói Gold",
+        "Trạm điều khiển IoT qua Smartphone",
+        "Cảm biến độ ẩm đất/thời tiết",
+        "Bay Drone định kỳ xịt thuốc",
+        "Tài khoản theo dõi Dashboard riêng",
       ],
-      ctaLabel: "Tu Van Goi Cao Cap",
+      ctaLabel: "Tư Vấn Gói Cao Cấp",
       ctaHref: "https://zalo.me/YOUR_ZALO_OA",
     },
   ];
@@ -103,7 +103,7 @@ export default function SolutionsHubPage() {
         <div className="absolute inset-0">
           <Image
             src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1920&q=80"
-            alt="Vuon cay nong nghiep thong minh"
+            alt="Vườn cây nông nghiệp thông minh"
             fill
             className="object-cover opacity-35"
             priority
@@ -115,15 +115,15 @@ export default function SolutionsHubPage() {
         <div className="relative mx-auto max-w-7xl px-4 py-14 sm:py-16 lg:py-20">
           <div className="max-w-4xl">
             <p className="inline-flex rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-green-100">
-              Premium Turnkey Service
+              PREMIUM TURNKEY SERVICE
             </p>
             <h1 className="mt-5 text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">
-              Giai Phap All-In-One: Nong Trai Tu Dong Cho Nguoi Ban Ron
+              Giải Pháp All-In-One: Nông Trại Tự Động Cho Người Bận Rộn
             </h1>
             <p className="mt-5 max-w-3xl text-base leading-7 text-green-50 sm:text-lg">
-              Ban co dat trong o que nhung song tai thanh pho? Nha Be Agri cung cap dich vu "Chia khoa trao tay" - Tu
-              khau don co, cai tao dat, xuong giong den lap dat he thong tuoi tu dong co the dieu khien qua dien
-              thoai.
+              Bạn có đất trống ở quê nhưng sống tại thành phố? Nhà Bè Agri cung cấp dịch vụ "Chìa khóa trao tay" - Từ
+              khâu dọn cỏ, cải tạo đất, xuống giống đến lắp đặt hệ thống tưới tự động có thể điều khiển qua điện
+              thoại.
             </p>
           </div>
 
@@ -150,7 +150,7 @@ export default function SolutionsHubPage() {
                     </Link>
                   ) : (
                     <span className="mt-4 inline-flex w-fit rounded-full border border-white/25 px-3 py-1.5 text-xs font-semibold text-green-100">
-                      Dang trien khai
+                      Đang triển khai
                     </span>
                   )}
                 </article>
@@ -161,12 +161,12 @@ export default function SolutionsHubPage() {
           <div className="mt-8 rounded-2xl border border-amber-300/40 bg-white/10 p-5 backdrop-blur-sm sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <p className="max-w-3xl text-sm leading-6 text-green-50 sm:text-base">
-                Goi tu van tong the cho du an all-in-one: Khao sat, du toan, ke hoach thi cong va van hanh tu xa theo
-                thuc te dat dai cua ban.
+                Gói tư vấn tổng thể cho dự án all-in-one: Khảo sát, dự toán, kế hoạch thi công và vận hành từ xa theo
+                thực tế đất đai của bạn.
               </p>
               <SmartLeadForm
                 source="hero-all-in-one"
-                triggerLabel="NHAN TU VAN DU AN ALL-IN-ONE"
+                triggerLabel="NHẬN TƯ VẤN DỰ ÁN ALL-IN-ONE"
                 triggerClassName="inline-flex h-12 items-center justify-center rounded-xl bg-amber-500 px-6 text-sm font-extrabold text-green-950 transition hover:bg-amber-400"
               />
             </div>
@@ -176,9 +176,9 @@ export default function SolutionsHubPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Tuy Chon Goi Cham Soc & Van Hanh</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Tùy Chọn Gói Chăm Sóc & Vận Hành</h2>
           <p className="mt-3 text-sm leading-7 text-gray-600 sm:text-base">
-            Chon muc do tu dong hoa phu hop voi quy thoi gian va ngan sach cua ban.
+            Chọn mức độ tự động hóa phù hợp với quỹ thời gian và ngân sách của bạn.
           </p>
         </div>
 
@@ -255,9 +255,7 @@ export default function SolutionsHubPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:py-12">
         <header className="mb-8 text-center">
-          <h2 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">
-            Hieu Qua Thuc Te Tu Cac Du An All-In-One
-          </h2>
+          <h2 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">Hiệu Quả Thực Tế Từ Các Dự Án All-In-One</h2>
         </header>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -266,7 +264,7 @@ export default function SolutionsHubPage() {
               <div className="relative h-44 overflow-hidden rounded-xl bg-gray-100">
                 <Image
                   src="https://images.unsplash.com/photo-1492496913980-501348b61469?auto=format&fit=crop&w=900&q=80"
-                  alt="Before - Co ram rap truoc khi trien khai du an"
+                  alt="Before - Cỏ rậm rạp trước khi triển khai dự án"
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 25vw"
@@ -278,7 +276,7 @@ export default function SolutionsHubPage() {
               <div className="relative h-44 overflow-hidden rounded-xl bg-gray-100">
                 <Image
                   src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=900&q=80"
-                  alt="After - He thong tuoi van hanh on dinh"
+                  alt="After - Hệ thống tưới vận hành ổn định"
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 25vw"
@@ -289,10 +287,10 @@ export default function SolutionsHubPage() {
               </div>
             </div>
             <div className="p-5">
-              <h3 className="text-lg font-bold text-gray-900">Du an 2Ha Sau Rieng tai Bu Dang, Binh Phuoc</h3>
+              <h3 className="text-lg font-bold text-gray-900">Dự án 2Ha Sầu Riêng tại Bù Đăng, Bình Phước</h3>
               <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li>• Giam 80% cong tuoi so voi van hanh thu cong.</li>
-                <li>• Ty le song cay giong dat 98% sau giai doan kien thiet.</li>
+                <li>• Giảm 80% công tưới so với vận hành thủ công.</li>
+                <li>• Tỷ lệ sống cây giống đạt 98% sau giai đoạn kiến thiết.</li>
               </ul>
             </div>
           </article>
@@ -302,7 +300,7 @@ export default function SolutionsHubPage() {
               <div className="relative h-44 overflow-hidden rounded-xl bg-gray-100">
                 <Image
                   src="https://images.unsplash.com/photo-1516253593875-bd7ba052fbc5?auto=format&fit=crop&w=900&q=80"
-                  alt="Before - Vuon ca phe truoc khi cai tao"
+                  alt="Before - Vườn cà phê trước khi cải tạo"
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 25vw"
@@ -314,7 +312,7 @@ export default function SolutionsHubPage() {
               <div className="relative h-44 overflow-hidden rounded-xl bg-gray-100">
                 <Image
                   src="https://images.unsplash.com/photo-1444858291040-58f756a3bdd6?auto=format&fit=crop&w=900&q=80"
-                  alt="After - Van hanh tuoi va cham phan cho vuon ca phe"
+                  alt="After - Vận hành tưới và châm phân cho vườn cà phê"
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 25vw"
@@ -326,12 +324,12 @@ export default function SolutionsHubPage() {
             </div>
             <div className="p-5">
               <div className="mb-2 inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
-                Da ban giao
+                Đã bàn giao
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Du an 5Ha Ca Phe tai Dak Nong</h3>
+              <h3 className="text-lg font-bold text-gray-900">Dự án 5Ha Cà Phê tại Đắk Nông</h3>
               <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li>• Toi uu luu luong tuoi theo khu vuc, giam hao hut nuoc dang ke.</li>
-                <li>• Quy trinh van hanh on dinh, de theo doi tien do tu xa qua Zalo.</li>
+                <li>• Tối ưu lưu lượng tưới theo khu vực, giảm hao hụt nước đáng kể.</li>
+                <li>• Quy trình vận hành ổn định, dễ theo dõi tiến độ từ xa qua Zalo.</li>
               </ul>
             </div>
           </article>
@@ -340,45 +338,45 @@ export default function SolutionsHubPage() {
 
       <section className="mx-auto mt-16 max-w-5xl px-4 pb-6">
         <header className="mb-6 text-center">
-          <h2 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">Cau Hoi Thuong Gap Cua Nha Dau Tu</h2>
+          <h2 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">Câu Hỏi Thường Gặp Của Nhà Đầu Tư</h2>
         </header>
 
         <div className="space-y-3">
           <details className="group rounded-xl border border-gray-200 bg-white p-4 shadow-sm" open>
             <summary className="cursor-pointer list-none pr-6 text-sm font-semibold text-gray-900">
-              Toi o xa, lam sao kiem soat duoc tien do va chat luong?
+              Tôi ở xa, làm sao kiểm soát được tiến độ và chất lượng?
             </summary>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              Nha Be Agri thiet lap mot he thong quan ly 3 lop:
-              <br />- Lop 1: Camera giam sat AI 360 do lap dat tai cac vi tri trong yeu.
-              <br />- Lop 2: Nhat ky dien tu duoc doi tho cap nhat hang ngay qua ung dung noi bo (bao gom anh chup thuc dia).
-              <br />- Lop 3: Bao cao tu dong tu cam bien IoT (do am, pH, dinh duong) gui thang ve Zalo cua anh/chi moi 24h.
-              Anh/chi hoan toan lam chu vuon cay ma khong can co mat tai hien truong.
+              Nhà Bè Agri thiết lập một hệ thống quản lý 3 lớp:
+              <br />- Lớp 1: Camera giám sát AI 360 độ lắp đặt tại các vị trí trọng yếu.
+              <br />- Lớp 2: Nhật ký điện tử được đội thợ cập nhật hàng ngày qua ứng dụng nội bộ (bao gồm ảnh chụp thực địa).
+              <br />- Lớp 3: Báo cáo tự động từ cảm biến IoT (độ ẩm, pH, dinh dưỡng) gửi thẳng về Zalo của anh/chị mỗi 24h.
+              Anh/chị hoàn toàn làm chủ vườn cây mà không cần có mặt tại hiện trường.
             </p>
           </details>
 
           <details className="group rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <summary className="cursor-pointer list-none pr-6 text-sm font-semibold text-gray-900">
-              Bao hanh he thong va ty le song cua cay trong ra sao?
+              Bảo hành hệ thống và tỷ lệ sống của cây trồng ra sao?
             </summary>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              Chung toi ap dung quy trinh "Bao hiem cay trong":
-              <br />- Cay giong duoc tuyen chon tu cac vuon uom doi tac dat chuan VietGAP.
-              <br />- Trong 6 thang dau tien, neu cay chet do loi ky thuat hoac giong, chung toi thay moi 100% mien phi.
-              <br />- He thong tuoi duoc bao tri dinh ky 3 thang/lan de dam bao khong co cay nao bi thieu nuoc hay ung cuc bo.
+              Chúng tôi áp dụng quy trình "Bảo hiểm cây trồng":
+              <br />- Cây giống được tuyển chọn từ các vườn ươm đối tác đạt chuẩn VietGAP.
+              <br />- Trong 6 tháng đầu tiên, nếu cây chết do lỗi kỹ thuật hoặc giống, chúng tôi thay mới 100% miễn phí.
+              <br />- Hệ thống tưới được bảo trì định kỳ 3 tháng/lần để đảm bảo không có cây nào bị thiếu nước hay úng cục bộ.
             </p>
           </details>
 
           <details className="group rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <summary className="cursor-pointer list-none pr-6 text-sm font-semibold text-gray-900">
-              Rui ro van hanh (Cup dien/Mat mang) duoc xu ly nhu the nao?
+              Rủi ro vận hành (Cúp điện/Mất mạng) được xử lý như thế nào?
             </summary>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              He thong duoc thiet ke voi co che "Fail-safe":
-              <br />- Bo dieu khien IoT co che do luu kich ban tuoi Offline (tu chay theo gio du mat mang).
-              <br />- Lap dat van xa khi va van an toan de bao ve duong ong khi co su co ap luc.
-              <br />- Luon co he thong van tay song song de doi tho dia phuong co the can thiep thu cong ngay lap tuc neu
-              co su co dien keo dai.
+              Hệ thống được thiết kế với cơ chế "Fail-safe":
+              <br />- Bộ điều khiển IoT có chế độ lưu kịch bản tưới Offline (tự chạy theo giờ dù mất mạng).
+              <br />- Lắp đặt van xả khí và van an toàn để bảo vệ đường ống khi có sự cố áp lực.
+              <br />- Luôn có hệ thống van tay song song để đội thợ địa phương có thể can thiệp thủ công ngay lập tức nếu
+              có sự cố điện kéo dài.
             </p>
           </details>
         </div>
@@ -386,11 +384,9 @@ export default function SolutionsHubPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:py-14">
         <header className="mb-8">
-          <h2 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">
-            Giai Phap Ky Thuat Cho Tung Loai Cay Trong
-          </h2>
+          <h2 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">Giải Pháp Kỹ Thuật Cho Từng Loại Cây Trồng</h2>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-gray-600 sm:text-base">
-            Danh cho nha nong chuyen nghiep muon toi uu hoa nang suat va chi phi.
+            Dành cho nhà nông chuyên nghiệp muốn tối ưu hóa năng suất và chi phí.
           </p>
         </header>
 
@@ -403,7 +399,7 @@ export default function SolutionsHubPage() {
               <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
                 <Image
                   src={solution.coverImage}
-                  alt={`Giai phap nong nghiep cho ${solution.name}`}
+                  alt={`Giải pháp nông nghiệp cho ${solution.name}`}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -426,7 +422,7 @@ export default function SolutionsHubPage() {
                   href={`/giai-phap/${solution.cropSlug}`}
                   className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100"
                 >
-                  Xem chi tiet
+                  Xem chi tiết
                 </Link>
               </div>
             </article>

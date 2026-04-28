@@ -28,18 +28,18 @@ export default function LeadCaptureForm({ productCategory }: LeadCaptureFormProp
   const [message, setMessage] = useState("");
 
   const ctaLabel =
-    productCategory === "DRONE" ? "DANG KY BAY THU TAI VUON" : "NHAN TU VAN KY THUAT";
+    productCategory === "DRONE" ? "ĐĂNG KÝ BAY THỬ TẠI VƯỜN" : "NHẬN TƯ VẤN KỸ THUẬT";
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!form.fullName.trim() || !form.phone.trim() || !form.province.trim()) {
-      setMessage("Vui long nhap day du Ho ten, So dien thoai va Tinh/Thanh.");
+      setMessage("Vui lòng nhập đầy đủ Họ tên, Số điện thoại và Tỉnh/Thành.");
       return;
     }
 
     setMessage(
-      `Yeu cau da duoc gui den Dai ly gan nhat tai ${form.province.trim()}. Chung toi se lien he lai ngay.`,
+      `Yêu cầu đã được gửi đến Đại lý gần nhất tại ${form.province.trim()}. Chúng tôi sẽ liên hệ lại ngay.`,
     );
     setForm(INITIAL_STATE);
   };
@@ -47,26 +47,26 @@ export default function LeadCaptureForm({ productCategory }: LeadCaptureFormProp
   return (
     <section id="lead-form" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <header className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Nhan tu van O2O tu ky thuat vien</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Nhận tư vấn O2O từ kỹ thuật viên</h2>
         <p className="mt-1 text-sm text-gray-600">
-          De lai thong tin de he thong ket noi dai ly gan khu vuc vuon cua ban.
+          Để lại thông tin để hệ thống kết nối đại lý gần khu vực vườn của bạn.
         </p>
       </header>
 
       <form className="space-y-3" onSubmit={handleSubmit}>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Ho ten</span>
+            <span className="text-sm font-medium text-gray-700">Họ tên</span>
             <input
               value={form.fullName}
               onChange={(e) => setForm((current) => ({ ...current, fullName: e.target.value }))}
               className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-gray-900 outline-none focus:border-[#4CAF50]"
-              placeholder="Nguyen Van A"
+              placeholder="Nguyễn Văn A"
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">So dien thoai</span>
+            <span className="text-sm font-medium text-gray-700">Số điện thoại</span>
             <input
               value={form.phone}
               onChange={(e) => setForm((current) => ({ ...current, phone: e.target.value }))}
@@ -78,17 +78,17 @@ export default function LeadCaptureForm({ productCategory }: LeadCaptureFormProp
 
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Vi tri (Tinh/Thanh)</span>
+            <span className="text-sm font-medium text-gray-700">Vị trí (Tỉnh/Thành)</span>
             <input
               value={form.province}
               onChange={(e) => setForm((current) => ({ ...current, province: e.target.value }))}
               className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-gray-900 outline-none focus:border-[#4CAF50]"
-              placeholder="Dak Lak"
+              placeholder="Đắk Lắk"
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Dien tich vuon (ha)</span>
+            <span className="text-sm font-medium text-gray-700">Diện tích vườn (ha)</span>
             <input
               value={form.area}
               onChange={(e) => setForm((current) => ({ ...current, area: e.target.value }))}

@@ -6,15 +6,15 @@ type CropKey = "sau-rieng" | "ca-phe" | "mac-ca";
 type PackageKey = "silver" | "gold" | "diamond";
 
 const CROP_OPTIONS: { value: CropKey; label: string }[] = [
-  { value: "sau-rieng", label: "Sau Rieng" },
-  { value: "ca-phe", label: "Ca Phe" },
-  { value: "mac-ca", label: "Mac Ca" },
+  { value: "sau-rieng", label: "Sầu Riêng" },
+  { value: "ca-phe", label: "Cà Phê" },
+  { value: "mac-ca", label: "Mắc Ca" },
 ];
 
 const PACKAGE_OPTIONS: { value: PackageKey; label: string }[] = [
-  { value: "silver", label: "Khoi Tao" },
-  { value: "gold", label: "Ban Tu Dong" },
-  { value: "diamond", label: "Thong Minh" },
+  { value: "silver", label: "Khởi Tạo" },
+  { value: "gold", label: "Bán Tự Động" },
+  { value: "diamond", label: "Thông Minh" },
 ];
 
 const CROP_FACTORS: Record<CropKey, { setupPerHa: number; opsPerHaYear: number; revenuePerHaFromYear4: number }> = {
@@ -67,11 +67,11 @@ export default function ROICalculator() {
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="space-y-4">
-            <h3 className="text-2xl font-extrabold text-emerald-950">May Tinh Du Phong Dau Tu Nong Trai</h3>
+            <h3 className="text-2xl font-extrabold text-emerald-950">Máy Tính Dự Phóng Đầu Tư Nông Trại</h3>
 
             <div className="space-y-1.5">
               <label htmlFor="roi-crop" className="text-sm font-semibold text-emerald-900">
-                Loai cay trong
+                Loại cây trồng
               </label>
               <select
                 id="roi-crop"
@@ -89,7 +89,7 @@ export default function ROICalculator() {
 
             <div className="space-y-1.5">
               <label htmlFor="roi-area" className="text-sm font-semibold text-emerald-900">
-                Dien tich (Hecta)
+                Diện tích (Hecta)
               </label>
               <input
                 id="roi-area"
@@ -104,7 +104,7 @@ export default function ROICalculator() {
 
             <div className="space-y-1.5">
               <label htmlFor="roi-package" className="text-sm font-semibold text-emerald-900">
-                Goi dich vu
+                Gói dịch vụ
               </label>
               <select
                 id="roi-package"
@@ -124,41 +124,41 @@ export default function ROICalculator() {
           <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-emerald-100 sm:p-6">
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-2">
-                <span className="text-sm font-medium text-gray-600">Chi phi kien thiet (Nam 1)</span>
+                <span className="text-sm font-medium text-gray-600">Chi phí kiến thiết (Năm 1)</span>
                 <span className="text-right text-xl font-extrabold text-emerald-900">{formatVnd(projection.setupCostYear1)}</span>
               </div>
               <p className="-mt-1 border-b border-gray-100 pb-3 text-xs italic text-gray-500">
-                Bao gom: Vat tu he thong tuoi, giong cay trong, nhan cong dao ho va phan bon lot nam dau.
+                Bao gồm: Vật tư hệ thống tưới, giống cây trồng, nhân công đào hố và phân bón lót năm đầu.
               </p>
               <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-2">
-                <span className="text-sm font-medium text-gray-600">Phi duy tri van hanh (Nam 2 - 3)</span>
+                <span className="text-sm font-medium text-gray-600">Phí duy trì vận hành (Năm 2 - 3)</span>
                 <span className="text-right text-xl font-extrabold text-emerald-900">
-                  {formatVnd(projection.operationCostYear2to3)}/nam
+                  {formatVnd(projection.operationCostYear2to3)}/năm
                 </span>
               </div>
               <p className="-mt-1 border-b border-gray-100 pb-3 text-xs italic text-gray-500">
-                Bao gom: Chi phi dien/nuoc, phan bon dinh ky, dich vu drone xit thuoc va nhan cong phat co, tia canh.
+                Bao gồm: Chi phí điện/nước, phân bón định kỳ, dịch vụ drone xịt thuốc và nhân công phát cỏ, tỉa cành.
               </p>
               <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-2">
-                <span className="text-sm font-medium text-gray-600">Du phong Doanh thu (Tu Nam 4)</span>
+                <span className="text-sm font-medium text-gray-600">Dự phóng Doanh thu (Từ Năm 4)</span>
                 <span className="text-right text-xl font-extrabold text-emerald-900">
-                  {formatVnd(projection.projectedRevenueFromYear4)}/nam
+                  {formatVnd(projection.projectedRevenueFromYear4)}/năm
                 </span>
               </div>
               <p className="-mt-1 border-b border-gray-100 pb-3 text-xs italic text-gray-500">
-                Tinh toan dua tren nang suat trung binh 15-20kg/cay (nam 4) va gia thi truong trung binh cua 5 nam gan nhat.
+                Tính toán dựa trên năng suất trung bình 15-20kg/cây (năm 4) và giá thị trường trung bình của 5 năm gần nhất.
               </p>
               <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-medium text-gray-600">Diem hoa von du kien</span>
+                <span className="text-sm font-medium text-gray-600">Điểm hòa vốn dự kiến</span>
                 <span className="text-right text-2xl font-extrabold text-emerald-900">
-                  {projection.breakEvenYears > 0 ? `${projection.breakEvenYears} nam` : "Dang cap nhat"}
+                  {projection.breakEvenYears > 0 ? `${projection.breakEvenYears} năm` : "Đang cập nhật"}
                 </span>
               </div>
             </div>
 
             <p className="mt-5 text-xs leading-5 text-gray-500">
-              Day la bang du toan tham khao. De co ban ve boc tach BOM chinh xac den tung met ong, vui long lien he
-              doi ngu ky su.
+              Đây là bảng dự toán tham khảo. Để có bản vẽ bóc tách BOM chính xác đến từng mét ống, vui lòng liên hệ
+              đội ngũ kỹ sư.
             </p>
 
             <a
@@ -168,7 +168,7 @@ export default function ROICalculator() {
               data-tracking="last-click"
               className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#0068FF] px-4 text-sm font-extrabold text-white transition hover:bg-[#0058e6]"
             >
-              XUAT BAO CAO CHI TIET TOI ZALO
+              XUẤT BÁO CÁO CHI TIẾT TỚI ZALO
             </a>
           </div>
         </div>

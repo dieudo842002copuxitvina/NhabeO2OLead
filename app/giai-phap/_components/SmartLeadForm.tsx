@@ -18,9 +18,9 @@ type SmartLeadFormProps = {
   onSubmit?: (payload: SmartLeadPayload) => Promise<void> | void;
 };
 
-const PROVINCE_OPTIONS = ["Gia Lai", "Binh Phuoc", "Dak Lak", "Lam Dong", "Dong Nai"];
-const SCALE_OPTIONS = ["Duoi 1 Ha", "1 - 3 Ha", "Tren 3 Ha"];
-const CROP_OPTIONS = ["Sau Rieng", "Ca Phe", "Trai cay khac"];
+const PROVINCE_OPTIONS = ["Gia Lai", "Bình Phước", "Đắk Lắk", "Lâm Đồng", "Đồng Nai"];
+const SCALE_OPTIONS = ["Dưới 1 Ha", "1 - 3 Ha", "Trên 3 Ha"];
+const CROP_OPTIONS = ["Sầu Riêng", "Cà Phê", "Trái cây khác"];
 
 export default function SmartLeadForm({
   triggerLabel,
@@ -56,7 +56,7 @@ export default function SmartLeadForm({
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1200));
-    alert(`Yeu cau da duoc ghi nhan. Ky su khu vuc ${province} se lien he Zalo cua ban trong vong 30 phut!`);
+    alert(`Yêu cầu đã được ghi nhận. Kỹ sư khu vực ${province} sẽ liên hệ Zalo của bạn trong vòng 30 phút!`);
     setIsSubmitting(false);
     setOpen(false);
     setZaloPhone("");
@@ -73,17 +73,17 @@ export default function SmartLeadForm({
           <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-xl font-extrabold text-gray-900">Dang Ky Tu Van Giai Phap All-In-One</h3>
+                <h3 className="text-xl font-extrabold text-gray-900">Đăng Ký Tư Vấn Giải Pháp All-In-One</h3>
                 <p className="mt-2 text-sm leading-6 text-gray-600">
-                  Vui long cung cap mot so thong tin co ban de ky su Nha Be Agri chuan bi phuong an tot nhat cho ray
-                  cua ban.
+                  Vui lòng cung cấp một số thông tin cơ bản để kỹ sư Nhà Bè Agri chuẩn bị phương án tốt nhất cho rẫy
+                  của bạn.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
-                aria-label="Dong form tu van"
+                aria-label="Đóng form tư vấn"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -91,7 +91,7 @@ export default function SmartLeadForm({
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-800">Vi tri khu dat</label>
+                <label className="text-sm font-semibold text-gray-800">Vị trí khu đất</label>
                 <select
                   value={province}
                   onChange={(event) => setProvince(event.target.value)}
@@ -106,7 +106,7 @@ export default function SmartLeadForm({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-800">Quy mo dien tich</label>
+                <label className="text-sm font-semibold text-gray-800">Quy mô diện tích</label>
                 <select
                   value={scale}
                   onChange={(event) => setScale(event.target.value)}
@@ -121,7 +121,7 @@ export default function SmartLeadForm({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-800">Cay trong du kien</label>
+                <label className="text-sm font-semibold text-gray-800">Cây trồng dự kiến</label>
                 <select
                   value={crop}
                   onChange={(event) => setCrop(event.target.value)}
@@ -136,7 +136,7 @@ export default function SmartLeadForm({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-800">So Zalo lien he</label>
+                <label className="text-sm font-semibold text-gray-800">Số Zalo liên hệ</label>
                 <input
                   type="text"
                   inputMode="tel"
@@ -153,7 +153,7 @@ export default function SmartLeadForm({
                 disabled={isSubmitting}
                 className="mt-2 inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#0068FF] text-sm font-extrabold text-white transition hover:bg-[#0058e6] disabled:cursor-not-allowed disabled:opacity-80"
               >
-                {isSubmitting ? "Dang gui..." : "GUI YEU CAU TU VAN"}
+                {isSubmitting ? "Đang gửi..." : "GỬI YÊU CẦU TƯ VẤN"}
               </button>
             </form>
           </div>

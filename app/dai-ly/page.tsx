@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { DEALERS_DATA, type Dealer } from "@/data/dealers";
 import { cn } from "@/lib/utils";
 
-const REGIONS = ["Tat ca", "Mien Bac", "Mien Trung", "Tay Nguyen", "Mien Nam"] as const;
+const REGIONS = ["Tất cả", "Miền Bắc", "Miền Trung", "Tây Nguyên", "Miền Nam"] as const;
 type RegionFilter = (typeof REGIONS)[number];
 
 export type DealerWithDistance = Dealer & {
@@ -17,7 +17,7 @@ const DaiLyMap = dynamic(() => import("./DaiLyMap"), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center bg-white text-sm font-semibold text-gray-600">
-      Dang tai ban do dai ly...
+      Đang tải bản đồ đại lý...
     </div>
   ),
 });
@@ -46,7 +46,7 @@ function phoneHref(phone: string) {
 
 export default function DaiLyPage() {
   const [query, setQuery] = useState("");
-  const [activeRegion, setActiveRegion] = useState<RegionFilter>("Tat ca");
+  const [activeRegion, setActiveRegion] = useState<RegionFilter>("Tất cả");
   const [selectedDealerId, setSelectedDealerId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
@@ -56,7 +56,7 @@ export default function DaiLyPage() {
     const needle = query.trim().toLowerCase();
 
     const byRegion =
-      activeRegion === "Tat ca"
+      activeRegion === "Tất cả"
         ? DEALERS_DATA
         : DEALERS_DATA.filter((dealer) => dealer.region.toLowerCase() === activeRegion.toLowerCase());
 
@@ -89,7 +89,7 @@ export default function DaiLyPage() {
 
   const handleLocateNearest = () => {
     if (!navigator.geolocation) {
-      setGeoError("Trinh duyet khong ho tro GPS.");
+      setGeoError("Trình duyệt không hỗ trợ GPS.");
       return;
     }
 
@@ -111,7 +111,7 @@ export default function DaiLyPage() {
         setLocating(false);
       },
       () => {
-        setGeoError("Khong the lay vi tri hien tai. Vui long cap quyen GPS.");
+        setGeoError("Không thể lấy vị trí hiện tại. Vui lòng cấp quyền GPS.");
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000 },
@@ -123,15 +123,15 @@ export default function DaiLyPage() {
       <div className="flex h-full flex-col md:flex-row">
         <div className="flex h-[56vh] flex-col border-b border-gray-200 bg-white md:h-full md:w-[390px] md:min-w-[390px] md:border-b-0 md:border-r">
           <div className="border-b border-gray-200 p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-green-600">Nha Be Agri</p>
-            <h1 className="mt-1 text-xl font-bold text-gray-900">Mang luoi dai ly uy quyen</h1>
+            <p className="text-xs font-bold uppercase tracking-wide text-green-600">Nhà Bè Agri</p>
+            <h1 className="mt-1 text-xl font-bold text-gray-900">Mạng lưới đại lý ủy quyền</h1>
 
             <label className="relative mt-4 block">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Nhap khu vuc, ten dai ly..."
+                placeholder="Nhập khu vực, tên đại lý..."
                 className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-sm text-gray-900 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-600/20"
               />
             </label>
@@ -142,7 +142,7 @@ export default function DaiLyPage() {
               className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-900 transition hover:bg-gray-50"
             >
               <LocateFixed className={cn("h-4 w-4 text-green-600", locating && "animate-pulse")} />
-              {locating ? "Dang dinh vi..." : "Tim tram gan toi nhat"}
+              {locating ? "Đang định vị..." : "Tìm trạm gần tôi nhất"}
             </button>
 
             {geoError ? <p className="mt-2 text-xs font-medium text-orange-700">{geoError}</p> : null}
@@ -175,7 +175,7 @@ export default function DaiLyPage() {
           <div className="min-h-0 flex-1 overflow-y-auto p-3">
             {visibleDealers.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
-                Khong tim thay dai ly phu hop voi bo loc hien tai.
+                Không tìm thấy đại lý phù hợp với bộ lọc hiện tại.
               </div>
             ) : (
               <ul className="space-y-4">
@@ -214,12 +214,12 @@ export default function DaiLyPage() {
 
                         <div className="mt-3 flex items-center justify-between text-xs">
                           {typeof dealer.distanceKm === "number" ? (
-                            <span className="font-semibold text-green-700">Cach ban {formatDistance(dealer.distanceKm)}</span>
+                            <span className="font-semibold text-green-700">Cách bạn {formatDistance(dealer.distanceKm)}</span>
                           ) : (
-                            <span className="text-gray-500">Chua dinh vi GPS</span>
+                            <span className="text-gray-500">Chưa định vị GPS</span>
                           )}
                           {isNearest ? (
-                            <span className="rounded-full bg-green-100 px-2 py-1 font-bold text-green-700">Gan nhat</span>
+                            <span className="rounded-full bg-green-100 px-2 py-1 font-bold text-green-700">Gần nhất</span>
                           ) : null}
                         </div>
                       </button>
@@ -247,7 +247,7 @@ export default function DaiLyPage() {
                 href={phoneHref(selectedDealer.phone)}
                 className="pointer-events-auto mt-3 inline-flex h-9 items-center rounded-lg bg-green-600 px-3 text-xs font-semibold text-white hover:bg-green-700"
               >
-                Goi dai ly
+                Gọi đại lý
               </a>
             </div>
           ) : null}

@@ -15,7 +15,7 @@ function formatSpecKey(key: string) {
 }
 
 function formatSpecValue(value: unknown) {
-  if (typeof value === "boolean") return value ? "Co" : "Khong";
+  if (typeof value === "boolean") return value ? "Có" : "Không";
   if (typeof value === "number") return value.toLocaleString("vi-VN");
   if (typeof value === "string") return value;
   if (value === null || value === undefined) return "-";
@@ -42,7 +42,7 @@ export default function ProductDetailTabs({ description, specs }: ProductDetailT
               activeTab === "description" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700",
             )}
           >
-            Mo ta chi tiet
+            Mô tả chi tiết
           </button>
           <button
             type="button"
@@ -52,7 +52,7 @@ export default function ProductDetailTabs({ description, specs }: ProductDetailT
               activeTab === "specs" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700",
             )}
           >
-            Thong so ky thuat
+            Thông số kỹ thuật
           </button>
         </div>
       </div>
@@ -63,7 +63,7 @@ export default function ProductDetailTabs({ description, specs }: ProductDetailT
             {descriptionBlocks.length > 0 ? (
               descriptionBlocks.map((block) => <p key={block}>{block}</p>)
             ) : (
-              <p>Thong tin mo ta dang duoc cap nhat.</p>
+              <p>Thông tin mô tả đang được cập nhật.</p>
             )}
           </div>
         ) : (

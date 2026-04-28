@@ -26,7 +26,7 @@ export default function DroneRoiCalculator({ dronePrice }: DroneRoiCalculatorPro
     const safeSprays = Math.max(0, spraysPerYear);
 
     const traditionalLaborPerYear = safeArea * safeLabor * safeSprays;
-    const traditionalChemicalPerYear = traditionalLaborPerYear; // Gia dinh baseline de uoc tinh nhanh.
+    const traditionalChemicalPerYear = traditionalLaborPerYear; // Giả định baseline để ước tính nhanh.
     const laborSavings = traditionalLaborPerYear * 0.9;
     const chemicalSavings = traditionalChemicalPerYear * 0.3;
     const totalSavingsPerYear = laborSavings + chemicalSavings;
@@ -45,14 +45,14 @@ export default function DroneRoiCalculator({ dronePrice }: DroneRoiCalculatorPro
           <Calculator className="h-5 w-5" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Du toan hieu qua dau tu Drone</h2>
-          <p className="text-sm text-gray-600">Uoc tinh theo tiet kiem thuoc 30% va nhan cong 90%.</p>
+          <h2 className="text-lg font-semibold text-gray-900">Dự toán hiệu quả đầu tư Drone</h2>
+          <p className="text-sm text-gray-600">Ước tính theo tiết kiệm thuốc 30% và nhân công 90%.</p>
         </div>
       </header>
 
       <div className="grid gap-3 md:grid-cols-3">
         <label className="space-y-1">
-          <span className="text-sm font-medium text-gray-700">Dien tich canh tac (ha)</span>
+          <span className="text-sm font-medium text-gray-700">Diện tích canh tác (ha)</span>
           <input
             type="number"
             min={0}
@@ -63,7 +63,7 @@ export default function DroneRoiCalculator({ dronePrice }: DroneRoiCalculatorPro
         </label>
 
         <label className="space-y-1">
-          <span className="text-sm font-medium text-gray-700">Chi phi nhan cong truyen thong (d/ha)</span>
+          <span className="text-sm font-medium text-gray-700">Chi phí nhân công truyền thống (đ/ha)</span>
           <input
             type="number"
             min={0}
@@ -74,7 +74,7 @@ export default function DroneRoiCalculator({ dronePrice }: DroneRoiCalculatorPro
         </label>
 
         <label className="space-y-1">
-          <span className="text-sm font-medium text-gray-700">So lan xit thuoc trung binh / nam</span>
+          <span className="text-sm font-medium text-gray-700">Số lần xịt thuốc trung bình / năm</span>
           <input
             type="number"
             min={0}
@@ -95,7 +95,7 @@ export default function DroneRoiCalculator({ dronePrice }: DroneRoiCalculatorPro
         <article className="rounded-xl border border-green-100 bg-white p-4">
           <p className="flex items-center gap-2 text-sm font-medium text-gray-600">
             <CircleDollarSign className="h-4 w-4 text-[#4CAF50]" />
-            Tiet kiem uoc tinh moi nam
+            Tiết kiệm ước tính mỗi năm
           </p>
           <p className="mt-2 text-2xl font-bold text-[#2F8E36]">{formatVnd(result.totalSavingsPerYear)}</p>
         </article>
@@ -103,9 +103,9 @@ export default function DroneRoiCalculator({ dronePrice }: DroneRoiCalculatorPro
         <article className="rounded-xl border border-green-100 bg-white p-4">
           <p className="flex items-center gap-2 text-sm font-medium text-gray-600">
             <Timer className="h-4 w-4 text-[#4CAF50]" />
-            Thoi gian hoan von du kien
+            Thời gian hoàn vốn dự kiến
           </p>
-          <p className="mt-2 text-2xl font-bold text-[#2F8E36]">{result.paybackMonths.toFixed(1)} thang</p>
+          <p className="mt-2 text-2xl font-bold text-[#2F8E36]">{result.paybackMonths.toFixed(1)} tháng</p>
         </article>
       </motion.div>
     </section>

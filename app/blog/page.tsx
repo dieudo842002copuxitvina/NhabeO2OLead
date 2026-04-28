@@ -9,7 +9,7 @@ type BlogPost = {
   slug: string;
   excerpt: string;
   coverImage: string;
-  category: "Kien thuc Nong nghiep" | "Cau chuyen Thanh cong" | "Xu huong Thi truong";
+  category: "Kiến thức Nông nghiệp" | "Câu chuyện Thành công" | "Xu hướng Thị trường";
   date: string;
   author: string;
 };
@@ -17,51 +17,51 @@ type BlogPost = {
 const POSTS: BlogPost[] = [
   {
     id: "b1",
-    title: "Giai phap tuoi sau rieng mua kho: Can bang am tang re va tiet kiem dien bom",
+    title: "Giải pháp tưới sầu riêng mùa khô: Cân bằng ẩm tầng rễ và tiết kiệm điện bơm",
     slug: "giai-phap-tuoi-sau-rieng-mua-kho",
     excerpt:
-      "Quy trinh thiet ke luu luong - ap luc cho vuon sau rieng tai Tay Nguyen, toi uu chi phi van hanh va giam that thoat nuoc.",
+      "Quy trình thiết kế lưu lượng - áp lực cho vườn sầu riêng tại Tây Nguyên, tối ưu chi phí vận hành và giảm thất thoát nước.",
     coverImage: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1400&q=80",
-    category: "Kien thuc Nong nghiep",
+    category: "Kiến thức Nông nghiệp",
     date: "28/04/2026",
-    author: "Ky su Nha Be Agri",
+    author: "Kỹ sư Nhà Bè Agri",
   },
   {
     id: "b2",
-    title: "Tu 12ha ca phe den he thong cham phan tu dong: Hanh trinh tang nang suat 18%",
+    title: "Từ 12ha cà phê đến hệ thống châm phân tự động: Hành trình tăng năng suất 18%",
     slug: "cau-chuyen-tuoi-cham-phan-ca-phe-12ha",
-    excerpt: "Case study trien khai thuc te voi chien luoc tuoi va dinh duong theo chu ky sinh truong cua cay ca phe.",
+    excerpt: "Case study triển khai thực tế với chiến lược tưới và dinh dưỡng theo chu kỳ sinh trưởng của cây cà phê.",
     coverImage: "https://images.unsplash.com/photo-1444858291040-58f756a3bdd6?auto=format&fit=crop&w=1200&q=80",
-    category: "Cau chuyen Thanh cong",
+    category: "Câu chuyện Thành công",
     date: "24/04/2026",
-    author: "Ban du an O2O",
+    author: "Ban dự án O2O",
   },
   {
     id: "b3",
-    title: "Gia nong san quy II/2026: Xu huong anh huong truc tiep den quyet dinh dau tu he tuoi",
+    title: "Giá nông sản quý II/2026: Xu hướng ảnh hưởng trực tiếp đến quyết định đầu tư hệ tưới",
     slug: "xu-huong-gia-nong-san-quy-2-2026",
-    excerpt: "Phan tich ngan gon cac bien so thi truong quan trong va cach nong ho ra quyet dinh dau tu thiet bi thong minh.",
+    excerpt: "Phân tích ngắn gọn các biến số thị trường quan trọng và cách nông hộ ra quyết định đầu tư thiết bị thông minh.",
     coverImage: "https://images.unsplash.com/photo-1589923158776-cb4485d99fd6?auto=format&fit=crop&w=1200&q=80",
-    category: "Xu huong Thi truong",
+    category: "Xu hướng Thị trường",
     date: "22/04/2026",
-    author: "Nhom Market Insight",
+    author: "Nhóm Market Insight",
   },
   {
     id: "b4",
-    title: "Checklist 9 buoc kiem tra he thong truoc mua mua de tranh tut ap cuc bo",
+    title: "Checklist 9 bước kiểm tra hệ thống trước mùa mưa để tránh tụt áp cục bộ",
     slug: "checklist-kiem-tra-he-thong-truoc-mua-mua",
-    excerpt: "Huong dan thuc chien cho dai ly va nong ho truoc cao diem mua vu, han che rui ro hong vat ngoai hien truong.",
+    excerpt: "Hướng dẫn thực chiến cho đại lý và nông hộ trước cao điểm mùa vụ, hạn chế rủi ro hỏng vặt ngoài hiện trường.",
     coverImage: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=1200&q=80",
-    category: "Kien thuc Nong nghiep",
+    category: "Kiến thức Nông nghiệp",
     date: "19/04/2026",
-    author: "Ky thuat van hanh",
+    author: "Kỹ thuật vận hành",
   },
 ];
 
 const CATEGORY_COUNT = [
-  { name: "Kien thuc Nong nghiep", count: POSTS.filter((p) => p.category === "Kien thuc Nong nghiep").length },
-  { name: "Cau chuyen Thanh cong", count: POSTS.filter((p) => p.category === "Cau chuyen Thanh cong").length },
-  { name: "Xu huong Thi truong", count: POSTS.filter((p) => p.category === "Xu huong Thi truong").length },
+  { name: "Kiến thức Nông nghiệp", count: POSTS.filter((p) => p.category === "Kiến thức Nông nghiệp").length },
+  { name: "Câu chuyện Thành công", count: POSTS.filter((p) => p.category === "Câu chuyện Thành công").length },
+  { name: "Xu hướng Thị trường", count: POSTS.filter((p) => p.category === "Xu hướng Thị trường").length },
 ];
 
 export default function BlogPage() {
@@ -81,15 +81,15 @@ export default function BlogPage() {
               <h2 className="mt-3 text-2xl font-extrabold leading-tight text-gray-900 sm:text-4xl">{featured.title}</h2>
               <p className="mt-3 text-gray-600">{featured.excerpt}</p>
               <Link href={`/blog/${featured.slug}`} className="mt-5 inline-flex items-center rounded-xl bg-green-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800">
-                Doc tiep
+                Đọc tiếp
               </Link>
             </div>
           </article>
 
           <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-5 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">So Tay Ky Thuat Theo Cay Trong</h3>
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">{GUIDES_DATA.length} lo trinh</span>
+              <h3 className="text-xl font-bold text-gray-900">Sổ Tay Kỹ Thuật Theo Cây Trồng</h3>
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">{GUIDES_DATA.length} lộ trình</span>
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -113,8 +113,8 @@ export default function BlogPage() {
                             className="group flex items-start justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm text-gray-700 transition hover:bg-green-50 hover:text-green-800"
                           >
                             <span className="line-clamp-2">
-                              <span className="mr-1 font-semibold text-green-700">Buoc {chapter.step}:</span>
-                              {chapter.title.replace(/^Phan \d+:\s*/i, "")}
+                              <span className="mr-1 font-semibold text-green-700">Bước {chapter.step}:</span>
+                              {chapter.title.replace(/^Phần \d+:\s*/i, "")}
                             </span>
                             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 transition group-hover:text-green-700" />
                           </Link>
@@ -128,7 +128,7 @@ export default function BlogPage() {
           </section>
 
           <section>
-            <h3 className="mb-4 text-xl font-bold text-gray-900">Bai viet moi nhat</h3>
+            <h3 className="mb-4 text-xl font-bold text-gray-900">Bài viết mới nhất</h3>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {latest.map((post) => (
                 <article key={post.id} className="overflow-hidden rounded-2xl border-none bg-white shadow-sm transition duration-200 hover:scale-[1.01] hover:shadow-md">
@@ -154,19 +154,19 @@ export default function BlogPage() {
 
         <aside className="h-fit space-y-5 lg:sticky lg:top-24 lg:col-span-4">
           <section className="rounded-2xl bg-white p-5 shadow-sm">
-            <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-900">Tim kiem</h4>
+            <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-900">Tìm kiếm</h4>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Tim bai viet..."
+                placeholder="Tìm bài viết..."
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-3 text-sm outline-none ring-0 focus:border-green-700"
               />
             </div>
           </section>
 
           <section className="rounded-2xl bg-white p-5 shadow-sm">
-            <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-900">Danh muc chu de</h4>
+            <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-gray-900">Danh mục chủ đề</h4>
             <ul className="space-y-2">
               {CATEGORY_COUNT.map((item) => (
                 <li key={item.name} className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2">
@@ -178,9 +178,9 @@ export default function BlogPage() {
           </section>
 
           <section className="rounded-2xl border border-green-200 bg-green-50 p-5 shadow-sm">
-            <h4 className="text-lg font-bold text-green-900">Tai cam nang ky thuat Sau Rieng 2026</h4>
+            <h4 className="text-lg font-bold text-green-900">Tải cẩm nang kỹ thuật Sầu Riêng 2026</h4>
             <p className="mt-2 text-sm text-green-800">
-              Nhan ngay tai lieu van hanh tuoi - cham phan theo mua vu, toi uu cho Tay Nguyen va Dong Nam Bo.
+              Nhận ngay tài liệu vận hành tưới - châm phân theo mùa vụ, tối ưu cho Tây Nguyên và Đông Nam Bộ.
             </p>
             <a
               href="https://zalo.me/YOUR_ZALO_NUMBER"
@@ -188,7 +188,7 @@ export default function BlogPage() {
               rel="noopener noreferrer"
               className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-[#0068FF] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#005ce6]"
             >
-              Nhan tai lieu qua Zalo
+              Nhận tài liệu qua Zalo
             </a>
           </section>
         </aside>

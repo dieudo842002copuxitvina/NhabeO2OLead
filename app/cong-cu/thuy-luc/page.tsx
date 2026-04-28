@@ -98,7 +98,7 @@ const WATER_SOURCE_META: Record<WaterSource, { label: string; frictionFactor: nu
   pond: { label: "Ao/Ho", frictionFactor: 1.02 },
   well: { label: "Gieng khoan", frictionFactor: 1.1 },
   canal: { label: "Kenh muong", frictionFactor: 1.06 },
-  river: { label: "Song", frictionFactor: 1.16 },
+  river: { label: "Sông", frictionFactor: 1.16 },
 };
 
 const MAIN_PIPE_PRICE_BY_DIA: Record<number, number> = {
@@ -108,7 +108,7 @@ const MAIN_PIPE_PRICE_BY_DIA: Record<number, number> = {
   110: 125000,
 };
 
-const KEYWORDS = ["Tinh toan vat tu tuoi sau rieng", "Cach chon venturi cho 1ha ca phe"];
+const KEYWORDS = ["Tính toán vật tư tưới sầu riêng", "Cách chọn venturi cho 1ha cà phê"];
 
 const formatVnd = (value: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(
@@ -287,12 +287,12 @@ export default function ThuyLucPage() {
     const filterCount = areaHa > 3 ? 2 : 1;
     const recommendedPumpHp = Math.max(2, Math.ceil(((designFlowM3h * totalDynamicHeadM) / 186) * 2) / 2);
 
-    const fertigationName = areaHa > 2 ? "Bom dinh luong" : "Venturi";
+    const fertigationName = areaHa > 2 ? "Bơm định lượng" : "Venturi";
     const fertigationCost = areaHa > 2 ? 21000000 : 2800000;
 
     const bomItems: BomItem[] = [
       {
-        name: "Ong chinh HDPE",
+        name: "Ống chính HDPE",
         spec: `O${mainPipeDiameter} PN10`,
         quantity: mainPipeLength,
         unit: "m",
@@ -300,7 +300,7 @@ export default function ThuyLucPage() {
         total: mainPipeLength * MAIN_PIPE_PRICE_BY_DIA[mainPipeDiameter],
       },
       {
-        name: "Ong nhanh PVC",
+        name: "Ống nhánh PVC",
         spec: "O42 - O49",
         quantity: subMainLength,
         unit: "m",
@@ -308,7 +308,7 @@ export default function ThuyLucPage() {
         total: subMainLength * 36000,
       },
       {
-        name: "Ong PE tuoi",
+        name: "Ống PE tưới",
         spec: irrigationModel === "sprinkler" ? "PE16 cho bec phun" : "PE16 cho day nho giot",
         quantity: lateralLength,
         unit: "m",
@@ -324,8 +324,8 @@ export default function ThuyLucPage() {
         total: emitterCount * model.emitterPrice,
       },
       {
-        name: "Cum loc trung tam",
-        spec: "Loc dia + loc cat",
+        name: "Cụm lọc trung tâm",
+        spec: "Lọc đĩa + lọc cát",
         quantity: filterCount,
         unit: "bo",
         unitPrice: 4500000,
@@ -348,7 +348,7 @@ export default function ThuyLucPage() {
         total: fertigationCost,
       },
       {
-        name: "May bom khuyen nghi",
+        name: "Máy bơm khuyến nghị",
         spec: `${recommendedPumpHp.toFixed(1)} HP`,
         quantity: 1,
         unit: "bo",
@@ -407,9 +407,9 @@ export default function ThuyLucPage() {
       `Cay trong: ${calc.selectedCrop.label}`,
       `Dien tich: ${round1(areaHa)} ha`,
       `Mo hinh tuoi: ${calc.model.label}`,
-      `Luu luong thiet ke: ${round1(calc.designFlowM3h)} m3/h`,
-      `Ap luc yeu cau: ${round1(calc.requiredPressureBar)} bar`,
-      "Danh muc vat tu chinh:",
+      `Lưu lượng thiết kế: ${round1(calc.designFlowM3h)} m3/h`,
+      `Áp lực yêu cầu: ${round1(calc.requiredPressureBar)} bar`,
+      "Danh mục vật tư chính:",
       topRows,
     ].join("\n");
   }, [areaHa, calc]);
@@ -419,14 +419,14 @@ export default function ThuyLucPage() {
     [calc.designFlowM3h, calc.totalBomCost],
   );
 
-  const pressureStatus = calc.pressureMargin > 0.4 ? "On dinh" : calc.pressureMargin > -0.2 ? "Sat nguong" : "Thieu ap";
+  const pressureStatus = calc.pressureMargin > 0.4 ? "Ổn định" : calc.pressureMargin > -0.2 ? "Sát ngưỡng" : "Thiếu áp";
   const pressureColor = calc.pressureMargin > 0.4 ? "#0f766e" : calc.pressureMargin > -0.2 ? "#d97706" : "#dc2626";
   const pressureBadge =
     calc.pressureMargin > 0.4
-      ? { text: "He thong on dinh", className: "bg-emerald-100 text-emerald-800 border-emerald-200" }
+      ? { text: "Hệ thống ổn định", className: "bg-emerald-100 text-emerald-800 border-emerald-200" }
       : calc.pressureMargin > -0.2
-        ? { text: "Canh bao: Ap luc vua du", className: "bg-amber-100 text-amber-800 border-amber-200" }
-        : { text: "Canh bao: Ap luc bom khong du", className: "bg-red-100 text-red-800 border-red-200" };
+        ? { text: "Cảnh báo: Áp lực vừa đủ", className: "bg-amber-100 text-amber-800 border-amber-200" }
+        : { text: "Cảnh báo: Áp lực bơm không đủ", className: "bg-red-100 text-red-800 border-red-200" };
 
   const switchAreaUnit = (nextUnit: AreaUnit) => {
     if (nextUnit === areaUnit) return;
@@ -446,18 +446,18 @@ export default function ThuyLucPage() {
   const openZaloWithNearestDealer = async (dealer: MatchedDealer) => {
     const quoteMessage = [
       `Xin chao ${dealer.name},`,
-      "Toi vua tinh du toan he thong tuoi va can bao gia chi tiet.",
+      "Tôi vừa tính dự toán hệ thống tưới và cần báo giá chi tiết.",
       `Cay: ${calc.selectedCrop.label} | Dien tich: ${round1(areaHa)} ha`,
-      `Tong BOM du kien: ${formatVnd(calc.totalBomCost)}`,
-      `Luu luong: ${round1(calc.designFlowM3h)} m3/h | Ap luc yeu cau: ${round1(calc.requiredPressureBar)} bar`,
-      "Nho ky su lien he tu van.",
+      `Tổng BOM dự kiến: ${formatVnd(calc.totalBomCost)}`,
+      `Lưu lượng: ${round1(calc.designFlowM3h)} m3/h | Áp lực yêu cầu: ${round1(calc.requiredPressureBar)} bar`,
+      "Nhờ kỹ sư liên hệ tư vấn.",
     ].join("\n");
 
     try {
       await navigator.clipboard.writeText(quoteMessage);
-      setZaloHint("Noi dung bao gia da copy vao clipboard de dan nhanh tren Zalo.");
+      setZaloHint("Nội dung báo giá đã copy vào clipboard để dán nhanh trên Zalo.");
     } catch {
-      setZaloHint("Ban co the gui yeu cau truc tiep tren Zalo cho dai ly gan nhat.");
+      setZaloHint("Bạn có thể gửi yêu cầu trực tiếp trên Zalo cho đại lý gần nhất.");
     }
 
     const zaloPhone = toZaloPhone(dealer.phone);
@@ -496,15 +496,15 @@ export default function ThuyLucPage() {
 
   const handleSubmitLead = async () => {
     if (leadName.trim().length < 2) {
-      setLeadFeedback({ type: "error", text: "Vui long nhap ten khach hang hop le." });
+      setLeadFeedback({ type: "error", text: "Vui lòng nhập tên khách hàng hợp lệ." });
       return;
     }
     if (!isValidPhone(leadPhone)) {
-      setLeadFeedback({ type: "error", text: "SDT chua dung dinh dang Viet Nam (0xxxxxxxxx hoac +84xxxxxxxxx)." });
+      setLeadFeedback({ type: "error", text: "SĐT chưa đúng định dạng Việt Nam (0xxxxxxxxx hoặc +84xxxxxxxxx)." });
       return;
     }
     if (leadRegion.trim().length < 2) {
-      setLeadFeedback({ type: "error", text: "Vui long nhap vung trong de ky thuat vien phan tuyen dung khu vuc." });
+      setLeadFeedback({ type: "error", text: "Vui lòng nhập vùng trồng để kỹ thuật viên phân tuyến đúng khu vực." });
       return;
     }
 
@@ -529,8 +529,8 @@ export default function ThuyLucPage() {
         crop_type: `Du toan thuy luc - ${calc.selectedCrop.label}`,
         area_m2: Math.round(calc.areaM2),
         message: [
-          "Lead tu cong cu thuy luc (Chot don/Tu van chuyen gia).",
-          `Dai ly uu tien: ${pickedDealer?.name ?? "Chua xac dinh"}`,
+          "Lead từ công cụ thủy lực (Chốt đơn/Tư vấn chuyên gia).",
+          `Đại lý ưu tiên: ${pickedDealer?.name ?? "Chưa xác định"}`,
           "",
           preliminaryDrawing,
         ].join("\n"),
@@ -560,10 +560,10 @@ export default function ThuyLucPage() {
 
       setLeadFeedback({
         type: "success",
-        text: `Ky thuat vien tai ${pickedDealer?.name ?? "dai ly gan nhat"} da nhan duoc yeu cau va se goi lai cho ban trong 15 phut.`,
+        text: `Kỹ thuật viên tại ${pickedDealer?.name ?? "đại lý gần nhất"} đã nhận được yêu cầu và sẽ gọi lại cho bạn trong 15 phút.`,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Khong gui duoc yeu cau. Vui long thu lai.";
+      const message = error instanceof Error ? error.message : "Không gửi được yêu cầu. Vui lòng thử lại.";
       setLeadFeedback({ type: "error", text: message });
     } finally {
       setIsSubmittingLead(false);
@@ -571,16 +571,16 @@ export default function ThuyLucPage() {
   };
 
   const stepItems = [
-    { id: 1, title: "Thong tin vuon" },
+    { id: 1, title: "Thông tin vườn" },
     { id: 2, title: "Loai cay & mo hinh tuoi" },
-    { id: 3, title: "Nguon nuoc & ap luc bom" },
+    { id: 3, title: "Nguồn nước & áp lực bơm" },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900">
       <SeoMeta
-        title="May tinh du toan thuy luc | Tinh toan vat tu tuoi sau rieng"
-        description="May tinh du toan thuy luc theo buoc: BOM realtime, geo-matching dai ly gan nhat, nhan bao gia qua Zalo va tu van chuyen gia cho tuoi sau rieng, ca phe."
+        title="Máy tính dự toán thủy lực | Tính toán vật tư tưới sầu riêng"
+        description="Máy tính dự toán thủy lực theo bước: BOM realtime, geo-matching đại lý gần nhất, nhận báo giá qua Zalo và tư vấn chuyên gia cho tưới sầu riêng, cà phê."
       />
 
       <header className="border-b border-slate-200 bg-white">
@@ -592,7 +592,7 @@ export default function ThuyLucPage() {
             >
               <ArrowLeft className="h-4 w-4" /> Quay lai hub cong cu
             </Link>
-            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">May tinh Du toan Thuy luc</h1>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Máy tính Dự toán Thủy lực</h1>
             <p className="mt-1 text-sm text-slate-500">
               Thiet ke nhanh, theo doi ap luc, cap nhat vat tu theo thoi gian thuc.
             </p>
@@ -619,7 +619,7 @@ export default function ThuyLucPage() {
                           : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300",
                       )}
                     >
-                      <p className="font-semibold">Buoc {item.id}</p>
+                      <p className="font-semibold">Bước {item.id}</p>
                       <p className="mt-1 leading-tight">{item.title}</p>
                     </button>
                   ))}
@@ -743,7 +743,7 @@ export default function ThuyLucPage() {
                 {step === 3 && (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Nguon nuoc</Label>
+                      <Label>Nguồn nước</Label>
                       <Select value={waterSource} onValueChange={(value) => setWaterSource(value as WaterSource)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Chon nguon nuoc" />
@@ -761,8 +761,8 @@ export default function ThuyLucPage() {
                     <div className="space-y-2">
                       <LabelWithTooltip
                         htmlFor="pressure-input"
-                        label="Ap luc bom hien co (bar)"
-                        tip="Ap luc hien co phai lon hon ap luc yeu cau de dam bao cac diem cuoi van du nuoc."
+                        label="Áp lực bơm hiện có (bar)"
+                        tip="Áp lực hiện có phải lớn hơn áp lực yêu cầu để đảm bảo các điểm cuối vẫn đủ nước."
                       />
                       <Input
                         id="pressure-input"
@@ -773,7 +773,7 @@ export default function ThuyLucPage() {
                         onChange={(event) => setPumpPressureBar(clamp(Number(event.target.value) || 1, 1, 8))}
                       />
                       <p className="text-xs text-slate-500">
-                        Ap luc yeu cau: {round1(calc.requiredPressureBar)} bar | Du ap: {round1(calc.pressureMargin)} bar
+                        Áp lực yêu cầu: {round1(calc.requiredPressureBar)} bar | Dư áp: {round1(calc.pressureMargin)} bar
                       </p>
                     </div>
                   </div>
@@ -812,19 +812,19 @@ export default function ThuyLucPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">Luu luong thiet ke</p>
+                    <p className="text-xs text-slate-500">Lưu lượng thiết kế</p>
                     <p className="mt-1 text-lg font-semibold">{round1(calc.designFlowM3h)} m3/h</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">Ap luc yeu cau</p>
+                    <p className="text-xs text-slate-500">Áp lực yêu cầu</p>
                     <p className="mt-1 text-lg font-semibold">{round1(calc.requiredPressureBar)} bar</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">Ong chinh</p>
+                    <p className="text-xs text-slate-500">Ống chính</p>
                     <p className="mt-1 text-lg font-semibold">O{calc.mainPipeDiameter}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">Bom de xuat</p>
+                    <p className="text-xs text-slate-500">Bơm đề xuất</p>
                     <p className="mt-1 text-lg font-semibold">{calc.recommendedPumpHp.toFixed(1)} HP</p>
                   </div>
                 </div>
@@ -836,7 +836,7 @@ export default function ThuyLucPage() {
                     <path d="M60 20 V300 M120 20 V300 M180 20 V300 M240 20 V300 M300 20 V300 M360 20 V300 M420 20 V300 M480 20 V300 M540 20 V300 M600 20 V300 M660 20 V300 M720 20 V300" stroke="#e6eef7" strokeWidth="1" />
                     <rect x="40" y="125" width="110" height="74" rx="8" fill="#e2e8f0" stroke="#94a3b8" />
                     <text x="95" y="155" textAnchor="middle" fontSize="12" fill="#334155">
-                      Nguon nuoc
+                      Nguồn nước
                     </text>
                     <text x="95" y="172" textAnchor="middle" fontSize="11" fill="#64748b">
                       {calc.source.label}
@@ -844,7 +844,7 @@ export default function ThuyLucPage() {
 
                     <rect x="185" y="128" width="100" height="68" rx="8" fill="#dbeafe" stroke="#60a5fa" />
                     <text x="235" y="154" textAnchor="middle" fontSize="12" fill="#1e3a8a">
-                      Bom
+                      Bơm
                     </text>
                     <text x="235" y="171" textAnchor="middle" fontSize="11" fill="#1e40af">
                       {calc.recommendedPumpHp.toFixed(1)} HP
@@ -852,7 +852,7 @@ export default function ThuyLucPage() {
 
                     <rect x="320" y="130" width="110" height="64" rx="8" fill="#ecfeff" stroke="#14b8a6" />
                     <text x="375" y="154" textAnchor="middle" fontSize="12" fill="#0f766e">
-                      Loc trung tam
+                      Lọc trung tâm
                     </text>
                     <text x="375" y="171" textAnchor="middle" fontSize="11" fill="#0f766e">
                       {calc.model.label}
@@ -881,10 +881,10 @@ export default function ThuyLucPage() {
 
                     <rect x="540" y="225" width="185" height="56" rx="8" fill="#ffffff" stroke={pressureColor} />
                     <text x="552" y="246" fontSize="11" fill="#334155">
-                      Trang thai ap luc: {pressureStatus}
+                      Trạng thái áp lực: {pressureStatus}
                     </text>
                     <text x="552" y="262" fontSize="11" fill="#334155">
-                      Yeu cau: {round1(calc.requiredPressureBar)} bar
+                      Yêu cầu: {round1(calc.requiredPressureBar)} bar
                     </text>
                     <text x="552" y="276" fontSize="11" fill="#334155">
                       Du ap: {round1(calc.pressureMargin)} bar
@@ -898,7 +898,7 @@ export default function ThuyLucPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Droplets className="h-5 w-5 text-teal-700" />
-                  Bang du toan vat tu (BOM)
+                  Bảng dự toán vật tư (BOM)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -906,10 +906,10 @@ export default function ThuyLucPage() {
                   <table className="w-full table-fixed text-left text-sm">
                     <thead className="bg-slate-50 text-slate-600">
                       <tr>
-                        <th className="w-[32%] px-3 py-3 font-semibold">Hang muc</th>
-                        <th className="w-[24%] px-3 py-3 font-semibold">Quy cach</th>
-                        <th className="w-[14%] px-3 py-3 text-right font-semibold">So luong</th>
-                        <th className="w-[15%] px-3 py-3 text-right font-semibold">Don gia</th>
+                        <th className="w-[32%] px-3 py-3 font-semibold">Hạng mục</th>
+                        <th className="w-[24%] px-3 py-3 font-semibold">Quy cách</th>
+                        <th className="w-[14%] px-3 py-3 text-right font-semibold">Số lượng</th>
+                        <th className="w-[15%] px-3 py-3 text-right font-semibold">Đơn giá</th>
                         <th className="w-[15%] px-3 py-3 text-right font-semibold">Thanh tien</th>
                       </tr>
                     </thead>
@@ -929,7 +929,7 @@ export default function ThuyLucPage() {
                     <tfoot className="border-t border-emerald-200 bg-emerald-50/70">
                       <tr>
                         <td className="px-3 py-4 text-base font-bold text-emerald-900" colSpan={4}>
-                          Tong chi phi uoc tinh
+                          Tổng chi phí ước tính
                         </td>
                         <td className="px-3 py-4 text-right text-2xl font-extrabold text-emerald-900">
                           {formatVnd(calc.totalBomCost)}
@@ -941,10 +941,10 @@ export default function ThuyLucPage() {
 
                 <section id="lead-handoff" className="space-y-5 rounded-2xl border border-green-200 bg-green-50 p-6 md:p-8">
                   <div className="text-center">
-                    <p className="text-sm font-semibold uppercase tracking-wide text-green-800">Tong du toan hien tai</p>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-green-800">Tổng dự toán hiện tại</p>
                     <p className="mt-2 text-4xl font-extrabold tracking-tight text-green-900 md:text-5xl">{formatVnd(calc.totalBomCost)}</p>
                     <p className="mx-auto mt-3 max-w-2xl text-sm text-green-900/85">
-                      Nhan ngay danh muc vat tu BOM chi tiet va ban ve ky thuat so bo cho ray cua ban.
+                      Nhận ngay danh mục vật tư BOM chi tiết và bản vẽ kỹ thuật sơ bộ cho rẫy của bạn.
                     </p>
                   </div>
 
@@ -959,12 +959,12 @@ export default function ThuyLucPage() {
                       {isMatchingDealers ? (
                         <>
                           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Dang geo-matching dai ly gan nhat...
+                          Đang geo-matching đại lý gần nhất...
                         </>
                       ) : (
                         <>
                           <MessageCircle className="mr-2 h-5 w-5" />
-                          NHAN BAO GIA CHI TIET QUA ZALO
+                          NHẬN BÁO GIÁ CHI TIẾT QUA ZALO
                         </>
                       )}
                     </Button>
@@ -974,7 +974,7 @@ export default function ThuyLucPage() {
                       onClick={handleTuVanChuyenGia}
                       className="h-12 w-full rounded-xl border-green-300 bg-white/80 text-green-900 hover:bg-white"
                     >
-                      TU VAN CHUYEN GIA THIET KE
+                      TƯ VẤN CHUYÊN GIA THIẾT KẾ
                     </Button>
                   </div>
 
@@ -1010,10 +1010,10 @@ export default function ThuyLucPage() {
 
                   {showLeadForm && (
                     <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
-                      <p className="text-sm font-semibold text-slate-900">Gui lead ve portal dai ly</p>
+                      <p className="text-sm font-semibold text-slate-900">Gửi lead về portal đại lý</p>
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                         <div className="space-y-1">
-                          <Label htmlFor="lead-name">Ten khach</Label>
+                          <Label htmlFor="lead-name">Tên khách</Label>
                           <Input id="lead-name" value={leadName} onChange={(event) => setLeadName(event.target.value)} placeholder="Nguyen Van A" />
                         </div>
                         <div className="space-y-1">
@@ -1027,12 +1027,12 @@ export default function ThuyLucPage() {
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label htmlFor="lead-region">Vung trong</Label>
+                          <Label htmlFor="lead-region">Vùng trồng</Label>
                           <Input id="lead-region" value={leadRegion} onChange={(event) => setLeadRegion(event.target.value)} placeholder="Dak Lak" />
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="lead-drawing">Ban ve du toan so bo</Label>
+                        <Label htmlFor="lead-drawing">Bản vẽ dự toán sơ bộ</Label>
                         <Textarea id="lead-drawing" value={preliminaryDrawing} readOnly className="min-h-[140px] bg-slate-50 font-mono text-xs" />
                       </div>
                       <Button
@@ -1044,10 +1044,10 @@ export default function ThuyLucPage() {
                         {isSubmittingLead ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Dang gui lead...
+                            Đang gửi lead...
                           </>
                         ) : (
-                          "CHOT DON VA CHUYEN LEAD CHO DAI LY"
+                          "CHỐT ĐƠN VÀ CHUYỂN LEAD CHO ĐẠI LÝ"
                         )}
                       </Button>
 
@@ -1075,7 +1075,7 @@ export default function ThuyLucPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Gauge className="h-5 w-5 text-teal-700" />
-                    Comparison: Venturi vs. Bom dinh luong (dien tich &gt; 2ha)
+                    Comparison: Venturi vs. Bơm định lượng (diện tích &gt; 2ha)
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1083,10 +1083,10 @@ export default function ThuyLucPage() {
                     <table className="w-full min-w-[620px] text-left text-sm">
                       <thead className="bg-slate-50 text-slate-600">
                         <tr>
-                          <th className="px-3 py-3 font-semibold">Giai phap</th>
-                          <th className="px-3 py-3 text-right font-semibold">Dau tu ban dau</th>
-                          <th className="px-3 py-3 text-right font-semibold">Chi phi van hanh/nam</th>
-                          <th className="px-3 py-3 text-right font-semibold">Tong nam dau</th>
+                          <th className="px-3 py-3 font-semibold">Giải pháp</th>
+                          <th className="px-3 py-3 text-right font-semibold">Đầu tư ban đầu</th>
+                          <th className="px-3 py-3 text-right font-semibold">Chi phí vận hành/năm</th>
+                          <th className="px-3 py-3 text-right font-semibold">Tổng năm đầu</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 bg-white">
@@ -1097,7 +1097,7 @@ export default function ThuyLucPage() {
                           <td className="px-3 py-3 text-right font-medium">{formatVnd(calc.comparison.venturi.year1)}</td>
                         </tr>
                         <tr className="bg-teal-50/60">
-                          <td className="px-3 py-3 font-medium">Bom dinh luong</td>
+                          <td className="px-3 py-3 font-medium">Bơm định lượng</td>
                           <td className="px-3 py-3 text-right font-medium">{formatVnd(calc.comparison.dosing.initial)}</td>
                           <td className="px-3 py-3 text-right font-medium">{formatVnd(calc.comparison.dosing.annual)}</td>
                           <td className="px-3 py-3 text-right font-semibold">{formatVnd(calc.comparison.dosing.year1)}</td>
@@ -1112,8 +1112,8 @@ export default function ThuyLucPage() {
                     </p>
                     <p className="mt-1 text-sm text-teal-800">
                       {calc.comparison.paybackYears
-                        ? `Hoan von dau tu them sau khoang ${round1(calc.comparison.paybackYears)} nam.`
-                        : "Voi tham so hien tai, chua tao duoc loi the hoan von ro rang cho bom dinh luong."}
+                        ? `Hoàn vốn đầu tư thêm sau khoảng ${round1(calc.comparison.paybackYears)} năm.`
+                        : "Với tham số hiện tại, chưa tạo được lợi thế hoàn vốn rõ ràng cho bơm định lượng."}
                     </p>
                   </div>
                 </CardContent>
@@ -1123,15 +1123,15 @@ export default function ThuyLucPage() {
             <div className="grid grid-cols-1 gap-3 text-sm text-slate-600 md:grid-cols-3">
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <LandPlot className="mb-2 h-4 w-4 text-slate-700" />
-                Mat do cay: <strong>{calc.selectedCrop.densityPerHa}</strong> cay/ha
+                Mật độ cây: <strong>{calc.selectedCrop.densityPerHa}</strong> cây/ha
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <Sprout className="mb-2 h-4 w-4 text-slate-700" />
-                Tong so cay: <strong>{calc.plantCount.toLocaleString("vi-VN")}</strong>
+                Tổng số cây: <strong>{calc.plantCount.toLocaleString("vi-VN")}</strong>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <Waves className="mb-2 h-4 w-4 text-slate-700" />
-                Dau tu theo mo hinh: <strong>{calc.model.label}</strong>
+                Đầu tư theo mô hình: <strong>{calc.model.label}</strong>
               </div>
             </div>
           </section>
@@ -1139,7 +1139,7 @@ export default function ThuyLucPage() {
 
         <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
           <h2 className="text-xl font-semibold text-gray-900 md:text-2xl">
-            Thiet bi & Vat tu khuyen dung cho he thong cua ban
+            Thiết bị & Vật tư khuyên dùng cho hệ thống của bạn
           </h2>
           <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
             {crossSellingProducts.map((product) => (
