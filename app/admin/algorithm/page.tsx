@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -109,10 +110,41 @@ function calculateScore(dealer: DealerPreview, weights: WeightConfig): number {
 }
 
 // ─── Main Page ───────────────────────────────────────────────────────
+const SETTINGS_KEY = 'geo_matching_weights';
+
 export default function AlgorithmTuningPage() {
   const [weights, setWeights] = useState<WeightConfig>({ ...DEFAULT_WEIGHTS });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+
+  // ─── Load saved weights from Supabase on mount ───────────────────
+  useEffect(() => {
+    async function loadWeights() {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', SETTINGS_KEY)
+          .maybeSingle();
+
+        if (!error && data?.value && typeof data.value === 'object') {
+          const saved = data.value as Record<string, number>;
+          setWeights({
+            w1_distance: saved.w1_distance ?? DEFAULT_WEIGHTS.w1_distance,
+            w2_stock: saved.w2_stock ?? DEFAULT_WEIGHTS.w2_stock,
+            w3_reputation: saved.w3_reputation ?? DEFAULT_WEIGHTS.w3_reputation,
+            w4_history: saved.w4_history ?? DEFAULT_WEIGHTS.w4_history,
+          });
+        }
+      } catch (err) {
+        console.error('[AlgorithmTuning] Failed to load weights:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadWeights();
+  }, []);
 
   const total = weights.w1_distance + weights.w2_stock + weights.w3_reputation + weights.w4_history;
   const isValid = total === 100;
@@ -171,17 +203,38 @@ export default function AlgorithmTuningPage() {
     }
 
     setSaving(true);
-    // Simulate PATCH API call to Supabase
-    await new Promise((r) => setTimeout(r, 1500));
+    try {
+      // Upsert to Supabase app_settings table
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert(
+          {
+            key: SETTINGS_KEY,
+            value: weights as any,
+            description: 'Trọng số thuật toán Geo-matching phân phối Lead đến Đại lý',
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'key' }
+        );
 
-    const now = new Date().toLocaleTimeString('vi-VN');
-    setLastSaved(now);
+      if (error) throw error;
 
-    toast({
-      title: '✅ Đã áp dụng cho toàn hệ thống',
-      description: `Bộ trọng số mới đã được cập nhật lúc ${now}. Tất cả các lead mới sẽ sử dụng thuật toán mới.`,
-    });
-    setSaving(false);
+      const now = new Date().toLocaleTimeString('vi-VN');
+      setLastSaved(now);
+
+      toast({
+        title: '✅ Đã lưu cấu hình vào hệ thống',
+        description: `Bộ trọng số mới đã được lưu vào Supabase lúc ${now}. Tất cả lead mới sẽ sử dụng thuật toán cập nhật.`,
+      });
+    } catch (err: any) {
+      toast({
+        title: '❌ Lỗi khi lưu',
+        description: err?.message || 'Không thể lưu cấu hình. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Live preview ranking

@@ -14,6 +14,9 @@ import {
   Cpu,
   User,
   Sparkles,
+  Blocks,
+  PanelTop,
+  Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +28,12 @@ const navItems = [
   { href: '/admin/pim', icon: Package, title: 'Quản lý PIM' },
   { href: '/admin/dealers', icon: MapPin, title: 'Bản đồ Đại lý' },
   { href: '/admin/algorithm', icon: SlidersHorizontal, title: 'Cấu hình thuật toán' },
+  { href: '/admin/o2o-strategy', icon: Target, title: 'Chiến lược O2O' },
+  { href: '/admin/schema-builder', icon: Blocks, title: 'Schema Builder' },
+  { href: '/admin/portal-layout', icon: PanelTop, title: 'Bố cục Portal' },
 ];
+
+
 
 export default function AdminSidebar() {
   const pathname = usePathname();
