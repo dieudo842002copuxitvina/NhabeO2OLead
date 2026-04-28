@@ -127,18 +127,27 @@ export default function ROICalculator() {
                 <span className="text-sm font-medium text-gray-600">Chi phi kien thiet (Nam 1)</span>
                 <span className="text-right text-xl font-extrabold text-emerald-900">{formatVnd(projection.setupCostYear1)}</span>
               </div>
+              <p className="-mt-1 border-b border-gray-100 pb-3 text-xs italic text-gray-500">
+                Bao gom: Vat tu he thong tuoi, giong cay trong, nhan cong dao ho va phan bon lot nam dau.
+              </p>
               <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-2">
                 <span className="text-sm font-medium text-gray-600">Phi duy tri van hanh (Nam 2 - 3)</span>
                 <span className="text-right text-xl font-extrabold text-emerald-900">
                   {formatVnd(projection.operationCostYear2to3)}/nam
                 </span>
               </div>
+              <p className="-mt-1 border-b border-gray-100 pb-3 text-xs italic text-gray-500">
+                Bao gom: Chi phi dien/nuoc, phan bon dinh ky, dich vu drone xit thuoc va nhan cong phat co, tia canh.
+              </p>
               <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-2">
                 <span className="text-sm font-medium text-gray-600">Du phong Doanh thu (Tu Nam 4)</span>
                 <span className="text-right text-xl font-extrabold text-emerald-900">
                   {formatVnd(projection.projectedRevenueFromYear4)}/nam
                 </span>
               </div>
+              <p className="-mt-1 border-b border-gray-100 pb-3 text-xs italic text-gray-500">
+                Tinh toan dua tren nang suat trung binh 15-20kg/cay (nam 4) va gia thi truong trung binh cua 5 nam gan nhat.
+              </p>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-medium text-gray-600">Diem hoa von du kien</span>
                 <span className="text-right text-2xl font-extrabold text-emerald-900">

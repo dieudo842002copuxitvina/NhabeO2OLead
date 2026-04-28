@@ -19,7 +19,8 @@ const turnkeySteps = [
   {
     id: "step-1",
     title: "Buoc 1: Khao sat & Phat quang",
-    description: "Doi tho dia phuong don sach co dai va do dac dia hinh thuc te.",
+    description:
+      "Khong chi la don co, ky su Nha Be Agri se tien hanh lay mau dat tai 5 diem khac nhau de xet nghiem chi so dinh duong, do do doc bang may dinh vi GPS de lap ban ve cao do chinh xac, dam bao he thong tuoi sau nay dong deu 100%.",
     icon: Scissors,
     ctaLabel: null,
     href: null,
@@ -27,7 +28,8 @@ const turnkeySteps = [
   {
     id: "step-2",
     title: "Buoc 2: Cai tao nen dat",
-    description: "Xu ly phen, kich re va nang do mau mo truoc khi xuong giong.",
+    description:
+      "Dua tren ket qua xet nghiem, chung toi thuc hien quy trinh cai tao dat 3 giai doan: Giai doc phen/huu co -> Bo sung tap doan vi sinh vat co loi -> Can bang pH dat bang voi tinh luyen va Humic nhap khau. Day la nen tang de cay ben goc, it sau benh.",
     icon: Leaf,
     ctaLabel: "Mua Phan Huu Co / Humic",
     href: "/danh-muc/phan-huu-co-vi-sinh",
@@ -35,7 +37,8 @@ const turnkeySteps = [
   {
     id: "step-3",
     title: "Buoc 3: Chon giong & Lap dat tuoi",
-    description: "Xuong giong chuan va thi cong he thong tuoi tu dong dong bo.",
+    description:
+      "Su dung giong dau dong co chung nhan. He thong tuoi su dung bec bu ap (PC) chong con trung, ket hop bo trung tam loc dia kep giup loai bo hoan toan can ban, bao ve dau tuoi khong bi tac nghen trong 10 nam.",
     icon: Sprout,
     ctaLabel: "Tim Dai ly cap vat tu gan ray",
     href: "/dai-ly",
@@ -43,7 +46,8 @@ const turnkeySteps = [
   {
     id: "step-4",
     title: "Buoc 4: Quan ly tu xa (IoT)",
-    description: "Theo doi do am va bam tuoi nuoc tren smartphone ngay tai van phong.",
+    description:
+      "Ban giao quyen dieu khien qua App Smartphone cho chu dau tu. Thiet lap che do tuoi tu dong theo cam bien do am, giup tiet kiem 40% tien dien va 50% luong nuoc so voi tuoi truyen thong.",
     icon: Smartphone,
     ctaLabel: "Xem Bo dieu khien IoT",
     href: "/danh-muc/bo-dieu-khien",
@@ -345,8 +349,11 @@ export default function SolutionsHubPage() {
               Toi o xa, lam sao kiem soat duoc tien do va chat luong?
             </summary>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              Khach hang duoc cung cap tai khoan Client Portal, tich hop camera giam sat tai vuon va nhan bao cao Zalo
-              tu dong hang tuan.
+              Nha Be Agri thiet lap mot he thong quan ly 3 lop:
+              <br />- Lop 1: Camera giam sat AI 360 do lap dat tai cac vi tri trong yeu.
+              <br />- Lop 2: Nhat ky dien tu duoc doi tho cap nhat hang ngay qua ung dung noi bo (bao gom anh chup thuc dia).
+              <br />- Lop 3: Bao cao tu dong tu cam bien IoT (do am, pH, dinh duong) gui thang ve Zalo cua anh/chi moi 24h.
+              Anh/chi hoan toan lam chu vuon cay ma khong can co mat tai hien truong.
             </p>
           </details>
 
@@ -355,18 +362,23 @@ export default function SolutionsHubPage() {
               Bao hanh he thong va ty le song cua cay trong ra sao?
             </summary>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              Nha Be Agri cam ket bao hanh thiet bi IoT 24 thang 1 doi 1. Ho tro ky thuat tron doi va cam ket ty le
-              song cua giong dat tren 95%.
+              Chung toi ap dung quy trinh "Bao hiem cay trong":
+              <br />- Cay giong duoc tuyen chon tu cac vuon uom doi tac dat chuan VietGAP.
+              <br />- Trong 6 thang dau tien, neu cay chet do loi ky thuat hoac giong, chung toi thay moi 100% mien phi.
+              <br />- He thong tuoi duoc bao tri dinh ky 3 thang/lan de dam bao khong co cay nao bi thieu nuoc hay ung cuc bo.
             </p>
           </details>
 
           <details className="group rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <summary className="cursor-pointer list-none pr-6 text-sm font-semibold text-gray-900">
-              Toi chua co dat, Nha Be Agri co ho tro tim quy dat khong?
+              Rui ro van hanh (Cup dien/Mat mang) duoc xu ly nhu the nao?
             </summary>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              Chung toi co mang luoi Dai ly rai khap cac tinh Tay Nguyen va Mien Nam, san sang ho tro anh/chi khao sat
-              quy dat phu hop nhat voi ngan sach.
+              He thong duoc thiet ke voi co che "Fail-safe":
+              <br />- Bo dieu khien IoT co che do luu kich ban tuoi Offline (tu chay theo gio du mat mang).
+              <br />- Lap dat van xa khi va van an toan de bao ve duong ong khi co su co ap luc.
+              <br />- Luon co he thong van tay song song de doi tho dia phuong co the can thiep thu cong ngay lap tuc neu
+              co su co dien keo dai.
             </p>
           </details>
         </div>
