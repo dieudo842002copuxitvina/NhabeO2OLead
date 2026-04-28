@@ -136,9 +136,9 @@ export default function ChamPhanPage() {
     [results.venturiLh],
   );
 
-  const zaloMessage = `Toi vua tinh fertigation cho ${areaHa.toFixed(2)} ha, can ${results.fertilizerKg.toFixed(
+  const zaloMessage = `Tôi vừa tính fertigation cho ${areaHa.toFixed(2)} ha, cần ${results.fertilizerKg.toFixed(
     1,
-  )} kg phan, dung dich me ${results.motherL.toFixed(1)} L. Can tu van bo cham phan...`;
+  )} kg phân, dung dịch mẹ ${results.motherL.toFixed(1)} L. Cần tư vấn bộ châm phân...`;
   const zaloHref = `https://zalo.me/share?text=${encodeURIComponent(zaloMessage)}`;
 
   return (
@@ -146,9 +146,9 @@ export default function ChamPhanPage() {
       <div className="space-y-8">
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4CAF50]">Fertigation SaaS Tool</p>
-          <h1 className="text-2xl font-bold sm:text-3xl">May tinh Thuy luc & Cham phan</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Máy tính Thủy lực & Châm phân</h1>
           <p className="max-w-3xl text-sm leading-6 text-gray-600">
-            Tinh nhanh luong phan, the tich dung dich me va luu luong hut Venturi de chot cau hinh vat tu toi uu.
+            Tính nhanh lượng phân, thể tích dung dịch mẹ và lưu lượng hút Venturi để chốt cấu hình vật tư tối ưu.
           </p>
         </header>
 
@@ -169,16 +169,21 @@ export default function ChamPhanPage() {
 
         <section className="rounded-3xl border border-gray-200 bg-white p-6 lg:p-8">
           <h2 className="text-center text-2xl font-bold text-gray-900">
-            Thiet bi & Vat tu khuyen dung cho he thong cua ban
+            Thiết bị & Vật tư khuyên dùng cho hệ thống của bạn
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-gray-600">
-            De xuat duoc cap nhat theo ket qua luu luong Venturi trong thoi gian thuc.
+            Đề xuất được cập nhật theo kết quả lưu lượng Venturi trong thời gian thực.
           </p>
 
-          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-            {crossSellingProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          <div className="mt-6 w-full overflow-x-auto whitespace-nowrap shadow-sm pb-4 rounded-xl">
+            <p className="text-xs text-gray-500 mb-3 md:hidden italic text-center">Vuốt để xem thêm &rarr;</p>
+            <div className="flex md:grid md:grid-cols-4 gap-4 w-max md:w-auto px-1">
+              {crossSellingProducts.map((product) => (
+                <div key={product.id} className="w-[260px] md:w-auto whitespace-normal">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </div>

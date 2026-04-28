@@ -17,6 +17,8 @@ import {
   Blocks,
   PanelTop,
   Target,
+  Handshake,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,10 +29,13 @@ const navItems = [
   { href: '/admin/leads', icon: Crosshair, title: 'Lead Command Center' },
   { href: '/admin/pim', icon: Package, title: 'Quản lý PIM' },
   { href: '/admin/dealers', icon: MapPin, title: 'Bản đồ Đại lý' },
+  { href: '/admin/partners', icon: Handshake, title: 'B2B Partner Hub' },
   { href: '/admin/algorithm', icon: SlidersHorizontal, title: 'Cấu hình thuật toán' },
   { href: '/admin/o2o-strategy', icon: Target, title: 'Chiến lược O2O' },
+  { href: '/admin/category-schema', icon: Blocks, title: 'Category Schema' },
   { href: '/admin/schema-builder', icon: Blocks, title: 'Schema Builder' },
   { href: '/admin/portal-layout', icon: PanelTop, title: 'Bố cục Portal' },
+  { href: '/admin/wiki', icon: BookOpen, title: 'Wiki Nội bộ' },
 ];
 
 
