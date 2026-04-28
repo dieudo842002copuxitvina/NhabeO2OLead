@@ -35,7 +35,7 @@ import {
   Image as ImageIcon,
   Loader2
 } from 'lucide-react';
-import { uploadProductImage, createProduct } from '../../../../app/actions/productActions';
+import { uploadProductImage, createProduct } from '../../../app/actions/productActions';
 
 const formSchema = z.object({
   title: z.string().min(2, 'Tên sản phẩm phải có ít nhất 2 ký tự.'),

@@ -16,6 +16,7 @@ import {
   Link as LinkIcon,
   GitMerge,
   Clock,
+  User,
   Terminal,
   FileText,
   ChevronRight,
