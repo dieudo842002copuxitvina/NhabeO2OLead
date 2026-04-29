@@ -69,8 +69,8 @@ export default function SmartLeadForm({
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 py-6">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+        <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/50 px-4 py-6">
+          <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-xl font-extrabold text-gray-900">Đăng Ký Tư Vấn Giải Pháp All-In-One</h3>
@@ -89,7 +89,7 @@ export default function SmartLeadForm({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-3 pb-6 sm:pb-8">
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-gray-800">Vị trí khu đất</label>
                 <select

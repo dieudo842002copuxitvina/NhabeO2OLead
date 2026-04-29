@@ -25,7 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/sonner';
 import {
   Boxes,
   Image as ImageIcon,
@@ -66,6 +66,7 @@ const formSchema = z.object({
   title: z.string().min(2, 'Tên sản phẩm phải có ít nhất 2 ký tự.'),
   sku: z.string().min(3, 'SKU phải có ít nhất 3 ký tự.'),
   brand: z.string().optional(),
+  imageUrl: z.string().min(1, 'Vui lòng tải ảnh sản phẩm.'),
   categoryId: z.string().min(1, 'Vui lòng chọn danh mục.'),
   basePrice: z.coerce.number().min(0, 'Giá bán không hợp lệ.'),
   description: z.string().optional(),
@@ -208,6 +209,7 @@ export default function ProductForm({ categories }: ProductFormProps) {
       title: '',
       sku: '',
       brand: '',
+      imageUrl: '',
       categoryId: '',
       basePrice: 0,
       description: '',
@@ -248,6 +250,7 @@ export default function ProductForm({ categories }: ProductFormProps) {
 
   const handleCategoryChange = (categoryId: string, onChange: (value: string) => void) => {
     onChange(categoryId);
+    form.clearErrors('categoryId');
 
     const currentSpecifications = form.getValues('specifications') ?? {};
     const nextSpecifications = { ...currentSpecifications };
@@ -270,17 +273,42 @@ export default function ProductForm({ categories }: ProductFormProps) {
 
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+    form.setValue('imageUrl', file.name, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.clearErrors('imageUrl');
   };
 
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
+    form.setValue('imageUrl', '', {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
 
     try {
+      if (!values.categoryId) {
+        form.setError('categoryId', {
+          type: 'manual',
+          message: 'Vui lòng chọn danh mục.',
+        });
+        return;
+      }
+
+      if (!imageFile || !values.imageUrl) {
+        form.setError('imageUrl', {
+          type: 'manual',
+          message: 'Vui lòng tải ảnh sản phẩm.',
+        });
+        return;
+      }
+
       let uploadedImageUrl = '';
 
       if (imageFile) {
