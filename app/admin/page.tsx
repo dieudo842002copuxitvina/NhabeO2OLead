@@ -269,7 +269,7 @@ export default function AdminDashboardPage() {
                 </div>
               </Link>
 
-              <Link href="/admin/wiki" className="block group">
+              <Link href="/admin/wiki/new" className="block group">
                 <div className="flex items-center gap-4 p-4 rounded-xl border border-border/60 bg-white group-hover:border-blue-500/50 group-hover:shadow-sm transition-all">
                   <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
                     <BookOpen className="h-5 w-5 text-blue-600" />

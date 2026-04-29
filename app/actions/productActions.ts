@@ -59,8 +59,21 @@ export interface CreateProductPayload {
   brand: string;
   categoryId: string;
   basePrice: number;
+  description: string;
   specifications: Record<string, any>;
   imageUrl: string;
+}
+
+function slugifyProductName(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
 }
 
 /**
@@ -71,17 +84,20 @@ export async function createProduct(payload: CreateProductPayload) {
   try {
     // Tự động chuyển SKU thành chữ In Hoa và loại bỏ khoảng trắng thừa
     const formattedSku = payload.sku.trim().toUpperCase();
+    const generatedSlug = slugifyProductName(payload.title);
 
     // Insert dữ liệu vào bảng products
     // Biến specifications (Record/JSON) được nạp thẳng vào cột JSONB
     const { data: insertedProduct, error } = await supabase
       .from('products')
       .insert({
+        slug: generatedSlug,
         sku: formattedSku,
         name: payload.title,
         brand: payload.brand,
         category_id: payload.categoryId,
         base_price: payload.basePrice,
+        description: payload.description,
         specifications: payload.specifications,
         image_url: payload.imageUrl,
         status: 'active'
