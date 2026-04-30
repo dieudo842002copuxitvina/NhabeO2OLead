@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -28,6 +27,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from '@/components/ui/sonner';
+import RichTextEditor from '@/components/admin/RichTextEditor';
 import {
   ChevronRight,
   FileText,
@@ -73,19 +73,309 @@ interface VariantRow {
   sku: string;
 }
 
+interface TechnicalFieldDefinition {
+  key: string;
+  label: string;
+  placeholder: string;
+  type: 'text' | 'number' | 'select';
+  options?: string[];
+}
+
+interface TechnicalSpecTemplate {
+  id: string;
+  title: string;
+  description: string;
+  columns: 2 | 3;
+  fields: TechnicalFieldDefinition[];
+  match: (normalizedCategory: string) => boolean;
+}
+
+interface CustomSpecificationRow {
+  id: string;
+  key: string;
+  value: string;
+}
+
 const MAX_GALLERY_IMAGES = 9;
 
 const SECTION_ITEMS = [
   { id: 'basic-info', label: 'Thông tin cơ bản' },
   { id: 'media-assets', label: 'Hình ảnh' },
   { id: 'sales-info', label: 'Thông tin bán hàng' },
+  { id: 'technical-specs', label: 'Thông số kỹ thuật' },
   { id: 'shipping-info', label: 'Vận chuyển' },
 ] as const;
+
+const TECHNICAL_SPEC_TEMPLATES: TechnicalSpecTemplate[] = [
+  {
+    id: 'central-filter',
+    title: 'Bộ lọc đĩa & Lọc màng',
+    description: 'Nhóm thông số cho bộ lọc trung tâm, hỗ trợ đội kỹ thuật và sales mô tả rõ năng lực lọc của hệ thống.',
+    columns: 2,
+    match: (normalizedCategory) =>
+      normalizedCategory.includes('bo loc dia') ||
+      normalizedCategory.includes('loc mang') ||
+      normalizedCategory.includes('bo loc trung tam'),
+    fields: [
+      {
+        key: 'luu_luong_loc_toi_da_m3_h',
+        label: 'Lưu lượng lọc tối đa (m3/h)',
+        placeholder: 'Ví dụ: 25',
+        type: 'number',
+      },
+      {
+        key: 'cap_do_loc',
+        label: 'Cấp độ lọc (Micron / Mesh)',
+        placeholder: 'Ví dụ: 130 Micron / 120 Mesh',
+        type: 'text',
+      },
+      {
+        key: 'co_ren_ket_noi',
+        label: 'Cỡ ren kết nối (inch/mm)',
+        placeholder: 'Ví dụ: 2 inch / 60 mm',
+        type: 'text',
+      },
+      {
+        key: 'ap_suat_hoat_dong_toi_da_bar',
+        label: 'Áp suất hoạt động tối đa (bar)',
+        placeholder: 'Ví dụ: 8',
+        type: 'number',
+      },
+    ],
+  },
+  {
+    id: 'fertigation',
+    title: 'Hệ thống Châm phân',
+    description: 'Dùng cho Venturi và các bộ châm phân bán tự động, tập trung vào khả năng hút phân và yêu cầu áp suất.',
+    columns: 2,
+    match: (normalizedCategory) =>
+      normalizedCategory.includes('venturi') ||
+      normalizedCategory.includes('cham phan') ||
+      normalizedCategory.includes('ban tu dong'),
+    fields: [
+      {
+        key: 'kich_thuoc_dau_noi',
+        label: 'Kích thước đầu nối (inch/mm)',
+        placeholder: 'Ví dụ: 34 / 27 mm',
+        type: 'text',
+      },
+      {
+        key: 'luu_luong_hut_phan_toi_da_l_h',
+        label: 'Lưu lượng hút phân tối đa (L/h)',
+        placeholder: 'Ví dụ: 180',
+        type: 'number',
+      },
+      {
+        key: 'chenh_lech_ap_suat_yeu_cau_bar',
+        label: 'Chênh lệch áp suất yêu cầu (bar)',
+        placeholder: 'Ví dụ: 0.5 - 1.0 bar',
+        type: 'text',
+      },
+      {
+        key: 'chat_lieu_loi',
+        label: 'Chất liệu lõi',
+        placeholder: 'Ví dụ: Nhựa POM chống ăn mòn',
+        type: 'text',
+      },
+    ],
+  },
+  {
+    id: 'pump',
+    title: 'Máy bơm ly tâm / Máy bơm hỏa tiễn',
+    description: 'Khai báo các thông số hiệu năng cốt lõi của máy bơm để đồng bộ sang PIM và nội dung bán hàng.',
+    columns: 3,
+    match: (normalizedCategory) =>
+      normalizedCategory.includes('may bom ly tam') || normalizedCategory.includes('may bom hoa tien'),
+    fields: [
+      { key: 'cong_suat_hp_kw', label: 'Công suất (HP / kW)', placeholder: 'Ví dụ: 3 HP / 2.2 kW', type: 'text' },
+      { key: 'cot_ap_toi_da_hmax_m', label: 'Cột áp tối đa Hmax (m)', placeholder: 'Ví dụ: 42', type: 'number' },
+      { key: 'luu_luong_toi_da_qmax_m3_h', label: 'Lưu lượng tối đa Qmax (m3/h)', placeholder: 'Ví dụ: 18', type: 'number' },
+      {
+        key: 'dien_ap_su_dung',
+        label: 'Điện áp sử dụng',
+        placeholder: 'Chọn điện áp',
+        type: 'select',
+        options: ['1 Pha 220V', '3 Pha 380V'],
+      },
+      { key: 'co_nong_hut_xa_mm', label: 'Cỡ nòng Hút - Xả (mm)', placeholder: 'Ví dụ: 49 - 42 mm', type: 'text' },
+    ],
+  },
+  {
+    id: 'valve',
+    title: 'Van điện từ (Solenoid) & Van tay',
+    description: 'Bộ thông số cho van điều tiết, van điện từ và van tay trong hệ thống tưới hoặc châm phân.',
+    columns: 3,
+    match: (normalizedCategory) =>
+      normalizedCategory.includes('van dien tu') ||
+      normalizedCategory.includes('solenoid') ||
+      normalizedCategory.includes('van tay'),
+    fields: [
+      {
+        key: 'dien_ap_cuon_hut',
+        label: 'Điện áp cuộn hút',
+        placeholder: 'Chọn điện áp',
+        type: 'select',
+        options: ['24VAC', '24VDC', '220V', '9VDC Latching', 'Không có'],
+      },
+      {
+        key: 'kich_thuoc_ren',
+        label: 'Kích thước ren (inch/mm)',
+        placeholder: 'Ví dụ: 1 inch / 34 mm',
+        type: 'text',
+      },
+      {
+        key: 'ap_suat_chiu_dung_bar',
+        label: 'Áp suất chịu đựng (bar)',
+        placeholder: 'Ví dụ: 10',
+        type: 'number',
+      },
+    ],
+  },
+  {
+    id: 'drone',
+    title: 'Drone Nông Nghiệp',
+    description: 'Thông số khai thác chính cho drone phun thuốc, rải hạt hoặc khảo sát nông nghiệp.',
+    columns: 3,
+    match: (normalizedCategory) =>
+      normalizedCategory.includes('drone nong nghiep') ||
+      (normalizedCategory.includes('drone') && normalizedCategory.includes('nong nghiep')),
+    fields: [
+      {
+        key: 'dung_tich_binh_phun_thuoc_lit',
+        label: 'Dung tích bình phun thuốc (Lít)',
+        placeholder: 'Ví dụ: 30',
+        type: 'number',
+      },
+      {
+        key: 'dung_tich_binh_rai_hat_kg',
+        label: 'Dung tích bình rải hạt (Kg)',
+        placeholder: 'Ví dụ: 40',
+        type: 'number',
+      },
+      {
+        key: 'chieu_rong_dai_phun_hieu_qua_m',
+        label: 'Chiều rộng dải phun hiệu quả (m)',
+        placeholder: 'Ví dụ: 9',
+        type: 'number',
+      },
+      {
+        key: 'cap_do_chong_nuoc_bui',
+        label: 'Cấp độ chống nước/bụi',
+        placeholder: 'Ví dụ: IPX6K',
+        type: 'text',
+      },
+      {
+        key: 'thoi_gian_bay_toi_da_1_pin_phut',
+        label: 'Thời gian bay tối đa / 1 pin (Phút)',
+        placeholder: 'Ví dụ: 22',
+        type: 'number',
+      },
+    ],
+  },
+  {
+    id: 'solar',
+    title: 'Điện Mặt Trời & Bơm Solar',
+    description: 'Nhóm thông số cho giải pháp solar, từ tấm pin đến biến tần và tuổi thọ thiết kế hệ thống.',
+    columns: 2,
+    match: (normalizedCategory) =>
+      normalizedCategory.includes('dien mat troi') ||
+      normalizedCategory.includes('bom solar') ||
+      normalizedCategory.includes('solar'),
+    fields: [
+      {
+        key: 'cong_suat_tam_pin_wp',
+        label: 'Công suất Tấm pin (Wp)',
+        placeholder: 'Ví dụ: 550',
+        type: 'number',
+      },
+      {
+        key: 'hieu_suat_quang_nang',
+        label: 'Hiệu suất quang năng (%)',
+        placeholder: 'Ví dụ: 21.3%',
+        type: 'text',
+      },
+      {
+        key: 'cong_suat_bien_tan_kw',
+        label: 'Công suất Biến tần / Inverter (kW)',
+        placeholder: 'Ví dụ: 5.5',
+        type: 'number',
+      },
+      {
+        key: 'tuoi_tho_thiet_ke_nam',
+        label: 'Tuổi thọ thiết kế (Năm)',
+        placeholder: 'Ví dụ: 25',
+        type: 'number',
+      },
+    ],
+  },
+  {
+    id: 'pipe',
+    title: 'Ống LDPE & HDPE',
+    description: 'Nhóm thông số hình học và khả năng chịu áp dành cho ống tưới chính và ống nhánh.',
+    columns: 2,
+    match: (normalizedCategory) =>
+      normalizedCategory.includes('ldpe') || normalizedCategory.includes('hdpe'),
+    fields: [
+      { key: 'duong_kinh_mm', label: 'Đường kính (mm)', placeholder: 'Ví dụ: 16', type: 'number' },
+      { key: 'do_day_mm', label: 'Độ dày (mm)', placeholder: 'Ví dụ: 1.2', type: 'number' },
+      { key: 'ap_suat_chiu_dung_bar', label: 'Áp suất chịu đựng (bar)', placeholder: 'Ví dụ: 6', type: 'number' },
+      { key: 'chieu_dai_cuon_m', label: 'Chiều dài mỗi cuộn (m)', placeholder: 'Ví dụ: 200', type: 'number' },
+    ],
+  },
+  {
+    id: 'fertilizer',
+    title: 'Phân bón hòa tan',
+    description: 'Khai báo thành phần dinh dưỡng và dạng thành phẩm để hỗ trợ hiển thị thông số kỹ thuật rõ ràng hơn.',
+    columns: 2,
+    match: (normalizedCategory) => normalizedCategory.includes('phan bon'),
+    fields: [
+      { key: 'ty_le_npk', label: 'Tỷ lệ N-P-K (%)', placeholder: 'Ví dụ: 20-20-20', type: 'text' },
+      {
+        key: 'dang_phan_bon',
+        label: 'Dạng',
+        placeholder: 'Chọn dạng',
+        type: 'select',
+        options: ['Bột', 'Hạt', 'Nước'],
+      },
+      { key: 'lieu_luong_pha', label: 'Liều lượng pha (g/Lít)', placeholder: 'Ví dụ: 1.5', type: 'number' },
+    ],
+  },
+  {
+    id: 'emitter',
+    title: 'Béc tưới & Đầu nhỏ giọt',
+    description: 'Thiết lập các thông số phát nước quan trọng để đội kỹ thuật và sales sử dụng thống nhất.',
+    columns: 2,
+    match: (normalizedCategory) =>
+      normalizedCategory.includes('bec tuoi') ||
+      normalizedCategory.includes('dau nho giot') ||
+      normalizedCategory.includes('nho giot'),
+    fields: [
+      { key: 'ban_kinh_tuoi_m', label: 'Bán kính tưới (m)', placeholder: 'Ví dụ: 2.5', type: 'number' },
+      { key: 'luu_luong_l_h', label: 'Lưu lượng (L/h)', placeholder: 'Ví dụ: 60', type: 'number' },
+      { key: 'ap_suat_hoat_dong_bar', label: 'Áp suất hoạt động (bar)', placeholder: 'Ví dụ: 1.8', type: 'number' },
+    ],
+  },
+];
+
+function getRichTextPlainText(value: string) {
+  return value
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 const formSchema = z.object({
   title: z.string().min(2, 'Tên sản phẩm phải có ít nhất 2 ký tự.'),
   categoryId: z.string().min(1, 'Vui lòng chọn ngành hàng.'),
-  description: z.string().min(10, 'Mô tả sản phẩm nên có ít nhất 10 ký tự.'),
+  description: z.string().refine((value) => getRichTextPlainText(value).length >= 10, {
+    message: 'Mô tả sản phẩm nên có ít nhất 10 ký tự nội dung.',
+  }),
   sku: z.string().optional(),
   imageUrl: z.string().min(1, 'Vui lòng tải lên ít nhất 1 ảnh sản phẩm.'),
   basePrice: z.coerce.number().min(0, 'Giá bán không hợp lệ.'),
@@ -113,6 +403,26 @@ function slugifyProduct(value: string) {
 function parseCurrencyInput(value: string) {
   const rawValue = value.replace(/[^0-9]/g, '');
   return rawValue === '' ? 0 : Number(rawValue);
+}
+
+function normalizeCategorySearchValue(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function createCustomSpecificationRow(): CustomSpecificationRow {
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    key: '',
+    value: '',
+  };
 }
 
 function SectionCard({
@@ -368,6 +678,10 @@ export default function ProductForm({ categories }: ProductFormProps) {
   const [variantGroup1Options, setVariantGroup1Options] = useState<string[]>([]);
   const [variantGroup2Options, setVariantGroup2Options] = useState<string[]>([]);
   const [variantRows, setVariantRows] = useState<VariantRow[]>([]);
+  const [technicalSpecValues, setTechnicalSpecValues] = useState<Record<string, string>>({});
+  const [customSpecificationRows, setCustomSpecificationRows] = useState<CustomSpecificationRow[]>([
+    createCustomSpecificationRow(),
+  ]);
   const galleryImagesRef = useRef<GalleryImageItem[]>([]);
 
   const form = useForm<FormValues>({
@@ -391,6 +705,15 @@ export default function ProductForm({ categories }: ProductFormProps) {
   const selectedCategory = useMemo(
     () => categories.find((category) => category.id === selectedCategoryId),
     [categories, selectedCategoryId]
+  );
+  const normalizedSelectedCategory = useMemo(
+    () => normalizeCategorySearchValue(`${selectedCategory?.name || ''} ${selectedCategory?.slug || ''}`),
+    [selectedCategory]
+  );
+  const activeTechnicalSpecTemplate = useMemo(
+    () =>
+      TECHNICAL_SPEC_TEMPLATES.find((template) => template.match(normalizedSelectedCategory)) ?? null,
+    [normalizedSelectedCategory]
   );
   const isUsingFallbackCategories = categories.some((category) => category.source === 'fallback');
 
@@ -579,6 +902,37 @@ export default function ProductForm({ categories }: ProductFormProps) {
     setVariantGroup2Options((previous) => previous.filter((item) => item !== option));
   };
 
+  const updateTechnicalSpecValue = (fieldKey: string, nextValue: string) => {
+    setTechnicalSpecValues((previous) => ({
+      ...previous,
+      [fieldKey]: nextValue,
+    }));
+  };
+
+  const addCustomSpecificationRow = () => {
+    setCustomSpecificationRows((previous) => [...previous, createCustomSpecificationRow()]);
+  };
+
+  const updateCustomSpecificationRow = (
+    rowId: string,
+    field: 'key' | 'value',
+    nextValue: string
+  ) => {
+    setCustomSpecificationRows((previous) =>
+      previous.map((row) => (row.id === rowId ? { ...row, [field]: nextValue } : row))
+    );
+  };
+
+  const removeCustomSpecificationRow = (rowId: string) => {
+    setCustomSpecificationRows((previous) => {
+      if (previous.length === 1) {
+        return previous.map((row) => (row.id === rowId ? { ...row, key: '', value: '' } : row));
+      }
+
+      return previous.filter((row) => row.id !== rowId);
+    });
+  };
+
   const updateVariantRow = (
     rowKey: string,
     field: 'price' | 'stockQuantity' | 'sku',
@@ -608,6 +962,40 @@ export default function ProductForm({ categories }: ProductFormProps) {
           : null,
     }));
   }, [hasSecondVariantGroup, variantGroup1Name, variantGroup2Name, variantRows]);
+
+  const technicalSpecificationsPayload = useMemo(() => {
+    const templateEntries =
+      activeTechnicalSpecTemplate?.fields
+        .map((field) => {
+          const rawValue = technicalSpecValues[field.key];
+          const trimmedValue = rawValue?.trim();
+
+          if (!trimmedValue) {
+            return null;
+          }
+
+          return [
+            field.key,
+            field.type === 'number' ? Number(trimmedValue) : trimmedValue,
+          ] as const;
+        })
+        .filter((entry): entry is readonly [string, string | number] => Boolean(entry)) ?? [];
+
+    const customEntries = customSpecificationRows
+      .map((row) => {
+        const trimmedKey = row.key.trim();
+        const trimmedValue = row.value.trim();
+
+        if (!trimmedKey || !trimmedValue) {
+          return null;
+        }
+
+        return [trimmedKey, trimmedValue] as const;
+      })
+      .filter((entry): entry is readonly [string, string] => Boolean(entry));
+
+    return Object.fromEntries([...templateEntries, ...customEntries]);
+  }, [activeTechnicalSpecTemplate, customSpecificationRows, technicalSpecValues]);
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
@@ -723,6 +1111,7 @@ export default function ProductForm({ categories }: ProductFormProps) {
           stock_status: effectiveStockQuantity > 0 ? 'con_hang' : 'het_hang',
           gallery_count: uploadedGalleryUrls.length,
           has_variants: hasVariants,
+          technical_specs: technicalSpecificationsPayload,
           default_sale_info: hasVariants
             ? null
             : {
@@ -845,14 +1234,17 @@ export default function ProductForm({ categories }: ProductFormProps) {
                     <FormItem>
                       <FormLabel>Mô tả sản phẩm</FormLabel>
                       <FormControl>
-                        <Textarea
+                        <RichTextEditor
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
                           placeholder="Mô tả chi tiết đặc tính, ứng dụng, lợi ích và đối tượng phù hợp cho sản phẩm..."
-                          className="min-h-[220px] rounded-2xl border-slate-200 bg-white leading-7"
-                          {...field}
+                          toolbarPreset="basic"
+                          minHeightClassName="min-h-[260px]"
                         />
                       </FormControl>
                       <FormDescription>
-                        Có thể soạn theo phong cách Seller Center: lợi ích chính, thông số, cách dùng và lưu ý.
+                        Soạn theo kiểu WordPress với toolbar cơ bản và lưu nội dung dưới dạng HTML vào form state.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -1108,6 +1500,145 @@ export default function ProductForm({ categories }: ProductFormProps) {
                     </div>
                   </div>
                 )}
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              id="technical-specs"
+              title="Thông số kỹ thuật"
+              description="Hiển thị động theo ngành hàng đang chọn, đồng thời cho phép bổ sung thông số tùy chỉnh để lưu vào specifications."
+              icon={<Ruler className="h-5 w-5" />}
+            >
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Bộ thông số theo danh mục</p>
+                      <p className="text-sm text-slate-500">
+                        {selectedCategory
+                          ? activeTechnicalSpecTemplate
+                            ? `Đang dùng template "${activeTechnicalSpecTemplate.title}" theo danh mục bạn đã chọn.`
+                            : 'Danh mục hiện tại chưa có template riêng, bạn có thể tự khai báo thông số tùy chỉnh bên dưới.'
+                          : 'Hãy chọn ngành hàng ở phần Thông tin cơ bản để hiển thị đúng bộ thông số kỹ thuật.'}
+                      </p>
+                    </div>
+                    {selectedCategory ? (
+                      <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-700">
+                        {selectedCategory.name}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
+
+                {activeTechnicalSpecTemplate ? (
+                  <div className="rounded-3xl border border-slate-200 bg-white p-5">
+                    <div className="mb-5">
+                      <p className="text-sm font-semibold text-slate-900">{activeTechnicalSpecTemplate.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        {activeTechnicalSpecTemplate.description}
+                      </p>
+                    </div>
+
+                    <div
+                      className={cn(
+                        'grid gap-5',
+                        activeTechnicalSpecTemplate.columns === 3
+                          ? 'md:grid-cols-2 xl:grid-cols-3'
+                          : 'md:grid-cols-2'
+                      )}
+                    >
+                      {activeTechnicalSpecTemplate.fields.map((field) => (
+                        <div key={field.key} className="space-y-2">
+                          <label className="text-sm font-medium text-slate-700">{field.label}</label>
+                          {field.type === 'select' ? (
+                            <Select
+                              value={technicalSpecValues[field.key] || undefined}
+                              onValueChange={(value) => updateTechnicalSpecValue(field.key, value)}
+                            >
+                              <SelectTrigger className="h-11 rounded-2xl border-slate-200">
+                                <SelectValue placeholder={field.placeholder} />
+                              </SelectTrigger>
+                              <SelectContent className="z-[220]">
+                                {(field.options || []).map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              type={field.type === 'number' ? 'number' : 'text'}
+                              inputMode={field.type === 'number' ? 'decimal' : undefined}
+                              step={field.type === 'number' ? 'any' : undefined}
+                              min={field.type === 'number' ? '0' : undefined}
+                              value={technicalSpecValues[field.key] || ''}
+                              onChange={(event) => updateTechnicalSpecValue(field.key, event.target.value)}
+                              placeholder={field.placeholder}
+                              className="h-11 rounded-2xl border-slate-200"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-5 py-8 text-center">
+                    <p className="text-sm font-semibold text-slate-900">Chưa có bộ thông số cố định</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Bạn vẫn có thể tiếp tục bằng công cụ thông số tùy chỉnh ở bên dưới để tạo key-value cho sản phẩm.
+                    </p>
+                  </div>
+                )}
+
+                <div className="rounded-3xl border border-slate-200 bg-white p-5">
+                  <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Thông số tùy chỉnh</p>
+                      <p className="text-sm text-slate-500">
+                        Dùng cho các thông số phát sinh ngoài template chuẩn hoặc cho những danh mục chưa có cấu hình sẵn.
+                      </p>
+                    </div>
+                    <Button type="button" variant="outline" onClick={addCustomSpecificationRow} className="rounded-2xl">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Thêm thông số
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {customSpecificationRows.map((row) => (
+                      <div
+                        key={row.id}
+                        className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                      >
+                        <Input
+                          value={row.key}
+                          onChange={(event) =>
+                            updateCustomSpecificationRow(row.id, 'key', event.target.value)
+                          }
+                          placeholder="Tên thông số, ví dụ: Vật liệu cánh bơm"
+                          className="h-11 rounded-2xl border-slate-200"
+                        />
+                        <Input
+                          value={row.value}
+                          onChange={(event) =>
+                            updateCustomSpecificationRow(row.id, 'value', event.target.value)
+                          }
+                          placeholder="Giá trị, ví dụ: Inox 304"
+                          className="h-11 rounded-2xl border-slate-200"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-11 rounded-2xl px-4"
+                          onClick={() => removeCustomSpecificationRow(row.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </SectionCard>
 
