@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
   { href: '/admin/products', icon: Package, title: 'Sản phẩm', exact: true },
   { href: '/admin/products/new', icon: PlusCircle, title: 'Thêm sản phẩm', exact: true },
   { href: '/admin/categories', icon: FolderTree, title: 'Quản lý Danh mục', exact: true },
-  { href: '/admin/pim', icon: Blocks, title: 'Quản lý PIM', exact: true },
+  { href: '/admin/products', icon: Blocks, title: 'Quản lý PIM', exact: true },
   { href: '/admin/wiki', icon: BookOpen, title: 'Wiki & Tri thức' },
   { href: '/admin/dealers', icon: MapPin, title: 'Bản đồ Đại lý', exact: true },
   { href: '/admin/partners', icon: Handshake, title: 'B2B Partner Hub' },
