@@ -10,12 +10,20 @@ export interface SaveWikiPagePayload {
   slug: string;
   content: string;
   tags: string[];
+  status?: 'draft' | 'published';
+  category?: string;
+  coverImage?: string;
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 function createSupabaseServerClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseServiceRoleKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    '';
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     throw new Error('Thiếu cấu hình Supabase server client trong biến môi trường.');
@@ -70,6 +78,11 @@ export async function saveWikiPage(payload: SaveWikiPagePayload) {
     const slug = slugifyWikiValue(payload.slug || payload.title);
     const content = payload.content.trim();
     const tags = normalizeTags(payload.tags);
+    const status = payload.status === 'published' ? 'published' : 'draft';
+    const category = payload.category?.trim() || 'technical-irrigation';
+    const coverImage = payload.coverImage?.trim() || null;
+    const seoTitle = payload.seoTitle?.trim() || null;
+    const seoDescription = payload.seoDescription?.trim() || null;
 
     if (!title || !slug || !content) {
       return {
@@ -88,6 +101,11 @@ export async function saveWikiPage(payload: SaveWikiPagePayload) {
           slug,
           content,
           tags,
+          status,
+          category,
+          cover_image: coverImage,
+          seo_title: seoTitle,
+          seo_description: seoDescription,
         },
         {
           onConflict: 'slug',
@@ -107,7 +125,6 @@ export async function saveWikiPage(payload: SaveWikiPagePayload) {
     const sourcePageId = savedPage.id;
     const targetSlugs = extractWikiLinks(content);
 
-    // Luôn xóa relation cũ trước để tránh giữ lại backlink stale khi bài viết bỏ hết wiki-link.
     const { error: deleteLinksError } = await supabase
       .from('wiki_links')
       .delete()
@@ -139,12 +156,16 @@ export async function saveWikiPage(payload: SaveWikiPagePayload) {
     }
 
     revalidatePath('/admin/wiki');
+    revalidatePath('/admin/wiki/new');
+    revalidatePath(`/admin/wiki/${slug}`);
 
     return {
       success: true,
       data: {
         id: sourcePageId,
         slug,
+        status,
+        category,
         targetSlugs,
       },
     };

@@ -1,4 +1,3 @@
-import React from 'react';
 import AdminShell from '@/components/admin/AdminShell';
 import WikiEditor from '@/components/admin/WikiEditor';
 
@@ -9,10 +8,10 @@ export const metadata = {
 export default function NewWikiPage() {
   return (
     <AdminShell
-      title="Tạo Bài Wiki Mới"
-      subtitle="Soạn markdown, kiểm tra mạng lưới tri thức và chuẩn bị payload xuất bản cho Agri-OS."
+      title="Studio Wiki Agri-OS"
+      subtitle="Không gian biên tập theo kiểu headless CMS để soạn nội dung, gắn taxonomy và tối ưu SEO trong một màn hình."
     >
-      <div className="mx-auto w-full max-w-[1600px] py-4">
+      <div className="mx-auto w-full max-w-[1680px] py-4">
         <WikiEditor />
       </div>
     </AdminShell>
