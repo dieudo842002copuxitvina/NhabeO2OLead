@@ -53,7 +53,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { calculateTDH, PipeSpecs, SystemInputs } from '../../utils/pumpCalculator';
+import { calculateTDH, PipeSpecs, SystemInputs } from '@/lib/pumpCalculator';
 import { supabase } from '@/integrations/supabase/client';
 import { submitLeadO2O } from '@/app/actions/lead';
 

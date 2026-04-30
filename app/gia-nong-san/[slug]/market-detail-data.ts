@@ -1,6 +1,6 @@
 import { MOCK_CROP_CATEGORIES, MOCK_CROPS, MOCK_PRICE_RECORDS } from '@/data/mockMarket';
 import { PRODUCTS_DATA, type ProductData } from '@/data/productsData';
-import type { CropCategory, CropItem, PriceRecord } from '../../../types/market';
+import type { CropCategory, CropItem, PriceRecord } from '@/types/market';
 
 export type ChartPoint = {
   date: string;
@@ -127,4 +127,3 @@ function normalize(value: string) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd');
 }
-

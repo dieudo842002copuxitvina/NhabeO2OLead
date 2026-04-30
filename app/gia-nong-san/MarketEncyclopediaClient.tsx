@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { MapPin, Search, ShieldCheck } from 'lucide-react';
 import { MOCK_CROP_CATEGORIES, MOCK_CROPS, MOCK_PRICE_RECORDS } from '@/data/mockMarket';
-import type { CropCategory, CropItem, PriceRecord } from '../../types/market';
+import type { CropCategory, CropItem, PriceRecord } from '@/types/market';
 import { cn } from '@/lib/utils';
 import { CropRowCard, type CropRowCardData } from './_components/CropRowCard';
 

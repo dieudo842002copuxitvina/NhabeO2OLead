@@ -10,9 +10,6 @@ export interface CropItem {
   name: string;
   slug: string;
   image_url: string;
-  /**
-   * 1 = Sản phẩm chủ lực/trending, 2 = Sản phẩm thường.
-   */
   tier: 1 | 2;
 }
 
@@ -24,9 +21,5 @@ export interface PriceRecord {
   unit: string;
   date: string;
   change_percentage: number;
-  /**
-   * true = Giá từ hệ thống, false = Giá cộng đồng báo.
-   */
   is_verified: boolean;
 }
-

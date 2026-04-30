@@ -1,4 +1,4 @@
-import type { CropCategory, CropItem, PriceRecord } from '../../types/market';
+import type { CropCategory, CropItem, PriceRecord } from '@/types/market';
 
 export const MOCK_CROP_CATEGORIES: CropCategory[] = [
   {
@@ -265,4 +265,3 @@ export const MOCK_PRICE_RECORDS: PriceRecord[] = [
   { id: 'price-047', crop_id: 'cabbage', province: 'Lâm Đồng', price: 9500, unit: 'đ/kg', date: '2026-04-25', change_percentage: -3.1, is_verified: true },
   { id: 'price-048', crop_id: 'cabbage', province: 'Hà Nội', price: 11200, unit: 'đ/kg', date: '2026-04-25', change_percentage: 0.6, is_verified: false },
 ];
-
