@@ -1,7 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { SLOPES, type SlopeKey } from '@/lib/calculatorV2';
+import { SLOPES, type SlopeKey } from '@/lib/calculators/calculatorV2';
 import { Ruler, Mountain } from 'lucide-react';
 
 interface Props {

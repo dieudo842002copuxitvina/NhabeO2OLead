@@ -1,4 +1,4 @@
-import { CROPS, type CropKey } from '@/lib/calculatorV2';
+import { CROPS, type CropKey } from '@/lib/calculators/calculatorV2';
 import { Card } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 

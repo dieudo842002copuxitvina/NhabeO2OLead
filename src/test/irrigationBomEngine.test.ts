@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateIrrigationBOM } from '../lib/irrigationBomEngine';
+import { calculateIrrigationBOM } from '../lib/calculators/irrigationBomEngine';
 
 describe('calculateIrrigationBOM', () => {
   it('calculates total flow from area, spacing, emitter count, and emitter flow', () => {

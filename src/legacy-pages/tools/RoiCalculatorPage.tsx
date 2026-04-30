@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, ArrowLeft, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { computeRoi, formatVnd } from '@/lib/calculatorSuite';
+import { computeRoi, formatVnd } from '@/lib/calculators/calculatorSuite';
 import SeoMeta from '@/components/SeoMeta';
 
 export default function RoiCalculatorPage() {

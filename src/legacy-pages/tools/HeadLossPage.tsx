@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Droplet, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { computeHeadLoss } from '@/lib/calculatorSuite';
+import { computeHeadLoss } from '@/lib/calculators/calculatorSuite';
 import { Button } from '@/components/ui/button';
 import SeoMeta from '@/components/SeoMeta';
 

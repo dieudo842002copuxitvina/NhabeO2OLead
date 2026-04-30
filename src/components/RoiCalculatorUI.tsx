@@ -54,7 +54,7 @@ import {
   generateCashflowProjection, 
   CurrentCosts, 
   SystemEfficiency 
-} from '@/lib/roiCalculator';
+} from '@/lib/calculators/roiCalculator';
 import { submitLeadO2O } from '@/app/actions/lead';
 import { toast } from '@/components/ui/use-toast';
 

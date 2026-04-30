@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { ParamMap } from '@/lib/calculatorV2';
+import type { ParamMap } from '@/lib/calculators/calculatorV2';
 
 export interface CalculatorParamRow {
   id: string;

@@ -8,7 +8,7 @@ import SeoMeta from '@/components/SeoMeta';
 import {
   CROPS, calculate,
   type CropKey, type SlopeKey, type WaterSourceKey, type CalculatorInput,
-} from '@/lib/calculatorV2';
+} from '@/lib/calculators/calculatorV2';
 import { useCalculatorParams } from '@/hooks/useCalculatorParams';
 import { trackEvent } from '@/lib/tracking';
 

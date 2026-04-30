@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { WATER_SOURCES, type WaterSourceKey } from '@/lib/calculatorV2';
+import { WATER_SOURCES, type WaterSourceKey } from '@/lib/calculators/calculatorV2';
 
 interface Props {
   value: WaterSourceKey | null;

@@ -11,7 +11,7 @@ import {
   buildSalesMessage,
   type CalculatorResult,
   type CalculatorInput,
-} from '@/lib/calculatorV2';
+} from '@/lib/calculators/calculatorV2';
 import AnimatedCounter from './AnimatedCounter';
 import { supabase } from '@/integrations/supabase/client';
 import { dealers } from '@/data/mock';

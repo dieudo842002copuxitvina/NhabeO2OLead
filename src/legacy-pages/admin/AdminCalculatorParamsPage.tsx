@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useCalculatorParams, type CalculatorParamRow } from '@/hooks/useCalculatorParams';
 import { supabase } from '@/integrations/supabase/client';
-import { calculate, formatVND, CROPS } from '@/lib/calculatorV2';
+import { calculate, formatVND, CROPS } from '@/lib/calculators/calculatorV2';
 
 const CATEGORY_META: Record<CalculatorParamRow['category'], { label: string; icon: typeof Coins; tone: string }> = {
   price:  { label: 'Giá vật tư',         icon: Coins,  tone: 'text-warning' },

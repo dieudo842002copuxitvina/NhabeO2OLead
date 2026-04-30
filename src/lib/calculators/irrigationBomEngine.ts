@@ -1,4 +1,4 @@
-import { PRODUCTS_DATA, type ProductData } from '../data/productsData';
+import { PRODUCTS_DATA, type ProductData } from '../../data/productsData';
 
 export type PlantSpacingInput =
   | number

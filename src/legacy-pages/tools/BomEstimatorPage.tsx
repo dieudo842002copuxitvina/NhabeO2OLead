@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Calculator, Download, Phone, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { formatVnd } from '@/lib/calculatorSuite';
+import { formatVnd } from '@/lib/calculators/calculatorSuite';
 import SeoMeta from '@/components/SeoMeta';
 import { trackEvent } from '@/lib/tracking';
 

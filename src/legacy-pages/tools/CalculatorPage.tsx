@@ -10,7 +10,7 @@ import {
   CROPS, SLOPES, WATER_SOURCES,
   type CropKey, type SlopeKey, type WaterSourceKey,
   calculateIrrigation, formatVND,
-} from '@/lib/calculator';
+} from '@/lib/calculators/calculator';
 import { useApp } from '@/contexts/AppContext';
 import NearbyInstallers from '@/components/NearbyInstallers';
 import { dealers } from '@/data/mock';

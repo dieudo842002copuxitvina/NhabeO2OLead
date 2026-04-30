@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Zap, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { computeElectrical } from '@/lib/calculatorSuite';
+import { computeElectrical } from '@/lib/calculators/calculatorSuite';
 import SeoMeta from '@/components/SeoMeta';
 
 export default function ElectricalCalculatorPage() {
