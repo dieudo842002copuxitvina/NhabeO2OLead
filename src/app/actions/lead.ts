@@ -4,12 +4,14 @@
  * ║  CRUD operations for Lead management using Prisma                      ║
  * ║  CRM - Quản lý Khách hàng Tiềm năng                               ║
  * ╚═══════════════════════════════════════════════════════════════════════════════╝
+ * 
+ * NOTE: Database uses snake_case field names matching Prisma schema
  */
 
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { PrismaClient, Prisma, LeadStatus } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { z } from "zod";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -24,10 +26,32 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * TYPES
+ * TYPES - Matching database schema (snake_case)
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
+// Lead type from database (snake_case)
 export interface Lead {
+  id: string;
+  customer_name: string | null;
+  customer_phone: string;
+  province: string | null;
+  district: string | null;
+  crop_type: string | null;
+  area_m2: Prisma.Decimal | null;
+  calculator_data: Prisma.JsonValue;
+  assigned_dealer_id: string | null;
+  status: string;
+  created_at: Date;
+  dealers: {
+    id: string;
+    name: string;
+    phone: string | null;
+    province: string | null;
+  } | null;
+}
+
+// Normalized Lead for frontend (camelCase)
+export interface LeadNormalized {
   id: string;
   customerName: string | null;
   customerPhone: string;
@@ -37,7 +61,7 @@ export interface Lead {
   areaM2: number | null;
   calculatorData: Prisma.JsonValue;
   assignedDealerId: string | null;
-  status: LeadStatus;
+  status: string;
   createdAt: Date;
   assignedDealer: {
     id: string;
@@ -49,15 +73,41 @@ export interface Lead {
 
 export interface LeadsResult {
   success: boolean;
-  data?: Lead[];
+  data?: LeadNormalized[];
   error?: string;
   count?: number;
 }
 
 export interface LeadResult {
   success: boolean;
-  data?: Lead;
+  data?: LeadNormalized;
   error?: string;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * HELPER: Normalize lead from DB (snake_case -> camelCase)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+function normalizeLead(lead: Lead): LeadNormalized {
+  return {
+    id: lead.id,
+    customerName: lead.customer_name,
+    customerPhone: lead.customer_phone,
+    province: lead.province,
+    district: lead.district,
+    cropType: lead.crop_type,
+    areaM2: lead.area_m2 ? Number(lead.area_m2) : null,
+    calculatorData: lead.calculator_data,
+    assignedDealerId: lead.assigned_dealer_id,
+    status: lead.status,
+    createdAt: lead.created_at,
+    assignedDealer: lead.dealers ? {
+      id: lead.dealers.id,
+      name: lead.dealers.name,
+      phone: lead.dealers.phone,
+      province: lead.dealers.province,
+    } : null,
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -78,7 +128,7 @@ const assignLeadSchema = z.object({
  * Includes assigned dealer information via include
  */
 export async function getLeads(options?: {
-  status?: LeadStatus;
+  status?: string;
   province?: string;
   search?: string;
   limit?: number;
@@ -97,11 +147,11 @@ export async function getLeads(options?: {
 
     if (options?.search) {
       where.OR = [
-        { customerName: { contains: options.search, mode: "insensitive" } },
-        { customerPhone: { contains: options.search, mode: "insensitive" } },
+        { customer_name: { contains: options.search, mode: "insensitive" } },
+        { customer_phone: { contains: options.search, mode: "insensitive" } },
         { province: { contains: options.search, mode: "insensitive" } },
         { district: { contains: options.search, mode: "insensitive" } },
-        { cropType: { contains: options.search, mode: "insensitive" } },
+        { crop_type: { contains: options.search, mode: "insensitive" } },
       ];
     }
 
@@ -109,7 +159,7 @@ export async function getLeads(options?: {
       prisma.leads.findMany({
         where,
         include: {
-          assignedDealer: {
+          dealers: {
             select: {
               id: true,
               name: true,
@@ -118,7 +168,7 @@ export async function getLeads(options?: {
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: options?.limit,
         skip: options?.offset,
       }),
@@ -127,7 +177,7 @@ export async function getLeads(options?: {
 
     return {
       success: true,
-      data,
+      data: data.map(normalizeLead),
       count,
     };
   } catch (error) {
@@ -147,7 +197,7 @@ export async function getLeadById(id: string): Promise<LeadResult> {
     const lead = await prisma.leads.findUnique({
       where: { id },
       include: {
-        assignedDealer: {
+        dealers: {
           select: {
             id: true,
             name: true,
@@ -162,7 +212,7 @@ export async function getLeadById(id: string): Promise<LeadResult> {
       return { success: false, error: "Không tìm thấy lead" };
     }
 
-    return { success: true, data: lead };
+    return { success: true, data: normalizeLead(lead) };
   } catch (error) {
     console.error("getLeadById error:", error);
     return {
@@ -183,7 +233,7 @@ export async function getLeadById(id: string): Promise<LeadResult> {
 export async function assignLeadToDealer(
   leadId: string,
   dealerId: string
-): Promise<{ success: boolean; data?: Lead; error?: string }> {
+): Promise<{ success: boolean; data?: LeadNormalized; error?: string }> {
   try {
     // Validate input
     const validated = assignLeadSchema.parse({ leadId, dealerId });
@@ -206,19 +256,19 @@ export async function assignLeadToDealer(
       return { success: false, error: "Không tìm thấy đại lý" };
     }
 
-    if (!dealer.isActive) {
+    if (!dealer.is_active) {
       return { success: false, error: "Đại lý đang không hoạt động" };
     }
 
-    // Update lead
+    // Update lead (status: 'progress' for assigned leads)
     const updatedLead = await prisma.leads.update({
       where: { id: validated.leadId },
       data: {
-        assignedDealerId: validated.dealerId,
-        status: "PROGRESS",
+        assigned_dealer_id: validated.dealerId,
+        status: "progress",
       },
       include: {
-        assignedDealer: {
+        dealers: {
           select: {
             id: true,
             name: true,
@@ -234,7 +284,7 @@ export async function assignLeadToDealer(
 
     return {
       success: true,
-      data: updatedLead,
+      data: normalizeLead(updatedLead),
     };
   } catch (error) {
     console.error("assignLeadToDealer error:", error);
@@ -262,7 +312,7 @@ export async function assignLeadToDealer(
  */
 export async function updateLeadStatus(
   leadId: string,
-  status: LeadStatus
+  status: string
 ): Promise<LeadResult> {
   try {
     const lead = await prisma.leads.findUnique({
@@ -277,7 +327,7 @@ export async function updateLeadStatus(
       where: { id: leadId },
       data: { status },
       include: {
-        assignedDealer: {
+        dealers: {
           select: {
             id: true,
             name: true,
@@ -290,7 +340,7 @@ export async function updateLeadStatus(
 
     revalidatePath("/admin/leads");
 
-    return { success: true, data: updatedLead };
+    return { success: true, data: normalizeLead(updatedLead) };
   } catch (error) {
     console.error("updateLeadStatus error:", error);
     return {
@@ -325,7 +375,7 @@ export async function getLeadStats(): Promise<{
       select: {
         status: true,
         province: true,
-        cropType: true,
+        crop_type: true,
       },
     });
 
@@ -342,16 +392,16 @@ export async function getLeadStats(): Promise<{
     leads.forEach((lead) => {
       // Count by status
       switch (lead.status) {
-        case "NEW":
+        case "new":
           stats.new++;
           break;
-        case "PROGRESS":
+        case "progress":
           stats.inProgress++;
           break;
-        case "WON":
+        case "won":
           stats.won++;
           break;
-        case "LOST":
+        case "lost":
           stats.lost++;
           break;
       }
@@ -362,8 +412,8 @@ export async function getLeadStats(): Promise<{
       }
 
       // Count by crop type
-      if (lead.cropType) {
-        stats.byCropType[lead.cropType] = (stats.byCropType[lead.cropType] || 0) + 1;
+      if (lead.crop_type) {
+        stats.byCropType[lead.crop_type] = (stats.byCropType[lead.crop_type] || 0) + 1;
       }
     });
 

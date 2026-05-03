@@ -1,15 +1,16 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════╗
  * ║  DEALER SERVER ACTIONS                                              ║
- * ║  CRUD operations for Dealer management using Supabase + Prisma        ║
- * ╚═══════════════════════════════════════════════════════════════════════╝
+ * ║  CRUD operations for Dealer management using Prisma                      ║
+ * ╚═══════════════════════════════════════════════════════════════════════════════╝
+ * 
+ * NOTE: Database uses snake_case field names matching Prisma schema
  */
 
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseAdminClient } from "@/lib/supabase-admin";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { z } from "zod";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -24,10 +25,25 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * TYPES
+ * TYPES - Matching database schema (snake_case)
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
+// Dealer type from database (snake_case)
 export interface Dealer {
+  id: string;
+  name: string;
+  phone: string | null;
+  address: string | null;
+  province: string | null;
+  district: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  is_active: boolean;
+  created_at: Date;
+}
+
+// Normalized Dealer for frontend (camelCase)
+export interface DealerNormalized {
   id: string;
   name: string;
   phone: string | null;
@@ -56,15 +72,34 @@ export interface UpdateDealerInput extends Partial<CreateDealerInput> {
 
 export interface DealerResult {
   success: boolean;
-  data?: Dealer;
+  data?: DealerNormalized;
   error?: string;
 }
 
 export interface DealersResult {
   success: boolean;
-  data?: Dealer[];
+  data?: DealerNormalized[];
   error?: string;
   count?: number;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * HELPER: Normalize dealer from DB (snake_case -> camelCase)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+function normalizeDealer(dealer: Dealer): DealerNormalized {
+  return {
+    id: dealer.id,
+    name: dealer.name,
+    phone: dealer.phone,
+    address: dealer.address,
+    province: dealer.province,
+    district: dealer.district,
+    latitude: dealer.latitude,
+    longitude: dealer.longitude,
+    isActive: dealer.is_active,
+    createdAt: dealer.created_at,
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -86,276 +121,11 @@ const updateDealerSchema = createDealerSchema.extend({
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * NORMALIZE HELPER (PostgreSQL snake_case → TypeScript camelCase)
- * ═══════════════════════════════════════════════════════════════════════════════ */
-
-function normalizeDealer(raw: Record<string, unknown>): Dealer {
-  return {
-    id: raw.id as string,
-    name: raw.name as string,
-    phone: raw.phone as string | null,
-    address: raw.address as string | null,
-    province: raw.province as string | null,
-    district: raw.district as string | null,
-    latitude: raw.latitude as number | null,
-    longitude: raw.longitude as number | null,
-    isActive: raw.is_active as boolean,
-    createdAt: new Date(raw.created_at as string),
-  };
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
- * SUPABASE IMPLEMENTATION
+ * GET DEALERS
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 /**
- * Get all dealers with optional filtering
- * @param options - Filter and pagination options
- */
-export async function getDealersSupabase(options?: {
-  province?: string;
-  isActive?: boolean;
-  search?: string;
-  limit?: number;
-  offset?: number;
-}): Promise<DealersResult> {
-  try {
-    const supabase = createSupabaseAdminClient();
-    
-    let query = supabase
-      .from("dealers")
-      .select("*", { count: "exact" });
-
-    // Apply filters
-    if (options?.province) {
-      query = query.eq("province", options.province);
-    }
-    if (options?.isActive !== undefined) {
-      query = query.eq("is_active", options.isActive);
-    }
-    if (options?.search) {
-      query = query.or(`name.ilike.%${options.search}%,phone.ilike.%${options.search}%,address.ilike.%${options.search}%`);
-    }
-
-    // Apply pagination
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    if (options?.offset) {
-      query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
-    }
-
-    // Order by created_at desc
-    query = query.order("created_at", { ascending: false });
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      console.error("Supabase getDealers error:", error);
-      return { success: false, error: error.message };
-    }
-
-    return {
-      success: true,
-      data: data?.map((row) => normalizeDealer(row as Record<string, unknown>)),
-      count: count || data?.length || 0,
-    };
-  } catch (error) {
-    console.error("Supabase getDealers exception:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    };
-  }
-}
-
-/**
- * Get a single dealer by ID
- */
-export async function getDealerByIdSupabase(id: string): Promise<DealerResult> {
-  try {
-    const supabase = createSupabaseAdminClient();
-    
-    const { data, error } = await supabase
-      .from("dealers")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      if (error.code === "PGRST116") {
-        return { success: false, error: "Không tìm thấy đại lý" };
-      }
-      console.error("Supabase getDealerById error:", error);
-      return { success: false, error: error.message };
-    }
-
-    return {
-      success: true,
-      data: normalizeDealer(data as Record<string, unknown>),
-    };
-  } catch (error) {
-    console.error("Supabase getDealerById exception:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    };
-  }
-}
-
-/**
- * Create a new dealer
- */
-export async function createDealerSupabase(
-  input: CreateDealerInput
-): Promise<DealerResult> {
-  try {
-    // Validate input
-    const validated = createDealerSchema.parse(input);
-
-    const supabase = createSupabaseAdminClient();
-    
-    const { data, error } = await supabase
-      .from("dealers")
-      .insert({
-        name: validated.name,
-        phone: validated.phone || null,
-        address: validated.address || null,
-        province: validated.province || null,
-        district: validated.district || null,
-        latitude: validated.latitude || null,
-        longitude: validated.longitude || null,
-        is_active: true,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Supabase createDealer error:", error);
-      return { success: false, error: error.message };
-    }
-
-    // Revalidate the dealers list page
-    revalidatePath("/admin/dealers");
-
-    return {
-      success: true,
-      data: normalizeDealer(data as Record<string, unknown>),
-    };
-  } catch (error) {
-    console.error("Supabase createDealer exception:", error);
-    
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: error.errors.map((e) => e.message).join(", "),
-      };
-    }
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    };
-  }
-}
-
-/**
- * Update an existing dealer
- */
-export async function updateDealerSupabase(
-  id: string,
-  input: UpdateDealerInput
-): Promise<DealerResult> {
-  try {
-    // Validate input
-    const validated = updateDealerSchema.parse(input);
-
-    const supabase = createSupabaseAdminClient();
-    
-    const updateData: Record<string, unknown> = {};
-    
-    if (validated.name !== undefined) updateData.name = validated.name;
-    if (validated.phone !== undefined) updateData.phone = validated.phone;
-    if (validated.address !== undefined) updateData.address = validated.address;
-    if (validated.province !== undefined) updateData.province = validated.province;
-    if (validated.district !== undefined) updateData.district = validated.district;
-    if (validated.latitude !== undefined) updateData.latitude = validated.latitude;
-    if (validated.longitude !== undefined) updateData.longitude = validated.longitude;
-    if (validated.isActive !== undefined) updateData.is_active = validated.isActive;
-
-    const { data, error } = await supabase
-      .from("dealers")
-      .update(updateData)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Supabase updateDealer error:", error);
-      return { success: false, error: error.message };
-    }
-
-    // Revalidate both list and detail pages
-    revalidatePath("/admin/dealers");
-    revalidatePath(`/admin/dealers/${id}`);
-
-    return {
-      success: true,
-      data: normalizeDealer(data as Record<string, unknown>),
-    };
-  } catch (error) {
-    console.error("Supabase updateDealer exception:", error);
-    
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: error.errors.map((e) => e.message).join(", "),
-      };
-    }
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    };
-  }
-}
-
-/**
- * Delete a dealer
- */
-export async function deleteDealerSupabase(id: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const supabase = createSupabaseAdminClient();
-    
-    const { error } = await supabase
-      .from("dealers")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error("Supabase deleteDealer error:", error);
-      return { success: false, error: error.message };
-    }
-
-    // Revalidate the dealers list page
-    revalidatePath("/admin/dealers");
-
-    return { success: true };
-  } catch (error) {
-    console.error("Supabase deleteDealer exception:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    };
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
- * PRISMA IMPLEMENTATION (Alternative - uncomment when using Prisma)
- * ═══════════════════════════════════════════════════════════════════════════════ */
-
-/**
- * Get all dealers - Prisma implementation
+ * Get all dealers with optional filtering and pagination
  */
 export async function getDealers(options?: {
   province?: string;
@@ -365,13 +135,13 @@ export async function getDealers(options?: {
   offset?: number;
 }): Promise<DealersResult> {
   try {
-    const where: Parameters<typeof prisma.dealer.findMany>[0]["where"] = {};
+    const where: Prisma.DealerWhereInput = {};
 
     if (options?.province) {
       where.province = options.province;
     }
     if (options?.isActive !== undefined) {
-      where.isActive = options.isActive;
+      where.is_active = options.isActive;
     }
     if (options?.search) {
       where.OR = [
@@ -384,7 +154,7 @@ export async function getDealers(options?: {
     const [data, count] = await Promise.all([
       prisma.dealer.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: options?.limit,
         skip: options?.offset,
       }),
@@ -393,11 +163,11 @@ export async function getDealers(options?: {
 
     return {
       success: true,
-      data,
+      data: data.map(normalizeDealer),
       count,
     };
   } catch (error) {
-    console.error("Prisma getDealers error:", error);
+    console.error("getDealers error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",
@@ -406,27 +176,21 @@ export async function getDealers(options?: {
 }
 
 /**
- * Get a single dealer by ID - Prisma implementation
+ * Get a single dealer by ID
  */
 export async function getDealerById(id: string): Promise<DealerResult> {
   try {
     const dealer = await prisma.dealer.findUnique({
       where: { id },
-      include: {
-        leads: {
-          select: { id: true },
-          take: 5,
-        },
-      },
     });
 
     if (!dealer) {
       return { success: false, error: "Không tìm thấy đại lý" };
     }
 
-    return { success: true, data: dealer };
+    return { success: true, data: normalizeDealer(dealer) };
   } catch (error) {
-    console.error("Prisma getDealerById error:", error);
+    console.error("getDealerById error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",
@@ -434,8 +198,12 @@ export async function getDealerById(id: string): Promise<DealerResult> {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * CREATE DEALER
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
 /**
- * Create a new dealer - Prisma implementation
+ * Create a new dealer
  */
 export async function createDealer(input: CreateDealerInput): Promise<DealerResult> {
   try {
@@ -451,16 +219,16 @@ export async function createDealer(input: CreateDealerInput): Promise<DealerResu
         district: validated.district,
         latitude: validated.latitude,
         longitude: validated.longitude,
-        isActive: true,
+        is_active: true,
       },
     });
 
     // Revalidate
     revalidatePath("/admin/dealers");
 
-    return { success: true, data: dealer };
+    return { success: true, data: normalizeDealer(dealer) };
   } catch (error) {
-    console.error("Prisma createDealer error:", error);
+    console.error("createDealer error:", error);
 
     if (error instanceof z.ZodError) {
       return {
@@ -476,8 +244,12 @@ export async function createDealer(input: CreateDealerInput): Promise<DealerResu
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * UPDATE DEALER
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
 /**
- * Update an existing dealer - Prisma implementation
+ * Update an existing dealer
  */
 export async function updateDealer(
   id: string,
@@ -487,27 +259,29 @@ export async function updateDealer(
     // Validate input
     const validated = updateDealerSchema.parse(input);
 
+    const updateData: Prisma.DealerUpdateInput = {
+      ...(validated.name !== undefined && { name: validated.name }),
+      ...(validated.phone !== undefined && { phone: validated.phone }),
+      ...(validated.address !== undefined && { address: validated.address }),
+      ...(validated.province !== undefined && { province: validated.province }),
+      ...(validated.district !== undefined && { district: validated.district }),
+      ...(validated.latitude !== undefined && { latitude: validated.latitude }),
+      ...(validated.longitude !== undefined && { longitude: validated.longitude }),
+      ...(validated.isActive !== undefined && { is_active: validated.isActive }),
+    };
+
     const dealer = await prisma.dealer.update({
       where: { id },
-      data: {
-        ...(validated.name !== undefined && { name: validated.name }),
-        ...(validated.phone !== undefined && { phone: validated.phone }),
-        ...(validated.address !== undefined && { address: validated.address }),
-        ...(validated.province !== undefined && { province: validated.province }),
-        ...(validated.district !== undefined && { district: validated.district }),
-        ...(validated.latitude !== undefined && { latitude: validated.latitude }),
-        ...(validated.longitude !== undefined && { longitude: validated.longitude }),
-        ...(validated.isActive !== undefined && { isActive: validated.isActive }),
-      },
+      data: updateData,
     });
 
     // Revalidate
     revalidatePath("/admin/dealers");
     revalidatePath(`/admin/dealers/${id}`);
 
-    return { success: true, data: dealer };
+    return { success: true, data: normalizeDealer(dealer) };
   } catch (error) {
-    console.error("Prisma updateDealer error:", error);
+    console.error("updateDealer error:", error);
 
     if (error instanceof z.ZodError) {
       return {
@@ -523,8 +297,12 @@ export async function updateDealer(
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * DELETE DEALER
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
 /**
- * Delete a dealer - Prisma implementation
+ * Delete a dealer
  */
 export async function deleteDealer(
   id: string
@@ -538,7 +316,7 @@ export async function deleteDealer(
 
     return { success: true };
   } catch (error) {
-    console.error("Prisma deleteDealer error:", error);
+    console.error("deleteDealer error:", error);
 
     if (error instanceof Error && error.message.includes("Record to delete does not exist")) {
       return { success: false, error: "Không tìm thấy đại lý" };
@@ -552,33 +330,8 @@ export async function deleteDealer(
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * HELPER FUNCTIONS
+ * STATISTICS
  * ═══════════════════════════════════════════════════════════════════════════════ */
-
-/**
- * Get unique provinces from all dealers
- */
-export async function getDealerProvinces(): Promise<string[]> {
-  try {
-    const supabase = createSupabaseAdminClient();
-    
-    const { data, error } = await supabase
-      .from("dealers")
-      .select("province")
-      .not("province", "is", null);
-
-    if (error) {
-      console.error("getDealerProvinces error:", error);
-      return [];
-    }
-
-    const provinces = [...new Set(data.map((d) => d.province).filter(Boolean))];
-    return provinces as string[];
-  } catch (error) {
-    console.error("getDealerProvinces exception:", error);
-    return [];
-  }
-}
 
 /**
  * Get dealer statistics
@@ -591,7 +344,7 @@ export async function getDealerStats(): Promise<{
 }> {
   try {
     const { success, data } = await getDealers({ limit: 1000 });
-    
+
     if (!success || !data) {
       return { total: 0, active: 0, inactive: 0, byProvince: {} };
     }

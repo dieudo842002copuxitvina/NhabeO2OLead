@@ -48,17 +48,17 @@ import {
   UserCheck,
   ChevronRight,
 } from "lucide-react";
-import type { Lead } from "@/app/actions/lead";
-import type { Dealer } from "@/app/actions/dealer";
+import type { LeadNormalized } from "@/app/actions/lead";
+import type { DealerNormalized } from "@/app/actions/dealer";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PROPS
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 interface LeadsTableProps {
-  initialLeads: Lead[];
+  initialLeads: LeadNormalized[];
   totalCount: number;
-  activeDealers: Dealer[];
+  activeDealers: DealerNormalized[];
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -67,28 +67,28 @@ interface LeadsTableProps {
 
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
-    case "NEW":
+    case "new":
       return (
         <Badge className="gap-1 bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
           <Clock className="w-3 h-3" />
           Mới
         </Badge>
       );
-    case "PROGRESS":
+    case "progress":
       return (
         <Badge className="gap-1 bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">
           <Clock className="w-3 h-3" />
           Đang xử lý
         </Badge>
       );
-    case "WON":
+    case "won":
       return (
         <Badge className="gap-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
           <CheckCircle2 className="w-3 h-3" />
           Thành công
         </Badge>
       );
-    case "LOST":
+    case "lost":
       return (
         <Badge className="gap-1 bg-slate-100 text-slate-600 hover:bg-slate-100 border-slate-200">
           <XCircle className="w-3 h-3" />
@@ -108,13 +108,13 @@ export default function LeadsTable({ initialLeads, totalCount, activeDealers }: 
   const router = useRouter();
 
   // State
-  const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  const [leads, setLeads] = useState<LeadNormalized[]>(initialLeads);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Assign modal state
   const [assignModalOpen, setAssignModalOpen] = useState(false);
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedLead, setSelectedLead] = useState<LeadNormalized | null>(null);
 
   /* ─────────────────────────────────────────────────────────────────────────
    * FILTER LEADS
@@ -136,7 +136,7 @@ export default function LeadsTable({ initialLeads, totalCount, activeDealers }: 
    * ACTIONS
    * ───────────────────────────────────────────────────────────────────────── */
 
-  const handleAssign = (lead: Lead) => {
+  const handleAssign = (lead: LeadNormalized) => {
     setSelectedLead(lead);
     setAssignModalOpen(true);
   };
@@ -156,9 +156,9 @@ export default function LeadsTable({ initialLeads, totalCount, activeDealers }: 
    * ───────────────────────────────────────────────────────────────────────── */
 
   // Count stats
-  const newCount = leads.filter((l) => l.status === "NEW").length;
-  const assignedCount = leads.filter((l) => l.status === "PROGRESS").length;
-  const wonCount = leads.filter((l) => l.status === "WON").length;
+  const newCount = leads.filter((l) => l.status === "new").length;
+  const assignedCount = leads.filter((l) => l.status === "progress").length;
+  const wonCount = leads.filter((l) => l.status === "won").length;
 
   return (
     <div className="space-y-6">
@@ -381,7 +381,7 @@ export default function LeadsTable({ initialLeads, totalCount, activeDealers }: 
 
                     {/* Thao tác */}
                     <TableCell className="text-right">
-                      {lead.status === "NEW" && !lead.assignedDealerId && (
+                      {lead.status === "new" && !lead.assignedDealerId && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -400,7 +400,7 @@ export default function LeadsTable({ initialLeads, totalCount, activeDealers }: 
                           </Tooltip>
                         </TooltipProvider>
                       )}
-                      {lead.status === "PROGRESS" && (
+                      {lead.status === "progress" && (
                         <Button
                           size="sm"
                           variant="outline"

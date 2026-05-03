@@ -23,8 +23,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, UserPlus, MapPin, Phone, X, CheckCircle2, AlertCircle } from "lucide-react";
-import { assignLeadToDealer, type Lead } from "@/app/actions/lead";
-import type { Dealer } from "@/app/actions/dealer";
+import { assignLeadToDealer, type LeadNormalized } from "@/app/actions/lead";
+import type { DealerNormalized } from "@/app/actions/dealer";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PROPS
@@ -33,8 +33,8 @@ import type { Dealer } from "@/app/actions/dealer";
 interface AssignLeadModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  lead: Lead | null;
-  dealers: Dealer[];
+  lead: LeadNormalized | null;
+  dealers: DealerNormalized[];
   onSuccess?: () => void;
 }
 
