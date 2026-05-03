@@ -72,6 +72,13 @@ function StatusBadge({ status }: { status: string }) {
           Mới
         </Badge>
       );
+    case "assigned":
+      return (
+        <Badge className="gap-1 bg-violet-100 text-violet-700 hover:bg-violet-100 border-violet-200">
+          <UserCheck className="w-3 h-3" />
+          Đã giao
+        </Badge>
+      );
     case "progress":
       return (
         <Badge className="gap-1 bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">

@@ -228,12 +228,12 @@ export async function assignLeadToDealer(
       return { success: false, error: "Đại lý đang không hoạt động" };
     }
 
-    // Update lead (status: 'progress' for assigned leads)
+    // Update lead (status: 'assigned' for newly assigned leads)
     const updatedLead = await prisma.leads.update({
       where: { id: validated.leadId },
       data: {
         assigned_dealer_id: validated.dealerId,
-        status: "progress",
+        status: "assigned",
       },
       include: {
         dealers: {
