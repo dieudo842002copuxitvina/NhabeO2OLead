@@ -71,16 +71,6 @@ import { DEFAULT_PRODUCT_CATEGORIES, MOCK_PRODUCTS, TECH_TYPE_OPTIONS } from "@/
  * Form Schema (Zod) - Must match Supabase schema exactly
  * ───────────────────────────────────────────── */
 
-// Tech type enum values - MUST match Supabase enum
-const TECH_TYPE_OPTIONS = [
-  "Bơm Thủy Lực",
-  "Ống Chính",
-  "Ống Nhánh",
-  "Béc Tưới",
-  "Bộ Lọc Trung Tâm",
-  "Phụ Kiện",
-] as const;
-
 const productFormSchema = z.object({
   name: z.string().min(5, "Tên sản phẩm phải có ít nhất 5 ký tự").max(200, "Tên tối đa 200 ký tự"),
   slug: z
