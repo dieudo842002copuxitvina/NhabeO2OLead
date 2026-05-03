@@ -304,6 +304,42 @@ export async function assignLeadToDealer(
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+ * GET ACTIVE DEALERS
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+export interface DealerBasic {
+  id: string;
+  name: string;
+  province: string | null;
+  district: string | null;
+  phone: string | null;
+}
+
+/**
+ * Get list of active dealers for dropdown
+ */
+export async function getActiveDealers(): Promise<DealerBasic[]> {
+  try {
+    const dealers = await prisma.dealer.findMany({
+      where: { is_active: true },
+      select: {
+        id: true,
+        name: true,
+        province: true,
+        district: true,
+        phone: true,
+      },
+      orderBy: { created_at: "desc" },
+    });
+
+    return dealers;
+  } catch (error) {
+    console.error("getActiveDealers error:", error);
+    return [];
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
  * UPDATE LEAD STATUS
  * ═══════════════════════════════════════════════════════════════════════════════ */
 

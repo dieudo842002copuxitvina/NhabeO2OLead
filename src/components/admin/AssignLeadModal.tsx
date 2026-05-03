@@ -22,9 +22,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, UserPlus, MapPin, Phone, X, CheckCircle2, AlertCircle } from "lucide-react";
-import { assignLeadToDealer, type LeadNormalized } from "@/app/actions/lead";
-import type { DealerNormalized } from "@/app/actions/dealer";
+import { Loader2, UserPlus, MapPin, Phone, X, CheckCircle2, AlertCircle, Sprout } from "lucide-react";
+import { assignLeadToDealer, type DealerBasic } from "@/app/actions/lead";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PROPS
@@ -33,8 +32,13 @@ import type { DealerNormalized } from "@/app/actions/dealer";
 interface AssignLeadModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  lead: LeadNormalized | null;
-  dealers: DealerNormalized[];
+  leadId: string;
+  customerName: string;
+  customerPhone: string;
+  customerProvince?: string | null;
+  customerDistrict?: string | null;
+  cropType?: string | null;
+  dealers: DealerBasic[];
   onSuccess?: () => void;
 }
 
@@ -45,7 +49,12 @@ interface AssignLeadModalProps {
 export default function AssignLeadModal({
   open,
   onOpenChange,
-  lead,
+  leadId,
+  customerName,
+  customerPhone,
+  customerProvince,
+  customerDistrict,
+  cropType,
   dealers,
   onSuccess,
 }: AssignLeadModalProps) {
@@ -53,7 +62,7 @@ export default function AssignLeadModal({
   const [selectedDealerId, setSelectedDealerId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset state when modal opens/closes or lead changes
+  // Reset state when modal opens/closes
   useEffect(() => {
     if (!open) {
       setSelectedDealerId("");
@@ -63,7 +72,7 @@ export default function AssignLeadModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!lead) {
+    if (!leadId) {
       toast({
         title: "Lỗi",
         description: "Không tìm thấy thông tin lead",
@@ -84,11 +93,11 @@ export default function AssignLeadModal({
     setIsSubmitting(true);
 
     try {
-      const result = await assignLeadToDealer(lead.id, selectedDealerId);
+      const result = await assignLeadToDealer(leadId, selectedDealerId);
 
       if (!result.success) {
         toast({
-          title: "Lỗi",
+          title: "Phân bổ thất bại",
           description: result.error || "Không thể phân bổ lead",
           variant: "destructive",
         });
@@ -96,9 +105,9 @@ export default function AssignLeadModal({
       }
 
       toast({
-        title: "Thành công",
+        title: "Phân bổ thành công",
         description: `Đã phân bổ lead cho đại lý "${result.data?.assignedDealer?.name}"`,
-        className: "bg-emerald-50 border-emerald-200",
+        className: "bg-emerald-50 border-emerald-200 text-emerald-800",
       });
 
       setSelectedDealerId("");
@@ -107,7 +116,7 @@ export default function AssignLeadModal({
     } catch (error) {
       console.error("Assign lead error:", error);
       toast({
-        title: "Lỗi",
+        title: "Lỗi hệ thống",
         description: "Đã xảy ra lỗi khi phân bổ lead",
         variant: "destructive",
       });
@@ -128,14 +137,24 @@ export default function AssignLeadModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-xl border-0 shadow-2xl">
         {/* Header */}
-        <div className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 px-6 py-6 text-white rounded-t-lg overflow-hidden">
+        <div className="relative bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 px-6 py-6 text-white rounded-t-2xl overflow-hidden">
           {/* Background pattern */}
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/20 -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white/20 translate-y-1/2 -translate-x-1/2" />
+            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs>
+                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
+                </pattern>
+              </defs>
+              <rect width="100" height="100" fill="url(#grid)" />
+            </svg>
           </div>
+
+          {/* Decorative circles */}
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white/10 translate-y-1/2 -translate-x-1/2" />
 
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -146,7 +165,7 @@ export default function AssignLeadModal({
                 <h2 className="text-xl font-bold text-white m-0">
                   Phân bổ Lead
                 </h2>
-                <p className="text-sm text-blue-100 mt-0.5">
+                <p className="text-sm text-emerald-100 mt-0.5">
                   Giao khách hàng cho đại lý phụ trách
                 </p>
               </div>
@@ -164,82 +183,81 @@ export default function AssignLeadModal({
         </div>
 
         {/* Lead Info Card */}
-        {lead && (
-          <div className="px-6 pt-4">
-            <div className="bg-gradient-to-r from-muted/50 to-muted/20 rounded-xl p-4 border border-border/40">
-              <p className="text-xs text-muted-foreground mb-2 font-medium">Thông tin khách hàng</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <span className="text-sm font-bold text-blue-700">
-                      {(lead.customerName || lead.customerPhone).charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {lead.customerName || "Khách hàng"}
-                    </p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      {lead.customerPhone}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-emerald-700" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {lead.province || "Chưa có địa chỉ"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {lead.district || "—"}
-                    </p>
-                  </div>
-                </div>
+        <div className="px-6 pt-5">
+          <div className="bg-gradient-to-r from-slate-50 to-slate-50/50 rounded-xl p-4 border border-slate-200/60">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-md bg-blue-500 flex items-center justify-center">
+                <Sprout className="w-3.5 h-3.5 text-white" />
               </div>
-              {lead.cropType && (
-                <div className="mt-3 pt-3 border-t border-border/40 flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Loại cây trồng:</span>
-                  <span className="text-xs font-medium bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                    {lead.cropType}
+              <p className="text-xs text-muted-foreground font-medium">Thông tin khách hàng</p>
+            </div>
+
+            <div className="flex items-start gap-4">
+              {/* Avatar */}
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold text-lg shadow-lg shadow-blue-500/30 flex-shrink-0">
+                {(customerName || customerPhone).charAt(0).toUpperCase()}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <p className="font-semibold text-foreground">
+                  {customerName || "Khách hàng"}
+                </p>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Phone className="w-3.5 h-3.5" />
+                    {customerPhone}
                   </span>
                 </div>
-              )}
+                {(customerProvince || customerDistrict) && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {[customerDistrict, customerProvince].filter(Boolean).join(", ")}
+                  </div>
+                )}
+                {cropType && (
+                  <div className="pt-1.5">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                      <Sprout className="w-3 h-3" />
+                      {cropType}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-5">
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
           {/* Dealer Selection */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <Label htmlFor="dealer" className="text-sm font-medium flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-blue-600" />
+              <UserPlus className="w-4 h-4 text-emerald-600" />
               Chọn Đại lý phụ trách <span className="text-red-500">*</span>
             </Label>
             <Select value={selectedDealerId} onValueChange={setSelectedDealerId}>
-              <SelectTrigger className="h-11 border-border/60 focus:border-blue-500 focus:ring-blue-500/20">
+              <SelectTrigger className="h-12 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20 bg-white">
                 <SelectValue placeholder="-- Chọn đại lý --" />
               </SelectTrigger>
               <SelectContent>
                 {dealers.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    <AlertCircle className="w-4 h-4 mx-auto mb-2" />
-                    Chưa có đại lý nào hoạt động
+                  <div className="p-6 text-center text-sm text-muted-foreground">
+                    <AlertCircle className="w-5 h-5 mx-auto mb-2 text-amber-500" />
+                    <p className="font-medium">Chưa có đại lý nào hoạt động</p>
+                    <p className="text-xs mt-1">Vui lòng thêm đại lý trước</p>
                   </div>
                 ) : (
                   dealers.map((dealer) => (
                     <SelectItem
                       key={dealer.id}
                       value={dealer.id}
-                      className="py-3"
+                      className="py-3 cursor-pointer"
                     >
                       <div className="flex items-center gap-3 w-full">
-                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-bold text-emerald-700">
-                            {dealer.name.charAt(0)}
+                        <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-bold text-emerald-700">
+                            {dealer.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -266,21 +284,21 @@ export default function AssignLeadModal({
 
           {/* Selected Dealer Preview */}
           {selectedDealer && (
-            <div className="bg-gradient-to-r from-emerald-50 to-emerald-50/50 rounded-xl p-4 border border-emerald-200">
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200/60">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
                   <CheckCircle2 className="w-6 h-6 text-white" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-emerald-800">
                     Đã chọn: {selectedDealer.name}
                   </p>
-                  <p className="text-xs text-emerald-600 flex items-center gap-1">
+                  <p className="text-xs text-emerald-600 flex items-center gap-1 flex-wrap">
                     <MapPin className="w-3 h-3" />
                     {selectedDealer.province && `${selectedDealer.district ? selectedDealer.district + ", " : ""}${selectedDealer.province}`}
                     {selectedDealer.phone && (
                       <>
-                        <span className="mx-1">·</span>
+                        <span className="mx-1.5">·</span>
                         <Phone className="w-3 h-3" />
                         {selectedDealer.phone}
                       </>
@@ -292,20 +310,20 @@ export default function AssignLeadModal({
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t bg-muted/20 -mx-6 px-6 pb-0 mt-6">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200/60 -mx-6 px-6 pb-0 mt-5">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="h-11 px-6"
+              className="h-11 px-6 border-slate-200 hover:bg-slate-50"
             >
               Hủy bỏ
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !selectedDealerId}
-              className="h-11 px-6 gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/25"
+              className="h-11 px-6 gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-lg shadow-emerald-500/30 text-white font-medium transition-all duration-200 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

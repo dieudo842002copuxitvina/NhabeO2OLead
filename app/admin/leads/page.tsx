@@ -8,8 +8,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import AdminShell from "@/components/admin/AdminShell";
 import LeadsTable from "@/components/admin/LeadsTable";
-import type { LeadNormalized } from "@/app/actions/lead";
-import type { DealerNormalized } from "@/app/actions/dealer";
+import { getActiveDealers } from "@/app/actions/lead";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT (singleton pattern)
@@ -23,10 +22,33 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+ * TYPES
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+interface NormalizedLead {
+  id: string;
+  customerName: string | null;
+  customerPhone: string;
+  province: string | null;
+  district: string | null;
+  cropType: string | null;
+  areaM2: number | null;
+  assignedDealerId: string | null;
+  status: string;
+  createdAt: Date;
+  assignedDealer: {
+    id: string;
+    name: string;
+    phone: string | null;
+    province: string | null;
+  } | null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
  * FETCH LEADS WITH DEALER RELATION
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
-async function getLeadsWithDealers(): Promise<LeadNormalized[]> {
+async function getLeadsWithDealers(): Promise<NormalizedLead[]> {
   try {
     const leads = await prisma.leads.findMany({
       include: {
@@ -43,7 +65,7 @@ async function getLeadsWithDealers(): Promise<LeadNormalized[]> {
     });
 
     // Normalize leads from snake_case to camelCase for frontend
-    const normalizedLeads: LeadNormalized[] = leads.map((lead) => ({
+    const normalizedLeads: NormalizedLead[] = leads.map((lead) => ({
       id: lead.id,
       customerName: lead.customer_name,
       customerPhone: lead.customer_phone,
@@ -51,7 +73,6 @@ async function getLeadsWithDealers(): Promise<LeadNormalized[]> {
       district: lead.district,
       cropType: lead.crop_type,
       areaM2: lead.area_m2 ? Number(lead.area_m2) : null,
-      calculatorData: lead.calculator_data,
       assignedDealerId: lead.assigned_dealer_id,
       status: lead.status,
       createdAt: lead.created_at,
@@ -68,31 +89,6 @@ async function getLeadsWithDealers(): Promise<LeadNormalized[]> {
     return normalizedLeads;
   } catch (error) {
     console.error("Error fetching leads:", error);
-    return [];
-  }
-}
-
-async function getActiveDealers(): Promise<DealerNormalized[]> {
-  try {
-    const dealers = await prisma.dealer.findMany({
-      where: { is_active: true },
-      orderBy: { created_at: "desc" },
-    });
-
-    return dealers.map((dealer) => ({
-      id: dealer.id,
-      name: dealer.name,
-      phone: dealer.phone,
-      address: dealer.address,
-      province: dealer.province,
-      district: dealer.district,
-      latitude: dealer.latitude,
-      longitude: dealer.longitude,
-      isActive: dealer.is_active,
-      createdAt: dealer.created_at,
-    }));
-  } catch (error) {
-    console.error("Error fetching dealers:", error);
     return [];
   }
 }

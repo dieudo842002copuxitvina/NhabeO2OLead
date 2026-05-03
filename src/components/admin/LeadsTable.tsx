@@ -36,7 +36,6 @@ import AssignLeadModal from "./AssignLeadModal";
 import {
   Search,
   RefreshCw,
-  Loader2,
   AlertCircle,
   UserPlus,
   Phone,
@@ -48,8 +47,7 @@ import {
   UserCheck,
   ChevronRight,
 } from "lucide-react";
-import type { LeadNormalized } from "@/app/actions/lead";
-import type { DealerNormalized } from "@/app/actions/dealer";
+import type { LeadNormalized, DealerBasic } from "@/app/actions/lead";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PROPS
@@ -58,7 +56,7 @@ import type { DealerNormalized } from "@/app/actions/dealer";
 interface LeadsTableProps {
   initialLeads: LeadNormalized[];
   totalCount: number;
-  activeDealers: DealerNormalized[];
+  activeDealers: DealerBasic[];
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -442,7 +440,12 @@ export default function LeadsTable({ initialLeads, totalCount, activeDealers }: 
       <AssignLeadModal
         open={assignModalOpen}
         onOpenChange={setAssignModalOpen}
-        lead={selectedLead}
+        leadId={selectedLead?.id || ""}
+        customerName={selectedLead?.customerName || ""}
+        customerPhone={selectedLead?.customerPhone || ""}
+        customerProvince={selectedLead?.province}
+        customerDistrict={selectedLead?.district}
+        cropType={selectedLead?.cropType}
         dealers={activeDealers}
         onSuccess={handleAssignSuccess}
       />
