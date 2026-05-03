@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
+/**
+ * Create Supabase admin client (server-side only)
+ * Uses service role key for bypassing RLS policies
+ */
 export function createSupabaseAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseServiceRoleKey =
@@ -19,3 +23,9 @@ export function createSupabaseAdminClient() {
     },
   });
 }
+
+/**
+ * @deprecated Use createSupabaseAdminClient() instead
+ * Alias for backwards compatibility
+ */
+export const supabaseAdmin = createSupabaseAdminClient;

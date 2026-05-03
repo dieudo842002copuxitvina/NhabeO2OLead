@@ -61,11 +61,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-import type { 
-  Product, 
-  ProductCategory, 
+import type {
+  Product,
+  ProductCategory,
 } from "@/types/product";
-import { DEFAULT_PRODUCT_CATEGORIES, MOCK_PRODUCTS, TECH_TYPE_OPTIONS } from "@/types/product";
+import { DEFAULT_PRODUCT_CATEGORIES, MOCK_PRODUCTS, TECH_TYPE_OPTIONS, TECH_TYPE_LABELS } from "@/types/product";
 
 /* ─────────────────────────────────────────────
  * Form Schema (Zod) - Must match Supabase schema exactly
