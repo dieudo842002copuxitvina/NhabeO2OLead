@@ -7,8 +7,8 @@
  * ╚═══════════════════════════════════════════════════════════════════════════════╝
  */
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { loginAction } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ import { Loader2, Mail, Lock, AlertCircle, Sprout, ArrowRight } from "lucide-rea
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") || "/admin";
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -30,6 +33,7 @@ export default function LoginPage() {
     setFieldErrors({});
 
     const formData = new FormData(e.currentTarget);
+    formData.set("redirectTo", redirectTo);
 
     try {
       const result = await loginAction(formData);
@@ -133,7 +137,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">AGRI-OS</h1>
-              <p className="text-sm text-muted-foreground">Nền tảng Nông nghiệp</p>
+              <p className="text-sm text-muted-foreground">Admin Console</p>
             </div>
           </div>
 
@@ -172,6 +176,7 @@ export default function LoginPage() {
                   autoComplete="email"
                   className={`pl-11 h-12 ${fieldErrors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                   disabled={isLoading}
+                  required
                 />
               </div>
               {fieldErrors.email && (
@@ -197,6 +202,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   className={`pl-11 h-12 ${fieldErrors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                   disabled={isLoading}
+                  required
                 />
               </div>
               {fieldErrors.password && (
@@ -205,23 +211,6 @@ export default function LoginPage() {
                   {fieldErrors.password}
                 </p>
               )}
-            </div>
-
-            {/* Remember & Forgot */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-input bg-background text-primary focus:ring-primary"
-                />
-                Ghi nhớ đăng nhập
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-              >
-                Quên mật khẩu?
-              </Link>
             </div>
 
             {/* Submit Button */}

@@ -1,7 +1,7 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════╗
- * ║  LOGIN PAGE                                                        ║
- * ║  Authentication page with Supabase Auth                      ║
+ * ║  LOGIN ACTIONS                                                   ║
+ * ║  Server Actions for authentication with Supabase Auth            ║
  * ╚═══════════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -9,6 +9,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createServerClient } from "@/utils/supabase/server";
 import { z } from "zod";
 
@@ -18,7 +19,7 @@ import { z } from "zod";
 
 const loginSchema = z.object({
   email: z.string().email("Email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  password: z.string().min(1, "Mật khẩu không được để trống"),
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -34,6 +35,7 @@ export interface LoginResult {
 export async function loginAction(formData: FormData): Promise<LoginResult> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const redirectTo = formData.get("redirectTo") as string || "/admin";
 
   // Validate input
   const validation = loginSchema.safeParse({ email, password });
@@ -68,9 +70,9 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       return { success: false, error: error.message };
     }
 
-    // Revalidate and redirect
+    // Revalidate and redirect to the requested page
     revalidatePath("/", "layout");
-    redirect("/admin");
+    redirect(redirectTo);
   } catch (error) {
     // Next.js redirect throws an error, catch it
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
