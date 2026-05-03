@@ -1,18 +1,16 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import { Inbox, MapPin, Search, Sprout, UserRoundCheck, Users } from 'lucide-react';
-import AdminEmptyState from '@/components/admin/AdminEmptyState';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+/**
+ * ╔═══════════════════════════════════════════════════════════════════════════════╗
+ * ║  LEADS TABLE COMPONENT                                      ║
+ * ║  Interactive table with search, filters, and assign actions        ║
+ * ╚═══════════════════════════════════════════════════════════════════════════════╝
+ */
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -20,316 +18,434 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Badge,
+} from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import AssignLeadModal from "./AssignLeadModal";
+import {
+  Search,
+  RefreshCw,
+  Loader2,
+  AlertCircle,
+  UserPlus,
+  Phone,
+  MapPin,
+  Sprout,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  UserCheck,
+  ChevronRight,
+} from "lucide-react";
+import type { Lead } from "@/app/actions/lead";
+import type { Dealer } from "@/app/actions/dealer";
 
-export interface LeadListItem {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  province: string;
-  district: string;
-  cropType: string;
-  areaM2: number | null;
-  assignedDealerId: string | null;
-  status: string | null;
-  createdAt: string | null;
-}
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * PROPS
+ * ═══════════════════════════════════════════════════════════════════════════════ */
 
 interface LeadsTableProps {
-  data: LeadListItem[];
+  initialLeads: Lead[];
+  totalCount: number;
+  activeDealers: Dealer[];
 }
 
-function formatDate(value: string | null) {
-  if (!value) {
-    return 'Chưa có ngày';
-  }
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * HELPER: Status Badge
+ * ═══════════════════════════════════════════════════════════════════════════════ */
 
-  return new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(value));
+function StatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case "NEW":
+      return (
+        <Badge className="gap-1 bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
+          <Clock className="w-3 h-3" />
+          Mới
+        </Badge>
+      );
+    case "PROGRESS":
+      return (
+        <Badge className="gap-1 bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">
+          <Clock className="w-3 h-3" />
+          Đang xử lý
+        </Badge>
+      );
+    case "WON":
+      return (
+        <Badge className="gap-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
+          <CheckCircle2 className="w-3 h-3" />
+          Thành công
+        </Badge>
+      );
+    case "LOST":
+      return (
+        <Badge className="gap-1 bg-slate-100 text-slate-600 hover:bg-slate-100 border-slate-200">
+          <XCircle className="w-3 h-3" />
+          Mất
+        </Badge>
+      );
+    default:
+      return <Badge variant="secondary">{status}</Badge>;
+  }
 }
 
-function formatArea(areaM2: number | null) {
-  if (!areaM2 || Number.isNaN(areaM2)) {
-    return 'Chưa có dữ liệu';
-  }
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * COMPONENT
+ * ═══════════════════════════════════════════════════════════════════════════════ */
 
-  const hectares = areaM2 / 10000;
-  return hectares >= 1 ? `${hectares.toFixed(2)} ha` : `${areaM2.toLocaleString('vi-VN')} m²`;
-}
+export default function LeadsTable({ initialLeads, totalCount, activeDealers }: LeadsTableProps) {
+  const router = useRouter();
 
-function getStatusLabel(status: string | null) {
-  if (!status) {
-    return 'Chưa gán trạng thái';
-  }
+  // State
+  const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  return status
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
+  // Assign modal state
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-function getStatusClasses(status: string | null) {
-  const normalized = (status || '').toLowerCase();
+  /* ─────────────────────────────────────────────────────────────────────────
+   * FILTER LEADS
+   * ───────────────────────────────────────────────────────────────────────── */
 
-  if (normalized.includes('new')) {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-  }
-
-  if (normalized.includes('pending') || normalized.includes('processing')) {
-    return 'border-amber-200 bg-amber-50 text-amber-700';
-  }
-
-  if (normalized.includes('closed') || normalized.includes('won')) {
-    return 'border-sky-200 bg-sky-50 text-sky-700';
-  }
-
-  return 'border-slate-200 bg-slate-100 text-slate-700';
-}
-
-export default function LeadsTable({ data }: LeadsTableProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [provinceFilter, setProvinceFilter] = useState('all');
-  const [cropFilter, setCropFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-
-  const provinceOptions = useMemo(() => {
-    return Array.from(new Set(data.map((lead) => lead.province).filter(Boolean))).sort((a, b) =>
-      a.localeCompare(b, 'vi')
-    );
-  }, [data]);
-
-  const cropOptions = useMemo(() => {
-    return Array.from(new Set(data.map((lead) => lead.cropType).filter(Boolean))).sort((a, b) =>
-      a.localeCompare(b, 'vi')
-    );
-  }, [data]);
-
-  const statusOptions = useMemo(() => {
-    return Array.from(new Set(data.map((lead) => lead.status || 'unknown')));
-  }, [data]);
-
-  const filteredLeads = useMemo(() => {
-    const normalizedSearch = searchQuery.trim().toLowerCase();
-
-    return data.filter((lead) => {
-      const normalizedStatus = lead.status || 'unknown';
-      const matchesSearch =
-        !normalizedSearch ||
-        [
-          lead.customerName,
-          lead.customerPhone,
-          lead.province,
-          lead.district,
-          lead.cropType,
-          normalizedStatus,
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(normalizedSearch);
-
-      const matchesProvince = provinceFilter === 'all' || lead.province === provinceFilter;
-      const matchesCrop = cropFilter === 'all' || lead.cropType === cropFilter;
-      const matchesStatus = statusFilter === 'all' || normalizedStatus === statusFilter;
-
-      return matchesSearch && matchesProvince && matchesCrop && matchesStatus;
-    });
-  }, [cropFilter, data, provinceFilter, searchQuery, statusFilter]);
-
-  const stats = useMemo(() => {
-    const assigned = data.filter((lead) => Boolean(lead.assignedDealerId)).length;
-    const provinces = new Set(data.map((lead) => lead.province).filter(Boolean)).size;
-
-    return {
-      total: data.length,
-      assigned,
-      unassigned: data.length - assigned,
-      provinces,
-    };
-  }, [data]);
-
-  if (data.length === 0) {
+  const filteredLeads = leads.filter((lead) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
     return (
-      <AdminEmptyState
-        icon={Inbox}
-        title="Lead thật hiện chưa có"
-        description="Trang này chỉ còn đọc dữ liệu thật từ bảng leads. Nếu nguồn thu lead chưa đẩy bản ghi nào vào Supabase, bạn sẽ thấy empty state thay vì mock rows."
-        ctaLabel="Bắt đầu đăng sản phẩm thật ngay"
-        ctaHref="/admin/products/new"
-      />
+      lead.customerName?.toLowerCase().includes(query) ||
+      lead.customerPhone.toLowerCase().includes(query) ||
+      lead.province?.toLowerCase().includes(query) ||
+      lead.district?.toLowerCase().includes(query) ||
+      lead.cropType?.toLowerCase().includes(query)
     );
-  }
+  });
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * ACTIONS
+   * ───────────────────────────────────────────────────────────────────────── */
+
+  const handleAssign = (lead: Lead) => {
+    setSelectedLead(lead);
+    setAssignModalOpen(true);
+  };
+
+  const handleAssignSuccess = () => {
+    router.refresh();
+  };
+
+  const handleRefresh = async () => {
+    setIsLoading(true);
+    router.refresh();
+    setTimeout(() => setIsLoading(false), 500);
+  };
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * RENDER
+   * ───────────────────────────────────────────────────────────────────────── */
+
+  // Count stats
+  const newCount = leads.filter((l) => l.status === "NEW").length;
+  const assignedCount = leads.filter((l) => l.status === "PROGRESS").length;
+  const wonCount = leads.filter((l) => l.status === "WON").length;
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-border/50">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#2E7D32]/10">
-              <Users className="h-5 w-5 text-[#2E7D32]" />
-            </div>
-            <div>
-              <p className="text-xl font-black text-slate-900">{stats.total}</p>
-              <p className="text-xs text-slate-500">Tổng lead thật</p>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Tổng số</p>
+                <p className="text-2xl font-bold">{totalCount}</p>
+              </div>
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <UserPlus className="w-5 h-5 text-primary" />
+              </div>
             </div>
           </CardContent>
         </Card>
+
         <Card className="border-border/50">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100">
-              <UserRoundCheck className="h-5 w-5 text-sky-700" />
-            </div>
-            <div>
-              <p className="text-xl font-black text-slate-900">{stats.assigned}</p>
-              <p className="text-xs text-slate-500">Đã gán đại lý</p>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Lead mới</p>
+                <p className="text-2xl font-bold text-blue-600">{newCount}</p>
+              </div>
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-blue-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
+
         <Card className="border-border/50">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100">
-              <Inbox className="h-5 w-5 text-amber-700" />
-            </div>
-            <div>
-              <p className="text-xl font-black text-slate-900">{stats.unassigned}</p>
-              <p className="text-xs text-slate-500">Chưa gán đại lý</p>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Đã phân bổ</p>
+                <p className="text-2xl font-bold text-amber-600">{assignedCount}</p>
+              </div>
+              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                <UserCheck className="w-5 h-5 text-amber-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
+
         <Card className="border-border/50">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100">
-              <MapPin className="h-5 w-5 text-emerald-700" />
-            </div>
-            <div>
-              <p className="text-xl font-black text-slate-900">{stats.provinces}</p>
-              <p className="text-xs text-slate-500">Tỉnh thành có lead</p>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Thành công</p>
+                <p className="text-2xl font-bold text-emerald-600">{wonCount}</p>
+              </div>
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px_220px_220px]">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      {/* Toolbar */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Search */}
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            placeholder="Tìm kiếm tên, SĐT, địa chỉ..."
             value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Tìm theo tên, số điện thoại, khu vực hoặc cây trồng"
-            className="h-11 rounded-xl bg-white pl-9"
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-full"
           />
         </div>
 
-        <Select value={provinceFilter} onValueChange={setProvinceFilter}>
-          <SelectTrigger className="h-11 rounded-xl bg-white">
-            <MapPin className="mr-2 h-4 w-4 text-slate-400" />
-            <SelectValue placeholder="Tỉnh thành" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả tỉnh thành</SelectItem>
-            {provinceOptions.map((province) => (
-              <SelectItem key={province} value={province}>
-                {province}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={cropFilter} onValueChange={setCropFilter}>
-          <SelectTrigger className="h-11 rounded-xl bg-white">
-            <Sprout className="mr-2 h-4 w-4 text-slate-400" />
-            <SelectValue placeholder="Cây trồng" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả cây trồng</SelectItem>
-            {cropOptions.map((crop) => (
-              <SelectItem key={crop} value={crop}>
-                {crop}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-11 rounded-xl bg-white">
-            <SelectValue placeholder="Trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-            {statusOptions.map((status) => (
-              <SelectItem key={status} value={status}>
-                {status === 'unknown' ? 'Chưa gán trạng thái' : getStatusLabel(status)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Làm mới</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
-      <Card className="overflow-hidden border-border/50">
-        <CardContent className="p-0">
+      {/* Table */}
+      <Card className="border-border/50 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
           <Table>
-            <TableHeader className="bg-slate-50/90">
-              <TableRow>
-                <TableHead className="w-[260px]">Khách hàng</TableHead>
-                <TableHead>Khu vực</TableHead>
-                <TableHead>Cây trồng</TableHead>
-                <TableHead>Diện tích</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Đại lý</TableHead>
-                <TableHead className="w-[140px]">Ngày tạo</TableHead>
+            <TableHeader>
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableHead className="font-semibold w-[25%]">Khách hàng</TableHead>
+                <TableHead className="font-semibold">Liên hệ</TableHead>
+                <TableHead className="font-semibold">Địa chỉ</TableHead>
+                <TableHead className="font-semibold">Cây trồng</TableHead>
+                <TableHead className="font-semibold text-center">Trạng thái</TableHead>
+                <TableHead className="font-semibold">Đại lý phụ trách</TableHead>
+                <TableHead className="font-semibold text-right w-[100px]">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLeads.length > 0 ? (
-                filteredLeads.map((lead) => (
-                  <TableRow key={lead.id} className="hover:bg-slate-50/60">
-                    <TableCell>
-                      <div>
-                        <p className="font-semibold text-slate-900">{lead.customerName}</p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {lead.customerPhone || 'Chưa có số điện thoại'}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-600">
-                      {[lead.district, lead.province].filter(Boolean).join(', ') || 'Chưa có khu vực'}
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-600">
-                      {lead.cropType || 'Chưa có cây trồng'}
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-600">{formatArea(lead.areaM2)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={getStatusClasses(lead.status)}>
-                        {getStatusLabel(lead.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-600">
-                      {lead.assignedDealerId ? 'Đã gán' : 'Chưa gán'}
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-500">
-                      {formatDate(lead.createdAt)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
+              {filteredLeads.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-14 text-center">
-                    <div className="space-y-2">
-                      <p className="font-semibold text-slate-900">Không có lead phù hợp</p>
-                      <p className="text-sm text-slate-500">
-                        Tìm kiếm và bộ lọc hiện chỉ đang chạy trên dữ liệu thật vừa nạp từ Supabase.
+                  <TableCell colSpan={7} className="h-32 text-center">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <AlertCircle className="h-8 w-8" />
+                      <p className="text-sm">
+                        {searchQuery
+                          ? "Không tìm thấy lead nào phù hợp"
+                          : "Chưa có lead nào"}
                       </p>
                     </div>
                   </TableCell>
                 </TableRow>
+              ) : (
+                filteredLeads.map((lead) => (
+                  <TableRow
+                    key={lead.id}
+                    className="group hover:bg-muted/20 transition-colors"
+                  >
+                    {/* Khách hàng */}
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold text-sm">
+                          {(lead.customerName || lead.customerPhone).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground line-clamp-1">
+                            {lead.customerName || "Khách hàng"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(lead.createdAt).toLocaleDateString("vi-VN")}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Liên hệ */}
+                    <TableCell>
+                      {lead.customerPhone ? (
+                        <a
+                          href={`tel:${lead.customerPhone}`}
+                          className="flex items-center gap-1.5 text-sm text-foreground hover:text-blue-600 transition-colors"
+                        >
+                          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                          {lead.customerPhone}
+                        </a>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+
+                    {/* Địa chỉ */}
+                    <TableCell>
+                      {lead.province || lead.district ? (
+                        <div className="space-y-0.5">
+                          <p className="text-sm text-foreground flex items-center gap-1.5">
+                            <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                            {[lead.district, lead.province].filter(Boolean).join(", ")}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+
+                    {/* Cây trồng */}
+                    <TableCell>
+                      {lead.cropType ? (
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <Sprout className="h-3.5 w-3.5 text-emerald-600" />
+                          {lead.cropType}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+
+                    {/* Trạng thái */}
+                    <TableCell className="text-center">
+                      <StatusBadge status={lead.status} />
+                    </TableCell>
+
+                    {/* Đại lý phụ trách */}
+                    <TableCell>
+                      {lead.assignedDealer ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
+                            <span className="text-xs font-bold text-emerald-700">
+                              {lead.assignedDealer.name.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium line-clamp-1">
+                              {lead.assignedDealer.name}
+                            </p>
+                            {lead.assignedDealer.province && (
+                              <p className="text-xs text-muted-foreground">
+                                {lead.assignedDealer.province}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground italic">
+                          Chưa phân bổ
+                        </span>
+                      )}
+                    </TableCell>
+
+                    {/* Thao tác */}
+                    <TableCell className="text-right">
+                      {lead.status === "NEW" && !lead.assignedDealerId && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                onClick={() => handleAssign(lead)}
+                                className="gap-1.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm"
+                              >
+                                <UserPlus className="h-3.5 w-3.5" />
+                                Phân bổ
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Phân bổ lead cho đại lý
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {lead.status === "PROGRESS" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5"
+                        >
+                          <ChevronRight className="h-3.5 w-3.5" />
+                          Xem
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
-        </CardContent>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t bg-muted/10 px-4 py-3">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              Hiển thị <strong>{filteredLeads.length}</strong> / {totalCount} leads
+            </span>
+            {searchQuery && filteredLeads.length > 0 && (
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setSearchQuery("")}
+                className="h-auto p-0 text-xs text-blue-600"
+              >
+                Xóa bộ lọc
+              </Button>
+            )}
+          </div>
+        </div>
       </Card>
+
+      {/* Assign Modal */}
+      <AssignLeadModal
+        open={assignModalOpen}
+        onOpenChange={setAssignModalOpen}
+        lead={selectedLead}
+        dealers={activeDealers}
+        onSuccess={handleAssignSuccess}
+      />
     </div>
   );
 }

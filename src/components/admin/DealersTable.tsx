@@ -205,9 +205,11 @@ export default function DealersTable({ initialDealers, totalCount }: DealersTabl
 
           <Button
             onClick={handleAddNew}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+            className="gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-600/30 transition-all duration-200 font-medium"
           >
-            <Plus className="h-4 w-4" />
+            <span className="flex items-center justify-center w-5 h-5 rounded-md bg-white/20 backdrop-blur-sm">
+              <Plus className="h-4 w-4" />
+            </span>
             <span>Thêm Đại lý mới</span>
           </Button>
         </div>
