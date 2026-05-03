@@ -9,6 +9,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import AdminShell from "@/components/admin/AdminShell";
 import LeadsTable from "@/components/admin/LeadsTable";
 import { getActiveDealers } from "@/app/actions/lead";
+import type { LeadNormalized, DealerBasic } from "@/types/lead";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT (singleton pattern)

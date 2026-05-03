@@ -8,11 +8,10 @@
  * NOTE: Database uses snake_case field names matching Prisma schema
  */
 
-"use server";
-
 import { revalidatePath } from "next/cache";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { z } from "zod";
+import type { Lead, LeadNormalized, DealerBasic, LeadsResult, LeadResult } from "@/types/lead";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT (singleton pattern for production)
@@ -23,65 +22,6 @@ export const prisma = globalForPrisma.prisma || new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
- * TYPES - Matching database schema (snake_case)
- * ═══════════════════════════════════════════════════════════════════════════════ */
-
-// Lead type from database (snake_case)
-export interface Lead {
-  id: string;
-  customer_name: string | null;
-  customer_phone: string;
-  province: string | null;
-  district: string | null;
-  crop_type: string | null;
-  area_m2: Prisma.Decimal | null;
-  calculator_data: Prisma.JsonValue;
-  assigned_dealer_id: string | null;
-  status: string;
-  created_at: Date;
-  dealers: {
-    id: string;
-    name: string;
-    phone: string | null;
-    province: string | null;
-  } | null;
-}
-
-// Normalized Lead for frontend (camelCase)
-export interface LeadNormalized {
-  id: string;
-  customerName: string | null;
-  customerPhone: string;
-  province: string | null;
-  district: string | null;
-  cropType: string | null;
-  areaM2: number | null;
-  calculatorData: Prisma.JsonValue;
-  assignedDealerId: string | null;
-  status: string;
-  createdAt: Date;
-  assignedDealer: {
-    id: string;
-    name: string;
-    phone: string | null;
-    province: string | null;
-  } | null;
-}
-
-export interface LeadsResult {
-  success: boolean;
-  data?: LeadNormalized[];
-  error?: string;
-  count?: number;
-}
-
-export interface LeadResult {
-  success: boolean;
-  data?: LeadNormalized;
-  error?: string;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -223,7 +163,35 @@ export async function getLeadById(id: string): Promise<LeadResult> {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * ASSIGN LEAD TO DEALER
+ * GET ACTIVE DEALERS
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Get list of active dealers for dropdown
+ */
+export async function getActiveDealers(): Promise<DealerBasic[]> {
+  try {
+    const dealers = await prisma.dealer.findMany({
+      where: { is_active: true },
+      select: {
+        id: true,
+        name: true,
+        province: true,
+        district: true,
+        phone: true,
+      },
+      orderBy: { created_at: "desc" },
+    });
+
+    return dealers;
+  } catch (error) {
+    console.error("getActiveDealers error:", error);
+    return [];
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * ASSIGN LEAD TO DEALER (Server Action)
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 /**
@@ -300,42 +268,6 @@ export async function assignLeadToDealer(
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",
     };
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
- * GET ACTIVE DEALERS
- * ═══════════════════════════════════════════════════════════════════════════════ */
-
-export interface DealerBasic {
-  id: string;
-  name: string;
-  province: string | null;
-  district: string | null;
-  phone: string | null;
-}
-
-/**
- * Get list of active dealers for dropdown
- */
-export async function getActiveDealers(): Promise<DealerBasic[]> {
-  try {
-    const dealers = await prisma.dealer.findMany({
-      where: { is_active: true },
-      select: {
-        id: true,
-        name: true,
-        province: true,
-        district: true,
-        phone: true,
-      },
-      orderBy: { created_at: "desc" },
-    });
-
-    return dealers;
-  } catch (error) {
-    console.error("getActiveDealers error:", error);
-    return [];
   }
 }
 

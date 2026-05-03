@@ -47,7 +47,7 @@ import {
   UserCheck,
   ChevronRight,
 } from "lucide-react";
-import type { LeadNormalized, DealerBasic } from "@/app/actions/lead";
+import type { LeadNormalized, DealerBasic } from "@/types/lead";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PROPS

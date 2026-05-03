@@ -23,7 +23,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, UserPlus, MapPin, Phone, X, CheckCircle2, AlertCircle, Sprout } from "lucide-react";
-import { assignLeadToDealer, type DealerBasic } from "@/app/actions/lead";
+import { assignLeadToDealer } from "@/app/actions/lead";
+import type { DealerBasic } from "@/types/lead";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PROPS
