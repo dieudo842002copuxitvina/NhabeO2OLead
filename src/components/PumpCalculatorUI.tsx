@@ -55,7 +55,7 @@ import { toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { calculateTDH, PipeSpecs, SystemInputs } from '@/lib/calculators/pumpCalculator';
 import { supabase } from '@/integrations/supabase/client';
-import { submitLeadO2O } from '@/app/actions/lead';
+import { submitCalculatorAndCreateLead } from '@/app/actions/lead';
 
 export default function PumpCalculatorUI() {
   // ─── Input States ────────────────────────────────────────────────────────
@@ -77,6 +77,7 @@ export default function PumpCalculatorUI() {
   const [zaloModalOpen, setZaloModalOpen] = useState(false);
   const [selectedSku, setSelectedSku] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // ─── Calculations ────────────────────────────────────────────────────────
@@ -213,6 +214,7 @@ export default function PumpCalculatorUI() {
   const handleOpenZaloModal = (sku: string) => {
     setSelectedSku(sku);
     setPhone('');
+    setCustomerName('');
     setZaloModalOpen(true);
   };
 
@@ -224,21 +226,24 @@ export default function PumpCalculatorUI() {
 
     setSubmitting(true);
     const pumpData = pumps.find(p => p.sku === selectedSku);
-    
-    const result = await submitLeadO2O({
-      phone: phone,
-      regionId: elevationMode === 'gps' ? 'Quét GPS' : 'Nhập tay',
-      bomData: { 
-        selected_sku: selectedSku, 
+
+    const result = await submitCalculatorAndCreateLead({
+      customerName: customerName.trim(),
+      customerPhone: phone,
+      calculatorType: 'pump',
+      calculatorData: {
+        selected_sku: selectedSku,
         pump_name: pumpData?.name,
         system_parameters: {
           flow_required: requiredFlow,
           tdh_calculated: calculationResult.tdh,
           elevation: elevationChange,
-          pipe_length: mainlineLength
-        }
+          pipe_length: mainlineLength,
+          pipe_material: frictionFactor === 150 ? 'PVC' : 'HDPE',
+          pipe_diameter: innerDiameter,
+        },
+        total_cost: pumpData?.base_price || 0,
       },
-      totalEstimatedCost: pumpData?.base_price || 0
     });
 
     setSubmitting(false);
@@ -252,7 +257,7 @@ export default function PumpCalculatorUI() {
     } else {
       toast({
         title: '❌ Lỗi hệ thống',
-        description: 'Không thể gửi yêu cầu lúc này, vui lòng thử lại sau.',
+        description: result.error || 'Không thể gửi yêu cầu lúc này, vui lòng thử lại sau.',
         variant: 'destructive'
       });
     }
@@ -593,6 +598,17 @@ export default function PumpCalculatorUI() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="customerName">Họ và tên</Label>
+              <Input
+                id="customerName"
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Nhập tên của bạn"
+                className="rounded-xl"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Số điện thoại Zalo</Label>
               <Input

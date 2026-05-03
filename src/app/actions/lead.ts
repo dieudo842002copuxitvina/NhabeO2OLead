@@ -319,6 +319,99 @@ export async function updateLeadStatus(
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+ * CALCULATOR: Submit Calculator & Auto-Create Lead (CRM Integration)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+export interface CalculatorLeadData {
+  customerName: string;
+  customerPhone: string;
+  province?: string;
+  district?: string;
+  cropType?: string;
+  areaM2?: number;
+  calculatorType: 'pump' | 'roi' | 'bom';
+  calculatorData: Record<string, any>;
+}
+
+export async function submitCalculatorAndCreateLead(
+  data: CalculatorLeadData
+): Promise<{ success: boolean; leadId?: string; error?: string }> {
+  try {
+    // 1. Validate required fields
+    if (!data.customerPhone?.trim()) {
+      return { success: false, error: 'Số điện thoại là bắt buộc' };
+    }
+
+    // 2. Validate phone format (Vietnamese)
+    const phoneRegex = /^(0[0-9]{9,10})$/;
+    if (!phoneRegex.test(data.customerPhone.replace(/\s/g, ''))) {
+      return { success: false, error: 'Số điện thoại không hợp lệ (VD: 0912345678)' };
+    }
+
+    // 3. Insert into leads table with Prisma
+    const newLead = await prisma.leads.create({
+      data: {
+        customer_name: data.customerName?.trim() || null,
+        customer_phone: data.customerPhone.replace(/\s/g, ''),
+        province: data.province || null,
+        district: data.district || null,
+        crop_type: data.cropType || null,
+        area_m2: data.areaM2 ? new Prisma.Decimal(data.areaM2) : null,
+        calculator_data: {
+          type: data.calculatorType,
+          submitted_at: new Date().toISOString(),
+          ...data.calculatorData,
+        },
+        status: 'new',
+      },
+    });
+
+    console.log(`[Calculator→CRM] Created lead ${newLead.id} from ${data.calculatorType} calculator`);
+
+    // 4. Revalidate admin leads page for real-time update
+    revalidatePath('/admin/leads');
+
+    // 5. Optionally trigger n8n webhook (non-blocking)
+    const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+    if (n8nWebhookUrl) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        fetch(n8nWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'calculator_lead_created',
+            lead_id: newLead.id,
+            customer_phone: data.customerPhone,
+            calculator_type: data.calculatorType,
+            province: data.province,
+            crop_type: data.cropType,
+            timestamp: new Date().toISOString(),
+          }),
+          signal: controller.signal,
+        }).catch(() => {
+          // Non-fatal webhook error
+        });
+
+        clearTimeout(timeoutId);
+      } catch {
+        // Non-fatal webhook error
+      }
+    }
+
+    return { success: true, leadId: newLead.id };
+  } catch (error) {
+    console.error('[Calculator→CRM] Error creating lead:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Lỗi khi tạo lead',
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
  * STATISTICS
  * ═══════════════════════════════════════════════════════════════════════════════ */
 

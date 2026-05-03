@@ -55,7 +55,7 @@ import {
   CurrentCosts, 
   SystemEfficiency 
 } from '@/lib/calculators/roiCalculator';
-import { submitLeadO2O } from '@/app/actions/lead';
+import { submitCalculatorAndCreateLead } from '@/app/actions/lead';
 import { toast } from '@/components/ui/use-toast';
 
 // @ts-ignore - Assuming user installs these
@@ -194,27 +194,25 @@ export default function RoiCalculatorUI() {
 
     setSubmittingLead(true);
 
-    const bomData = {
-      type: 'high_ticket_project', // Nhãn phân loại trên n8n / DB
-      customer_info: { name: customerName, address: customerAddress },
-      financial_inputs: {
-        current_monthly_costs: { labor: laborCost, water: waterPowerCost, fertilizer: fertilizerCost },
-        capex_budget: capEx,
-        efficiency_target: { labor: laborSaved[0], water: waterPowerSaved[0], fertilizer: fertilizerSaved[0] }
+    const result = await submitCalculatorAndCreateLead({
+      customerName: customerName,
+      customerPhone: customerPhone,
+      province: customerAddress.split(',').pop()?.trim() || undefined,
+      calculatorType: 'roi',
+      calculatorData: {
+        type: 'high_ticket_project',
+        financial_inputs: {
+          current_monthly_costs: { labor: laborCost, water: waterPowerCost, fertilizer: fertilizerCost },
+          capex_budget: capEx,
+          efficiency_target: { labor: laborSaved[0], water: waterPowerSaved[0], fertilizer: fertilizerSaved[0] }
+        },
+        financial_results: {
+          annual_savings: calculationResult.annualSavings,
+          payback_months: calculationResult.paybackMonths,
+          net_profit_5y: calculationResult.netProfit
+        },
+        n8n_alert_message: `🚨 CÓ DỰ ÁN MỚI: Chủ farm quan tâm đầu tư hệ thống ${formatVND(capEx)}, thời gian hoàn vốn ${calculationResult.paybackMonths.toFixed(1)} tháng. Cần khảo sát gấp!`
       },
-      financial_results: {
-        annual_savings: calculationResult.annualSavings,
-        payback_months: calculationResult.paybackMonths,
-        net_profit_5y: calculationResult.netProfit
-      },
-      n8n_alert_message: `🚨 CÓ DỰ ÁN MỚI: Chủ farm quan tâm đầu tư hệ thống ${formatVND(capEx)}, thời gian hoàn vốn ${calculationResult.paybackMonths.toFixed(1)} tháng. Cần khảo sát gấp!`
-    };
-
-    const result = await submitLeadO2O({
-      phone: customerPhone,
-      regionId: customerAddress || 'Chưa xác định',
-      bomData: bomData,
-      totalEstimatedCost: capEx
     });
 
     setSubmittingLead(false);
@@ -229,7 +227,7 @@ export default function RoiCalculatorUI() {
       setCustomerPhone('');
       setCustomerAddress('');
     } else {
-      toast({ title: '❌ Lỗi hệ thống', description: 'Không thể gửi yêu cầu lúc này.', variant: 'destructive' });
+      toast({ title: '❌ Lỗi hệ thống', description: result.error || 'Không thể gửi yêu cầu lúc này.', variant: 'destructive' });
     }
   };
 
