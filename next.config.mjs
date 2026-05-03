@@ -9,10 +9,27 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+      },
     ],
   },
   async redirects() {
     return [
+      {
+        source: '/cong-cu',
+        destination: '/tinh-toan',
+        permanent: true,
+      },
       {
         source: '/store',
         destination: '/danh-muc/tat-ca',

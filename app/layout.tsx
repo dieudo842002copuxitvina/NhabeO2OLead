@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
-import { Suspense } from "react";
 import "@/index.css";
-import AIRulePopup from "@/components/AIRulePopup";
-import GA4RouteTracker from "@/components/GA4RouteTracker";
-import SiteFooter from "@/components/SiteFooter";
-import TopNav from "@/components/TopNav";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
-import { Providers } from "./providers";
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
@@ -46,6 +40,13 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Root Layout - Chỉ chứa html/body và font configuration
+ * KHÔNG chứa TopNav/SiteFooter vì sẽ gây xung đột với Admin routes
+ * 
+ * Public pages sử dụng app/(public)/layout.tsx
+ * Admin pages sử dụng app/admin/layout.tsx
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -57,17 +58,9 @@ export default function RootLayout({
         <meta charSet="UTF-8" />
       </head>
       <body className={`${beVietnamPro.className} bg-[#FFFFFF] text-[#1A1A1A]`}>
-        <Providers>
-          <Suspense fallback={null}>
-            <GA4RouteTracker />
-          </Suspense>
-          <AIRulePopup />
-          <TopNav />
-          <main className="bg-[#FFFFFF] text-[#1A1A1A]">{children}</main>
-          <SiteFooter />
-          <Toaster />
-          <Sonner />
-        </Providers>
+        {children}
+        <Toaster />
+        <Sonner />
       </body>
     </html>
   );

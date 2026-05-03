@@ -1,0 +1,393 @@
+/**
+ * ╔═══════════════════════════════════════════════════════════════════════════════╗
+ * ║  PRISMA SCHEMA - AgriTech Nông Nghiệp Platform                            ║
+ * ║  Generated from PostgreSQL Schema                                           ║
+ * ║  PostgreSQL + Supabase (Auth, Storage, Realtime)                           ║
+ * ╚═══════════════════════════════════════════════════════════════════════════════╝
+ *
+ * USAGE:
+ *   1. Copy this file to prisma/schema.prisma
+ *   2. Run: npx prisma generate
+ *   3. Run: npx prisma db push (to sync with Supabase)
+ *
+ * REQUIREMENTS:
+ *   - PostgreSQL 14+ (Supabase)
+ *   - Prisma 5.x
+ */
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE: AUTHENTICATION & USERS
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+// Profile: Extension of Supabase Auth Users
+// Links to auth.users (Supabase built-in)
+model Profile {
+  id        String   @id // Maps to auth.users.id
+  fullName  String?
+  phone     String?
+  avatarUrl String?
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  // Relations
+  userRoles  UserRole[]
+  wikiPages  WikiPage[]  @relation("WikiPageAuthor")
+
+  @@map("profiles")
+}
+
+// User Roles: Role-based access control
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  role      RoleType
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  profile Profile? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_roles")
+}
+
+enum RoleType {
+  admin
+  dealer
+  technician
+  customer
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE: CRM & LEAD MANAGEMENT
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+// Dealers: Đại lý ủy quyền / điểm bán
+model Dealer {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  address   String?
+  province  String?
+  district  String?
+  latitude  Float?
+  longitude Float?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  leads Leads[]
+
+  @@map("dealers")
+}
+
+// Leads: Khách hàng tiềm năng từ marketing/calculator
+model Leads {
+  id              String   @id @default(uuid())
+  customerName    String?  @map("customer_name")
+  customerPhone   String   @map("customer_phone")
+  province        String?
+  district        String?
+  cropType        String?  @map("crop_type")
+  areaM2          Float?   @map("area_m2")
+  calculatorData  Json     @default("{}") @map("calculator_data")
+  assignedDealerId String? @map("assigned_dealer_id")
+  status          LeadStatus @default(NEW) @map("status")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  assignedDealer Dealer? @relation(fields: [assignedDealerId], references: [id])
+
+  @@map("leads")
+}
+
+// Calculator Leads: Lead từ máy tính thủy lực
+model CalculatorLeads {
+  id            String   @id @default(uuid())
+  customerName  String?  @map("customer_name")
+  customerPhone String   @map("customer_phone")
+  cropType      String?  @map("crop_type")
+  areaHa        Float?   @map("area_ha")
+  results       Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("calculator_leads")
+}
+
+enum LeadStatus {
+  NEW      @map("new")
+  PROGRESS @map("progress")
+  WON      @map("won")
+  LOST     @map("lost")
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE: E-COMMERCE / PIM (Product Information Management)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+// Categories: Danh mục sản phẩm
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  products        Product[]
+  categorySchema  CategorySchema?
+  posts           Post[]
+
+  @@map("categories")
+}
+
+// Products: Sản phẩm vật tư nông nghiệp
+model Product {
+  id             String   @id @default(uuid())
+  categoryId     String   @map("category_id")
+  name           String
+  slug           String   @unique
+  description    String?
+  imageUrl       String?  @map("image_url")
+  features       Json     @default("{}")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  galleryImages  String[] @default([]) @map("gallery_images")
+  variants       Json     @default("[]")
+  shippingInfo   Json     @default("{}") @map("shipping_info")
+  stockQuantity  Int      @default(0) @map("stock_quantity")
+  basePrice      Int      @default(0) @map("base_price")
+  sku            String?  @unique
+  brand          String?
+  specifications Json     @default("{}")
+
+  // Relations
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("products")
+}
+
+// Category Schema: Dynamic fields cho mỗi category
+model CategorySchema {
+  id         String   @id @default(uuid())
+  categoryId String?  @unique @map("category_id")
+  fields     Json?
+
+  // Relations
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("category_schemas")
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE: CONTENT MANAGEMENT (CMS)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+// Posts: Bài viết blog / tin tức
+model Post {
+  id              String   @id @default(uuid())
+  categoryId      String?  @map("category_id")
+  title           String
+  slug            String   @unique
+  content         String?
+  thumbnailUrl    String?  @map("thumbnail_url")
+  status          PostStatus @default(DRAFT) @map("status")
+  metaTitle       String?  @map("meta_title")
+  metaDescription String?  @map("meta_description")
+  keywords        String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@map("posts")
+}
+
+enum PostStatus {
+  DRAFT     @map("draft")
+  PUBLISHED @map("published")
+}
+
+// Case Studies: Case study khách hàng
+model CmsCaseStudy {
+  id          String        @id @default(uuid())
+  slug        String        @unique
+  title       String
+  customerName String?      @map("customer_name")
+  province    String?
+  crop        String?
+  areaHa      Float?        @map("area_ha")
+  body        String?
+  coverImage  String?        @map("cover_image")
+  gallery     Json          @default("[]")
+  status      CaseStatus    @default(DRAFT) @map("status")
+  featured    Boolean       @default(false)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@map("cms_case_studies")
+}
+
+enum CaseStatus {
+  DRAFT     @map("draft")
+  PUBLISHED @map("published")
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE: WIKI / KNOWLEDGE BASE
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+// Wiki Pages: Trang wiki / cẩm nang kỹ thuật
+model WikiPage {
+  id             String       @id @default(uuid())
+  slug           String       @unique
+  title          String
+  content        String?
+  tags           String[]     @default([])
+  authorId       String?      @map("author_id")
+  articleType    ArticleType  @default(WIKI) @map("article_type")
+  status         WikiStatus   @default(DRAFT) @map("status")
+  coverImage     String?      @map("cover_image")
+  seoTitle       String?      @map("seo_title")
+  seoDescription String?      @map("seo_description")
+  category       String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  author   Profile?  @relation("WikiPageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  outLinks WikiLink[] @relation("WikiLinkSource") // Links FROM this page (outgoing)
+
+  // Note: Incoming links (links TO this page) can be queried via:
+  // WikiLink.findMany({ where: { targetPageSlug: pageSlug } })
+  // Or use a computed property / raw query
+
+  @@map("wiki_pages")
+}
+
+// Wiki Links: Internal links between wiki pages
+// Represents: source_page --[link]--> target_page (via slug)
+model WikiLink {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourcePageId  String?  @map("source_page_id") @db.Uuid
+  targetPageSlug String  @map("target_page_slug") @db.VarChar
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  sourcePage WikiPage? @relation("WikiLinkSource", fields: [sourcePageId], references: [id], onDelete: Cascade)
+
+  // Note: targetPageSlug references WikiPage.slug but without FK constraint
+  // (Prisma limitation - slug is not a primary key, so we can't create a relation)
+  // To get incoming links: WikiLink.findMany({ where: { targetPageSlug: someSlug } })
+
+  @@map("wiki_links")
+}
+
+enum ArticleType {
+  WIKI    @map("wiki")
+  GUIDE   @map("guide")
+  TUTORIAL @map("tutorial")
+}
+
+enum WikiStatus {
+  DRAFT     @map("draft")
+  PUBLISHED @map("published")
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE: MARKET DATA
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+// Market Prices: Giá nông sản theo vùng
+model MarketPrice {
+  id         String   @id @default(uuid())
+  cropName   String   @map("crop_name")
+  province   String
+  price      Float
+  priceChange Float?  @map("price_change")
+  recordedAt DateTime @default(now()) @map("recorded_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([cropName, province, recordedAt])
+  @@map("market_prices")
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE: REFERENCE DATA / TAGS
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+// Crop Tags: Tags cho loại cây trồng
+model CropTag {
+  id   String @id @default(uuid())
+  name String @unique
+  slug String @unique
+
+  @@map("crop_tags")
+}
+
+// Terrain Tags: Tags cho loại địa hình
+model TerrainTag {
+  id   String @id @default(uuid())
+  name String @unique
+  slug String @unique
+
+  @@map("terrain_tags")
+}
+
+// BOM Templates: Template công thức vật tư
+model BomTemplate {
+  id          String   @id @default(uuid())
+  cropName    String   @map("crop_name")
+  description String?
+  items       Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("bom_templates")
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE: SETTINGS & CONFIGURATION
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+// App Settings: Key-value settings
+model AppSetting {
+  id          String   @id @default(uuid())
+  settingKey  String   @unique @map("setting_key")
+  settingValue Json    @map("setting_value")
+  description String?
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  @@map("app_settings")
+}
+
+// Calculator Params: Parameters for calculators
+model CalculatorParam {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  label       String?
+  description  String?
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  @@map("calculator_params")
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE: ANALYTICS / TRACKING
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+// Tracking Events: Event tracking
+model TrackingEvent {
+  id         String   @id @default(uuid())
+  eventName  String   @map("event_name")
+  platform   String?
+  payload    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("tracking_events")
+}

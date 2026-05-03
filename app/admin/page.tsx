@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import AdminShell from '@/components/admin/AdminShell';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -77,8 +76,7 @@ const getStatusBadge = (status: string) => {
 
 export default function AdminDashboardPage() {
   return (
-    <AdminShell title="Tổng quan Hệ thống" subtitle="Bảng điều khiển trung tâm (Agri-OS Command Center)">
-      <div className="space-y-8 max-w-7xl mx-auto pb-10">
+    <div className="space-y-8 max-w-7xl mx-auto pb-10">
         
         {/* TẦNG 1: KPI CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -298,6 +296,5 @@ export default function AdminDashboardPage() {
         </Card>
 
       </div>
-    </AdminShell>
   );
 }
