@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { 
   Calculator, 
@@ -601,6 +602,39 @@ function ResultsDisplay({
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+ * UTM PARAMS CAPTURE COMPONENT
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+interface UtmParams {
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+}
+
+function UtmParamsCapture({ onCapture }: { onCapture: (params: UtmParams) => void }) {
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    const params: UtmParams = {
+      utm_source: searchParams.get("utm_source"),
+      utm_medium: searchParams.get("utm_medium"),
+      utm_campaign: searchParams.get("utm_campaign"),
+      utm_content: searchParams.get("utm_content"),
+      utm_term: searchParams.get("utm_term"),
+    };
+    
+    // Only pass if at least utm_source exists
+    if (params.utm_source) {
+      onCapture(params);
+    }
+  }, [searchParams, onCapture]);
+  
+  return null;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
  * MAIN PAGE COMPONENT
  * ───────────────────────────────────────────────────────────────────────────── */
 
@@ -617,7 +651,21 @@ export default function TinhToanPage() {
   const [contact, setContact] = useState<ContactInfo>(DEFAULT_CONTACT);
   const [contactErrors, setContactErrors] = useState<ContactErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
+  // UTM Tracking state
+  const [utmParams, setUtmParams] = useState<UtmParams>({
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
+  });
+  
+  const handleUtmCapture = (params: UtmParams) => {
+    setUtmParams(params);
+    console.log("[UTM] Captured:", params);
+  };
+  
   const handleContactChange = (field: keyof ContactInfo, value: string) => {
     setContact(prev => ({ ...prev, [field]: value }));
     // Clear error when user types
@@ -736,6 +784,12 @@ export default function TinhToanPage() {
         },
         latitude: provinceCoords?.lat,
         longitude: provinceCoords?.lon,
+        // UTM Tracking
+        utmSource: utmParams.utm_source,
+        utmMedium: utmParams.utm_medium,
+        utmCampaign: utmParams.utm_campaign,
+        utmContent: utmParams.utm_content,
+        utmTerm: utmParams.utm_term,
       });
 
       if (leadResult.success) {
@@ -779,6 +833,11 @@ export default function TinhToanPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* UTM Capture (hidden) */}
+      <Suspense fallback={null}>
+        <UtmParamsCapture onCapture={handleUtmCapture} />
+      </Suspense>
+      
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
         <div className="container mx-auto px-4 py-12">

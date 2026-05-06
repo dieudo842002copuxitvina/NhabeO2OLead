@@ -37,18 +37,14 @@ interface PostWithRelations {
   title: string;
   slug: string;
   description: string | null;
-  thumbnail: string | null;
+  thumbnail_url: string | null;
   published: boolean;
-  publishedAt: Date | null;
-  createdAt: Date;
-  category: {
+  published_at: Date | null;
+  created_at: Date;
+  categories: {
     id: string;
     name: string;
     slug: string;
-  } | null;
-  author: {
-    full_name: string | null;
-    avatar_url: string | null;
   } | null;
 }
 
@@ -89,15 +85,12 @@ export const metadata: Metadata = {
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 async function getPosts(): Promise<PostWithRelations[]> {
-  const posts = await prisma.post.findMany({
+  const posts = await prisma.posts.findMany({
     where: { published: true },
-    orderBy: { publishedAt: "desc" },
+    orderBy: { published_at: "desc" },
     include: {
-      category: {
+      categories: {
         select: { id: true, name: true, slug: true },
-      },
-      author: {
-        select: { full_name: true, avatar_url: true },
       },
     },
     take: 20,
@@ -107,9 +100,9 @@ async function getPosts(): Promise<PostWithRelations[]> {
 }
 
 async function getCategories(): Promise<Category[]> {
-  const categories = await prisma.postCategory.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
+  const categories = await prisma.categories.findMany({
+    where: { /* Add isActive condition if exists */ },
+    orderBy: { created_at: "asc" },
     include: {
       _count: { select: { posts: true } },
     },
@@ -151,9 +144,9 @@ function PostCard({ post }: { post: PostWithRelations }) {
     >
       {/* Thumbnail */}
       <div className="relative aspect-[16/10] overflow-hidden bg-[#F1F5F9]">
-        {post.thumbnail ? (
+        {post.thumbnail_url ? (
           <Image
-            src={post.thumbnail}
+            src={post.thumbnail_url}
             alt={post.title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -166,9 +159,9 @@ function PostCard({ post }: { post: PostWithRelations }) {
         )}
         
         {/* Category Badge */}
-        {post.category && (
+        {post.categories && (
           <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#2F8E36] backdrop-blur-sm">
-            {post.category.name}
+            {post.categories.name}
           </div>
         )}
       </div>
@@ -188,22 +181,16 @@ function PostCard({ post }: { post: PostWithRelations }) {
         {/* Meta */}
         <div className="flex items-center justify-between text-xs text-[#9CA3AF]">
           <div className="flex items-center gap-3">
-            {post.author && (
-              <span className="flex items-center gap-1">
-                <User className="h-3 w-3" />
-                {post.author.full_name || "Admin"}
-              </span>
-            )}
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {formatReadingTime(post.description)}
             </span>
           </div>
           
-          {post.publishedAt && (
+          {post.published_at && (
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {formatDate(post.publishedAt)}
+              {formatDate(post.published_at)}
             </span>
           )}
         </div>
@@ -220,9 +207,9 @@ function FeaturedPost({ post }: { post: PostWithRelations }) {
     >
       {/* Large Thumbnail */}
       <div className="relative aspect-[21/9] overflow-hidden bg-[#1A1A1A]">
-        {post.thumbnail ? (
+        {post.thumbnail_url ? (
           <Image
-            src={post.thumbnail}
+            src={post.thumbnail_url}
             alt={post.title}
             fill
             className="object-cover opacity-80 transition-opacity group-hover:opacity-70"
@@ -245,9 +232,9 @@ function FeaturedPost({ post }: { post: PostWithRelations }) {
         
         {/* Content Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
-          {post.category && (
+          {post.categories && (
             <span className="mb-2 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-              {post.category.name}
+              {post.categories.name}
             </span>
           )}
           <h2 className="mb-2 text-2xl font-bold text-white transition-colors group-hover:text-[#8BC34A] sm:text-3xl">

@@ -330,7 +330,99 @@ export async function deleteDealer(
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * STATISTICS
+ * TOGGLE DEALER STATUS
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Toggle dealer active status (for admin dashboard)
+ */
+export async function toggleDealerStatus(
+  dealerId: string,
+  currentStatus: boolean
+): Promise<{ success: boolean; newStatus?: boolean; error?: string }> {
+  try {
+    const newStatus = !currentStatus;
+
+    const dealer = await prisma.dealer.update({
+      where: { id: dealerId },
+      data: { is_active: newStatus },
+    });
+
+    // Revalidate
+    revalidatePath("/admin/dealers");
+
+    console.log(
+      `[Dealer] Toggle status: "${dealer.name}" ` +
+      `(${currentStatus ? "active" : "inactive"} → ${newStatus ? "active" : "inactive"})`
+    );
+
+    return { success: true, newStatus: dealer.is_active };
+  } catch (error) {
+    console.error("toggleDealerStatus error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * GET DEALER STATS
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Get dealers with lead statistics for admin dashboard
+ */
+export async function getDealersWithStats(): Promise<{
+  success: boolean;
+  data?: Array<{
+    id: string;
+    name: string;
+    phone: string | null;
+    province: string | null;
+    district: string | null;
+    is_active: boolean;
+    created_at: Date;
+    lastAssignedAt: Date | null;
+    leadCount: number;
+  }>;
+  error?: string;
+}> {
+  try {
+    const dealers = await prisma.dealer.findMany({
+      orderBy: { created_at: "desc" },
+      include: {
+        _count: {
+          select: { calculator_leads: true },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: dealers.map((dealer) => ({
+        id: dealer.id,
+        name: dealer.name,
+        phone: dealer.phone,
+        province: dealer.province,
+        district: dealer.district,
+        is_active: dealer.is_active,
+        created_at: dealer.created_at,
+        lastAssignedAt: dealer.lastAssignedAt,
+        leadCount: dealer._count.calculator_leads,
+      })),
+    };
+  } catch (error) {
+    console.error("getDealersWithStats error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * GET DEALER STATISTICS
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 /**

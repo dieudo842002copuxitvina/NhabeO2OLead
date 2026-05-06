@@ -18,7 +18,6 @@ model Profile {
   dealers    Dealer?    @relation(fields: [dealer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users      users      @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user_roles UserRole[]
-  posts      Post[]
 
   @@map("profiles")
   @@schema("public")
@@ -37,18 +36,20 @@ model UserRole {
 }
 
 model Dealer {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  phone      String?
-  address    String?
-  province   String?
-  district   String?
-  latitude   Float?
-  longitude  Float?
-  is_active  Boolean   @default(true)
-  created_at DateTime  @default(now()) @db.Timestamptz(6)
-  leads      Leads[]
-  profiles   Profile[]
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  phone          String?
+  address        String?
+  province       String?
+  district       String?
+  latitude       Float?
+  longitude      Float?
+  is_active      Boolean   @default(true)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  lastAssignedAt DateTime? @db.Timestamptz(6) // Track last lead assignment for Round-Robin
+  leads          Leads[]
+  calculator_leads calculator_leads[]
+  profiles       Profile[]
 
   @@map("dealers")
   @@schema("public")
@@ -589,8 +590,29 @@ model calculator_leads {
   customer_phone String
   crop_type      String?
   area_ha        Decimal?  @db.Decimal
-  results        Json?
+  results        Json?     // BOM / calculator results
+  
+  // Geographic fields for O2O routing
+  province           String?
+  district           String?
+  assigned_dealer_id String?  @db.Uuid
+  status             String   @default("new") // new, assigned, contacted, won, lost
+  
+  // Full calculator data (items, totals, etc.)
+  calculator_data    Json?    @default("{}")
+  
   created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  
+  // Relations
+  assigned_dealer Dealer?  @relation(fields: [assigned_dealer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  // UTM Tracking Fields
+  utm_source     String?
+  utm_medium     String?
+  utm_campaign   String?
+  utm_content    String?
+  utm_term       String?
+  referrer_url   String?
 
   @@schema("public")
 }
@@ -723,7 +745,26 @@ model posts {
   created_at       DateTime?   @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamptz(6)
   updated_at       DateTime?   @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamptz(6)
   categories       categories? @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  
+  // Blog-specific fields
+  description      String?     @db.VarChar(320)  // For Meta Description
+  published        Boolean     @default(false)
+  published_at     DateTime?   @db.Timestamptz(6)
+  canonical_url    String?
+  structured_data  Json?
+  author_id        String?     @db.Uuid
+  
+  // UTM Tracking fields
+  utm_source       String?
+  utm_medium       String?
+  utm_campaign     String?
+  utm_content      String?
+  utm_term         String?
 
+  @@index([slug])
+  @@index([published_at(sort: Desc)])
+  @@index([published, published_at])
+  
   @@schema("public")
 }
 
@@ -848,90 +889,6 @@ enum oauth_authorization_status {
   expired
 
   @@schema("auth")
-}
-
-/* ══════════════════════════════════════════════════════════════════════════════════════════
- * BLOG MODELS - Posts, Categories, Tags
- * ══════════════════════════════════════════════════════════════════════════════════════════ */
-
-/// Blog Post model with SEO metadata
-model Post {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title        String
-  slug         String   @unique
-  description  String?  @db.VarChar(320)
-  content      String?  @db.Text
-  
-  // Media
-  thumbnail    String?
-  
-  // Publishing
-  published    Boolean  @default(false)
-  publishedAt  DateTime? @db.Timestamptz(6)
-  createdAt    DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
-  
-  // SEO Metadata
-  metaTitle    String?  @db.VarChar(70)
-  canonicalUrl String?
-  structuredData Json?  @db.Json
-  
-  // Relations
-  authorId     String?  @db.Uuid
-  categoryId   String?  @db.Uuid
-  author       Profile? @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  category     PostCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  tags         PostTag[]
-  
-  @@index([slug])
-  @@index([publishedAt(sort: Desc)])
-  @@index([published, publishedAt])
-  @@map("posts")
-  @@schema("public")
-}
-
-/// Blog Categories for organizing posts
-model PostCategory {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String
-  slug        String   @unique
-  description String?
-  icon        String?
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
-  
-  posts       Post[]
-  
-  @@map("post_categories")
-  @@schema("public")
-}
-
-/// Tags for cross-category post organization
-model PostTag {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String   @unique
-  slug      String   @unique
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  
-  posts     Post[]
-  
-  @@map("post_tags")
-  @@schema("public")
-}
-
-/// Many-to-many junction for Post-Tag relationship
-model PostToTag {
-  postId String @db.Uuid
-  tagId  String @db.Uuid
-  
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tag    PostTag @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  
-  @@id([postId, tagId])
-  @@map("post_to_tags")
-  @@schema("public")
 }
 
 enum oauth_client_type {

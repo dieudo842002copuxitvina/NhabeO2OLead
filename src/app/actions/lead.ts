@@ -15,6 +15,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import { z } from "zod";
 import type { Lead, LeadNormalized, DealerBasic, LeadsResult, LeadResult } from "@/types/lead";
 import { calculateDistance, findNearestDealer, isValidCoordinate } from "@/lib/geo";
+import { assignLeadToDealer, type RoutingResult } from "@/lib/routing";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT (singleton pattern for production)
@@ -327,6 +328,44 @@ export async function updateLeadStatus(
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+ * UPDATE CALCULATOR LEAD STATUS (O2O)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Update status for calculator_leads (O2O routing)
+ */
+export async function updateCalculatorLeadStatus(
+  leadId: string,
+  status: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const lead = await prisma.calculator_leads.findUnique({
+      where: { id: leadId },
+    });
+
+    if (!lead) {
+      return { success: false, error: "Không tìm thấy lead" };
+    }
+
+    await prisma.calculator_leads.update({
+      where: { id: leadId },
+      data: { status },
+    });
+
+    revalidatePath("/admin/leads");
+    revalidatePath("/dealer/dashboard");
+
+    return { success: true };
+  } catch (error) {
+    console.error("updateCalculatorLeadStatus error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
  * CALCULATOR: Submit Calculator & Auto-Create Lead (CRM Integration)
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
@@ -341,6 +380,12 @@ export interface CalculatorLeadData {
   longitude?: number;
   calculatorType: 'pump' | 'roi' | 'bom';
   calculatorData: Record<string, any>;
+  // UTM Tracking
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  utmTerm?: string | null;
 }
 
 export async function submitCalculatorAndCreateLead(
@@ -423,6 +468,14 @@ export async function submitCalculatorAndCreateLead(
       },
     });
 
+    // 4.1 UTM Tracking (log only - calculator_leads table pending schema sync)
+    if (data.utmSource || data.utmMedium || data.utmCampaign || data.utmContent || data.utmTerm) {
+      // Log UTM params for tracking
+      console.log(`[UTM Tracking] Lead UTM: source=${data.utmSource}, medium=${data.utmMedium}, campaign=${data.utmCampaign}, content=${data.utmContent}`);
+      // Note: Insert to calculator_leads pending Prisma schema sync
+      // TODO: Run `npx prisma db push` to sync schema
+    }
+
     console.log(`[Calculator→CRM] Created lead ${newLead.id} from ${data.calculatorType} calculator`);
 
     // 5. Revalidate admin leads page for real-time update
@@ -466,6 +519,169 @@ export async function submitCalculatorAndCreateLead(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Lỗi khi tạo lead',
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * CALCULATOR: Submit to calculator_leads with O2O Routing
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Submit calculator result directly to calculator_leads table
+ * with automatic O2O routing by province/district
+ */
+export async function submitCalculatorLeadWithRouting(
+  data: CalculatorLeadData & { 
+    bomItems?: Array<{ item: string; qty: number; unit: string; unitPrice: number; subtotal: number }>;
+    totalCost?: number;
+  }
+): Promise<{ 
+  success: boolean; 
+  leadId?: string; 
+  assignedDealerId?: string | null;
+  assignedDealerName?: string | null;
+  routingResult?: RoutingResult;
+  error?: string 
+}> {
+  try {
+    // 1. Validate required fields
+    if (!data.customerPhone?.trim()) {
+      return { success: false, error: 'Số điện thoại là bắt buộc' };
+    }
+
+    // 2. Validate phone format (Vietnamese)
+    const phoneRegex = /^(0[0-9]{9,10})$/;
+    if (!phoneRegex.test(data.customerPhone.replace(/\s/g, ''))) {
+      return { success: false, error: 'Số điện thoại không hợp lệ (VD: 0912345678)' };
+    }
+
+    // 3. O2O Routing: Find the best dealer based on province/district
+    let routingResult: RoutingResult = { dealerId: null, dealerName: null, matchType: "none" };
+    
+    if (data.province) {
+      try {
+        routingResult = await assignLeadToDealer(
+          data.province,
+          data.district,
+          data.latitude,
+          data.longitude
+        );
+        console.log(`[O2O Routing] ${data.province}/${data.district || 'N/A'} → ${routingResult.dealerName || 'No match'} (${routingResult.matchType})`);
+      } catch (routingError) {
+        console.error('[O2O Routing] Error during routing:', routingError);
+        // Continue without routing - lead will be in queue for admin
+      }
+    }
+
+    // 4. Prepare calculator_data with BOM items
+    const calculatorData = {
+      type: data.calculatorType,
+      submitted_at: new Date().toISOString(),
+      crop_type: data.cropType,
+      area_ha: data.areaM2 ? data.areaM2 / 10000 : null, // Convert m² to ha
+      bomItems: data.bomItems || [],
+      totalCost: data.totalCost || 0,
+      ...data.calculatorData,
+    };
+
+    // 5. Insert into calculator_leads with Prisma
+    const newLead = await prisma.calculator_leads.create({
+      data: {
+        customer_name: data.customerName?.trim() || null,
+        customer_phone: data.customerPhone.replace(/\s/g, ''),
+        province: data.province || null,
+        district: data.district || null,
+        crop_type: data.cropType || null,
+        area_ha: data.areaM2 ? new Prisma.Decimal(data.areaM2 / 10000) : null, // m² → ha
+        calculator_data: calculatorData,
+        results: data.totalCost ? { totalCost: data.totalCost } : undefined,
+        assigned_dealer_id: routingResult.dealerId || null,
+        status: routingResult.dealerId ? 'assigned' : 'new',
+        // UTM Tracking
+        utm_source: data.utmSource || null,
+        utm_medium: data.utmMedium || null,
+        utm_campaign: data.utmCampaign || null,
+        utm_content: data.utmContent || null,
+        utm_term: data.utmTerm || null,
+      },
+    });
+
+    console.log(`[O2O Routing→CalculatorLeads] Created lead ${newLead.id} assigned to ${routingResult.dealerName || 'Admin Queue'}`);
+
+    // 6. Revalidate pages
+    revalidatePath('/admin/leads');
+    revalidatePath('/dealer/dashboard');
+
+    return { 
+      success: true, 
+      leadId: newLead.id,
+      assignedDealerId: routingResult.dealerId,
+      assignedDealerName: routingResult.dealerName,
+      routingResult,
+    };
+  } catch (error) {
+    console.error('[O2O Routing→CalculatorLeads] Error creating lead:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Lỗi khi tạo lead',
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * DEALER: Get leads assigned to a specific dealer
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Get calculator leads assigned to a specific dealer
+ */
+export async function getDealerCalculatorLeads(dealerId: string): Promise<{
+  success: boolean;
+  data?: Array<{
+    id: string;
+    customer_name: string | null;
+    customer_phone: string;
+    province: string | null;
+    district: string | null;
+    crop_type: string | null;
+    area_ha: number | null;
+    calculator_data: any;
+    status: string;
+    created_at: Date;
+  }>;
+  error?: string;
+}> {
+  try {
+    const leads = await prisma.calculator_leads.findMany({
+      where: { assigned_dealer_id: dealerId },
+      select: {
+        id: true,
+        customer_name: true,
+        customer_phone: true,
+        province: true,
+        district: true,
+        crop_type: true,
+        area_ha: true,
+        calculator_data: true,
+        status: true,
+        created_at: true,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    return {
+      success: true,
+      data: leads.map(lead => ({
+        ...lead,
+        area_ha: lead.area_ha ? Number(lead.area_ha) : null,
+      })),
+    };
+  } catch (error) {
+    console.error('[Dealer Leads] Error fetching leads:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Lỗi khi lấy danh sách lead',
     };
   }
 }

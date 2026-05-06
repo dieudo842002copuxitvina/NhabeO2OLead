@@ -21,6 +21,7 @@ import { Calendar, Clock, User, ArrowLeft, Share2, Printer, BookOpen } from "luc
 import SeoMeta from "@/components/SeoMeta";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import RelatedProductsSidebar from "@/components/RelatedProductsSidebar";
+import { NhaBeBlogInlineCTA, NhaBeBlogEndCTA } from "@/components/NhaBeConversionBox";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT
@@ -43,30 +44,19 @@ interface PostDetail {
   slug: string;
   description: string | null;
   content: string | null;
-  thumbnail: string | null;
+  thumbnail_url: string | null;
   published: boolean;
-  publishedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  metaTitle: string | null;
-  canonicalUrl: string | null;
-  structuredData: object | null;
-  category: {
+  published_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+  meta_title: string | null;
+  canonical_url: string | null;
+  structured_data: object | null;
+  categories: {
     id: string;
     name: string;
     slug: string;
   } | null;
-  author: {
-    full_name: string | null;
-    avatar_url: string | null;
-  } | null;
-  tags: Array<{
-    tag: {
-      id: string;
-      name: string;
-      slug: string;
-    };
-  }>;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -80,7 +70,7 @@ export const revalidate = 3600;
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 export async function generateStaticParams() {
-  const posts = await prisma.post.findMany({
+  const posts = await prisma.posts.findMany({
     where: { published: true },
     select: { slug: true },
   });
@@ -103,11 +93,11 @@ export async function generateMetadata({
     return { title: "Không tìm thấy bài viết" };
   }
 
-  const title = post.metaTitle || post.title;
+  const title = post.meta_title || post.title;
   const description = post.description || "";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nhabe-agri.com";
-  const canonical = post.canonicalUrl || `${siteUrl}/kien-thuc/${post.slug}`;
-  const ogImage = post.thumbnail || `${siteUrl}/og-default.jpg`;
+  const canonical = post.canonical_url || `${siteUrl}/kien-thuc/${post.slug}`;
+  const ogImage = post.thumbnail_url || `${siteUrl}/og-default.jpg`;
 
   return {
     title: `${title} | Nhà Bè Agri`,
@@ -129,9 +119,7 @@ export async function generateMetadata({
           alt: post.title,
         },
       ],
-      publishedTime: post.publishedAt?.toISOString(),
-      authors: post.author ? [post.author.full_name || "Nhà Bè Agri"] : undefined,
-      tags: post.tags.map((t) => t.tag.name),
+      publishedTime: post.published_at?.toISOString(),
     },
     twitter: {
       card: "summary_large_image",
@@ -148,7 +136,7 @@ export async function generateMetadata({
 
 function generateArticleJsonLd(post: PostDetail) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://nhabe-agri.com";
-  const canonical = post.canonicalUrl || `${siteUrl}/kien-thuc/${post.slug}`;
+  const canonical = post.canonical_url || `${siteUrl}/kien-thuc/${post.slug}`;
 
   // Base Article schema
   const baseSchema = {
@@ -156,12 +144,12 @@ function generateArticleJsonLd(post: PostDetail) {
     "@type": "Article",
     headline: post.title,
     description: post.description,
-    image: post.thumbnail ? [post.thumbnail] : undefined,
-    datePublished: post.publishedAt?.toISOString(),
-    dateModified: post.updatedAt.toISOString(),
+    image: post.thumbnail_url ? [post.thumbnail_url] : undefined,
+    datePublished: post.published_at?.toISOString(),
+    dateModified: post.updated_at.toISOString(),
     author: {
       "@type": "Person",
-      name: post.author?.full_name || "Nhà Bè Agri",
+      name: "Nhà Bè Agri",
     },
     publisher: {
       "@type": "Organization",
@@ -175,14 +163,13 @@ function generateArticleJsonLd(post: PostDetail) {
       "@type": "WebPage",
       "@id": canonical,
     },
-    keywords: post.tags.map((t) => t.tag.name).join(", "),
-    articleSection: post.category?.name,
+    articleSection: post.categories?.name,
     inLanguage: "vi",
   };
 
   // Use custom structured data if available
-  if (post.structuredData && typeof post.structuredData === "object") {
-    return { ...baseSchema, ...(post.structuredData as object) };
+  if (post.structured_data && typeof post.structured_data === "object") {
+    return { ...baseSchema, ...(post.structured_data as object) };
   }
 
   return baseSchema;
@@ -193,21 +180,11 @@ function generateArticleJsonLd(post: PostDetail) {
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 async function getPostBySlug(slug: string): Promise<PostDetail | null> {
-  const post = await prisma.post.findUnique({
+  const post = await prisma.posts.findUnique({
     where: { slug, published: true },
     include: {
-      category: {
+      categories: {
         select: { id: true, name: true, slug: true },
-      },
-      author: {
-        select: { full_name: true, avatar_url: true },
-      },
-      tags: {
-        include: {
-          tag: {
-            select: { id: true, name: true, slug: true },
-          },
-        },
       },
     },
   });
@@ -263,26 +240,26 @@ function PostHeader({ post }: { post: PostDetail }) {
         <Link href="/kien-thuc" className="transition-colors hover:text-[#4CAF50]">
           Kiến thức
         </Link>
-        {post.category && (
+        {post.categories && (
           <>
             <span>/</span>
             <Link
-              href={`/kien-thuc?category=${post.category.slug}`}
+              href={`/kien-thuc?category=${post.categories.slug}`}
               className="transition-colors hover:text-[#4CAF50]"
             >
-              {post.category.name}
+              {post.categories.name}
             </Link>
           </>
         )}
       </nav>
 
       {/* Category Badge */}
-      {post.category && (
+      {post.categories && (
         <Link
-          href={`/kien-thuc?category=${post.category.slug}`}
+          href={`/kien-thuc?category=${post.categories.slug}`}
           className="mb-3 inline-block rounded-full bg-[#4CAF50]/10 px-4 py-1.5 text-sm font-semibold text-[#2F8E36] transition-colors hover:bg-[#4CAF50]/20"
         >
-          {post.category.name}
+          {post.categories.name}
         </Link>
       )}
 
@@ -293,28 +270,9 @@ function PostHeader({ post }: { post: PostDetail }) {
 
       {/* Meta Info */}
       <div className="flex flex-wrap items-center gap-4 text-sm text-[#7B8794]">
-        {post.author && (
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F1F5F9]">
-              {post.author.avatar_url ? (
-                <Image
-                  src={post.author.avatar_url}
-                  alt={post.author.full_name || ""}
-                  width={32}
-                  height={32}
-                  className="rounded-full"
-                />
-              ) : (
-                <User className="h-4 w-4" />
-              )}
-            </div>
-            <span className="font-medium">{post.author.full_name || "Admin"}</span>
-          </div>
-        )}
-        
         <span className="flex items-center gap-1.5">
           <Calendar className="h-4 w-4" />
-          {formatDate(post.publishedAt)}
+          {formatDate(post.published_at)}
         </span>
         
         <span className="flex items-center gap-1.5">
@@ -322,21 +280,6 @@ function PostHeader({ post }: { post: PostDetail }) {
           {formatReadingTime(post.content)}
         </span>
       </div>
-
-      {/* Tags */}
-      {post.tags.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {post.tags.map(({ tag }) => (
-            <Link
-              key={tag.id}
-              href={`/kien-thuc?tag=${tag.slug}`}
-              className="rounded-full border border-[#E9ECEF] px-3 py-1 text-xs font-medium text-[#5F6B7A] transition-colors hover:border-[#4CAF50] hover:text-[#4CAF50]"
-            >
-              #{tag.name}
-            </Link>
-          ))}
-        </div>
-      )}
     </header>
   );
 }
@@ -344,10 +287,10 @@ function PostHeader({ post }: { post: PostDetail }) {
 function PostThumbnail({ post }: { post: PostDetail }) {
   return (
     <figure className="mb-8 overflow-hidden rounded-2xl bg-[#F1F5F9]">
-      {post.thumbnail ? (
+      {post.thumbnail_url ? (
         <div className="relative aspect-[16/9] w-full">
           <Image
-            src={post.thumbnail}
+            src={post.thumbnail_url}
             alt={post.title}
             fill
             className="object-cover"
@@ -419,10 +362,10 @@ export default async function PostDetailPage({
       
       {/* SEO Meta */}
       <SeoMeta
-        title={post.metaTitle || post.title}
+        title={post.meta_title || post.title}
         description={post.description || ""}
-        canonical={post.canonicalUrl || `/kien-thuc/${post.slug}`}
-        ogImage={post.thumbnail || undefined}
+        canonical={post.canonical_url || `/kien-thuc/${post.slug}`}
+        ogImage={post.thumbnail_url || undefined}
       />
 
       <div className="min-h-screen bg-[#F8FAFC]">
@@ -450,7 +393,11 @@ export default async function PostDetailPage({
               {/* Article Body */}
               <div className="prose prose-lg max-w-none">
                 {post.content ? (
-                  <MarkdownRenderer content={post.content} />
+                  <>
+                    {/* Mid-content CTA - NhaBe Branded */}
+                    <NhaBeBlogInlineCTA cropType={post.categories?.name || undefined} />
+                    <MarkdownRenderer content={post.content} />
+                  </>
                 ) : (
                   <p className="text-center text-[#7B8794]">
                     Nội dung đang được cập nhật...
@@ -458,41 +405,15 @@ export default async function PostDetailPage({
                 )}
               </div>
 
-              {/* Author Box */}
-              {post.author && (
-                <div className="mt-12 rounded-2xl border border-[#E9ECEF] bg-white p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9]">
-                      {post.author.avatar_url ? (
-                        <Image
-                          src={post.author.avatar_url}
-                          alt={post.author.full_name || ""}
-                          width={56}
-                          height={56}
-                          className="rounded-full"
-                        />
-                      ) : (
-                        <User className="h-6 w-6 text-[#9CA3AF]" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-[#7B8794]">Tác giả</p>
-                      <p className="text-lg font-semibold text-[#1A1A1A]">
-                        {post.author.full_name || "Nhà Bè Agri"}
-                      </p>
-                      <p className="mt-1 text-sm text-[#5F6B7A]">
-                        Chuyên gia nông nghiệp tại Nhà Bè Agri - Chia sẻ kiến thức 
-                        và giải pháp tưới tiêu hiệu quả.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* End of Article CTA - NhaBe Branded */}
+              <div className="mt-8">
+                <NhaBeBlogEndCTA cropType={post.categories?.name || undefined} />
+              </div>
             </article>
 
             {/* Sidebar */}
             <aside className="space-y-6">
-              <RelatedProductsSidebar categorySlug={post.category?.slug || null} />
+              <RelatedProductsSidebar categorySlug={post.categories?.slug || null} />
             </aside>
           </div>
         </main>

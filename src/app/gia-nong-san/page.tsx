@@ -36,6 +36,7 @@ import {
   ComposedChart,
 } from "recharts";
 import SeoMeta from "@/components/SeoMeta";
+import { NhaBePricePageCTA } from "@/components/NhaBeConversionBox";
 import {
   fetchCurrentPrices,
   fetchPriceHistory,
@@ -388,45 +389,11 @@ function PriceChart({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * CTA BANNER COMPONENT
+ * CTA BANNER COMPONENT (NhaBe Branded)
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 function CTABanner() {
-  return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#2E7D32] via-[#4CAF50] to-[#388E3C] p-6 shadow-xl sm:p-8">
-      {/* Decorative elements */}
-      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
-      <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/5" />
-      <div className="absolute right-8 top-8 h-20 w-20 rounded-full bg-white/5" />
-
-      <div className="relative flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-          <Droplets className="h-8 w-8 text-white" />
-        </div>
-
-        <div className="flex-1">
-          <h3 className="mb-1 text-xl font-bold text-white">
-            Đầu tư hệ thống tưới đúng cách
-          </h3>
-          <p className="text-sm text-white/80 sm:text-base">
-            Bảo vệ năng suất cây trồng với máy tính thủy lực - lên cấu hình ống,
-            béc tưới phù hợp diện tích của bạn.
-          </p>
-        </div>
-
-        <Button
-          asChild
-          size="lg"
-          className="shrink-0 gap-2 rounded-xl bg-white px-6 font-semibold text-[#2E7D32] shadow-lg transition-all hover:bg-white/90 hover:shadow-xl"
-        >
-          <Link href="/tinh-toan">
-            Thử ngay
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
-    </div>
-  );
+  return <NhaBePricePageCTA />;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
