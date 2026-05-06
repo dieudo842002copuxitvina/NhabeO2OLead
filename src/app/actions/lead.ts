@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { z } from "zod";
 import type { Lead, LeadNormalized, DealerBasic, LeadsResult, LeadResult } from "@/types/lead";
+import { calculateDistance, findNearestDealer, isValidCoordinate } from "@/lib/geo";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT (singleton pattern for production)
@@ -38,6 +39,9 @@ function normalizeLead(lead: Lead): LeadNormalized {
     cropType: lead.crop_type,
     areaM2: lead.area_m2 ? Number(lead.area_m2) : null,
     calculatorData: lead.calculator_data,
+    latitude: lead.latitude ?? null,
+    longitude: lead.longitude ?? null,
+    distanceKm: lead.distance_km ?? null,
     assignedDealerId: lead.assigned_dealer_id,
     status: lead.status,
     createdAt: lead.created_at,
@@ -179,6 +183,8 @@ export async function getActiveDealers(): Promise<DealerBasic[]> {
         province: true,
         district: true,
         phone: true,
+        latitude: true,
+        longitude: true,
       },
       orderBy: { created_at: "desc" },
     });
@@ -329,13 +335,15 @@ export interface CalculatorLeadData {
   district?: string;
   cropType?: string;
   areaM2?: number;
+  latitude?: number;
+  longitude?: number;
   calculatorType: 'pump' | 'roi' | 'bom';
   calculatorData: Record<string, any>;
 }
 
 export async function submitCalculatorAndCreateLead(
   data: CalculatorLeadData
-): Promise<{ success: boolean; leadId?: string; error?: string }> {
+): Promise<{ success: boolean; leadId?: string; assignedDealerId?: string; distanceKm?: number; error?: string }> {
   try {
     // 1. Validate required fields
     if (!data.customerPhone?.trim()) {
@@ -348,7 +356,50 @@ export async function submitCalculatorAndCreateLead(
       return { success: false, error: 'Số điện thoại không hợp lệ (VD: 0912345678)' };
     }
 
-    // 3. Insert into leads table with Prisma
+    // 3. Geo-matching: Find nearest active dealer if coordinates are provided
+    let assignedDealerId: string | undefined;
+    let distanceKm: number | undefined;
+    let status = 'new';
+
+    if (
+      typeof data.latitude === 'number' &&
+      typeof data.longitude === 'number' &&
+      isValidCoordinate(data.latitude, data.longitude)
+    ) {
+      try {
+        // Fetch all active dealers with coordinates
+        const activeDealers = await prisma.dealer.findMany({
+          where: {
+            is_active: true,
+            latitude: { not: null },
+            longitude: { not: null },
+          },
+          select: {
+            id: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+          },
+        });
+
+        if (activeDealers.length > 0) {
+          // Find nearest dealer using Haversine formula
+          const nearest = findNearestDealer(data.latitude, data.longitude, activeDealers);
+
+          if (nearest) {
+            assignedDealerId = nearest.dealer.id;
+            distanceKm = nearest.distanceKm;
+            status = 'assigned';
+            console.log(`[Geo-Matching] Lead matched to dealer "${nearest.dealer.name}" (${nearest.distanceKm} km)`);
+          }
+        }
+      } catch (geoError) {
+        // Geo-matching failure should not block lead creation
+        console.error('[Geo-Matching] Error finding nearest dealer:', geoError);
+      }
+    }
+
+    // 4. Insert into leads table with Prisma
     const newLead = await prisma.leads.create({
       data: {
         customer_name: data.customerName?.trim() || null,
@@ -357,21 +408,25 @@ export async function submitCalculatorAndCreateLead(
         district: data.district || null,
         crop_type: data.cropType || null,
         area_m2: data.areaM2 ? new Prisma.Decimal(data.areaM2) : null,
+        latitude: typeof data.latitude === 'number' ? data.latitude : null,
+        longitude: typeof data.longitude === 'number' ? data.longitude : null,
+        distance_km: typeof distanceKm === 'number' ? new Prisma.Decimal(distanceKm) : null,
         calculator_data: {
           type: data.calculatorType,
           submitted_at: new Date().toISOString(),
           ...data.calculatorData,
         },
-        status: 'new',
+        assigned_dealer_id: assignedDealerId || null,
+        status: status,
       },
     });
 
     console.log(`[Calculator→CRM] Created lead ${newLead.id} from ${data.calculatorType} calculator`);
 
-    // 4. Revalidate admin leads page for real-time update
+    // 5. Revalidate admin leads page for real-time update
     revalidatePath('/admin/leads');
 
-    // 5. Optionally trigger n8n webhook (non-blocking)
+    // 6. Optionally trigger n8n webhook (non-blocking)
     const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
     if (n8nWebhookUrl) {
       try {
@@ -388,6 +443,8 @@ export async function submitCalculatorAndCreateLead(
             calculator_type: data.calculatorType,
             province: data.province,
             crop_type: data.cropType,
+            assigned_dealer_id: assignedDealerId,
+            distance_km: distanceKm,
             timestamp: new Date().toISOString(),
           }),
           signal: controller.signal,
@@ -401,7 +458,7 @@ export async function submitCalculatorAndCreateLead(
       }
     }
 
-    return { success: true, leadId: newLead.id };
+    return { success: true, leadId: newLead.id, assignedDealerId, distanceKm };
   } catch (error) {
     console.error('[Calculator→CRM] Error creating lead:', error);
     return {

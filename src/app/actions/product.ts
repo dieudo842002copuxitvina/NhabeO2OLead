@@ -334,6 +334,214 @@ export async function updateProduct(
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+ * TOGGLE PRODUCT STATUS (Bật/Tắt hiển thị)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+export async function toggleProductStatus(
+  id: string,
+  currentStatus: boolean
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await prisma.products.update({
+      where: { id },
+      data: { is_active: !currentStatus },
+    });
+
+    revalidatePath('/admin/products');
+    revalidatePath('/san-pham');
+
+    return { success: true };
+  } catch (error) {
+    console.error('toggleProductStatus error:', error);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        return { success: false, error: 'Sản phẩm không tồn tại' };
+      }
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * CREATE PRODUCT (Từ FormData)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export async function createProductFromForm(
+  formData: FormData
+): Promise<{ success: boolean; data?: ProductWithCategory; error?: string }> {
+  try {
+    const sku = formData.get('sku') as string;
+    const name = formData.get('name') as string;
+    const category_id = formData.get('category_id') as string;
+    const description = formData.get('description') as string | null;
+    const image_url = formData.get('image_url') as string | null;
+    const pdf_url = formData.get('pdf_url') as string | null;
+    const base_price = formData.get('base_price') as string | null;
+    const brand = formData.get('brand') as string | null;
+    const specificationsStr = formData.get('specifications') as string | null;
+
+    if (!sku || !name || !category_id) {
+      return { success: false, error: 'SKU, Tên sản phẩm và Danh mục là bắt buộc' };
+    }
+
+    const slug = `${generateSlug(name)}-${Date.now()}`;
+
+    let specifications = {};
+    if (specificationsStr) {
+      try {
+        specifications = JSON.parse(specificationsStr);
+      } catch {
+        specifications = {};
+      }
+    }
+
+    const product = await prisma.products.create({
+      data: {
+        sku: sku.toUpperCase(),
+        name,
+        slug,
+        category_id,
+        description: description || null,
+        image_url: image_url || null,
+        pdf_url: pdf_url || null,
+        specifications,
+        base_price: base_price ? parseInt(base_price, 10) : 0,
+        brand: brand || null,
+        is_active: true,
+        in_stock: true,
+      },
+      include: {
+        categories: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    });
+
+    revalidatePath('/admin/products');
+
+    return { success: true, data: product as ProductWithCategory };
+  } catch (error) {
+    console.error('createProductFromForm error:', error);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return { success: false, error: 'Mã SKU đã tồn tại' };
+      }
+      if (error.code === 'P2003') {
+        return { success: false, error: 'Danh mục không tồn tại' };
+      }
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * UPDATE PRODUCT (Từ FormData)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+export async function updateProductFromForm(
+  id: string,
+  formData: FormData
+): Promise<{ success: boolean; data?: ProductWithCategory; error?: string }> {
+  try {
+    const sku = formData.get('sku') as string | null;
+    const name = formData.get('name') as string | null;
+    const category_id = formData.get('category_id') as string | null;
+    const description = formData.get('description') as string | null;
+    const image_url = formData.get('image_url') as string | null;
+    const pdf_url = formData.get('pdf_url') as string | null;
+    const base_price = formData.get('base_price') as string | null;
+    const brand = formData.get('brand') as string | null;
+    const is_active = formData.get('is_active') as string | null;
+    const in_stock = formData.get('in_stock') as string | null;
+    const specificationsStr = formData.get('specifications') as string | null;
+
+    const updateData: Prisma.productsUpdateInput = {};
+
+    if (sku) updateData.sku = sku.toUpperCase();
+    if (name) updateData.name = name;
+    if (category_id) updateData.category_id = category_id;
+    if (description !== null) updateData.description = description || null;
+    if (image_url !== null) updateData.image_url = image_url || null;
+    if (pdf_url !== null) updateData.pdf_url = pdf_url || null;
+    if (base_price !== null) {
+      updateData.base_price = base_price ? parseInt(base_price, 10) : null;
+    }
+    if (brand !== null) updateData.brand = brand || null;
+    if (is_active !== null) updateData.is_active = is_active === 'true';
+    if (in_stock !== null) updateData.in_stock = in_stock === 'true';
+
+    if (specificationsStr) {
+      try {
+        updateData.specifications = JSON.parse(specificationsStr);
+      } catch {
+        // Ignore invalid JSON
+      }
+    }
+
+    const product = await prisma.products.update({
+      where: { id },
+      data: updateData,
+      include: {
+        categories: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    });
+
+    revalidatePath('/admin/products');
+
+    return { success: true, data: product as ProductWithCategory };
+  } catch (error) {
+    console.error('updateProductFromForm error:', error);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        return { success: false, error: 'Sản phẩm không tồn tại' };
+      }
+      if (error.code === 'P2002') {
+        return { success: false, error: 'Mã SKU đã tồn tại' };
+      }
+      if (error.code === 'P2003') {
+        return { success: false, error: 'Danh mục không tồn tại' };
+      }
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
  * DELETE PRODUCT
  * ═══════════════════════════════════════════════════════════════════════════════ */
 

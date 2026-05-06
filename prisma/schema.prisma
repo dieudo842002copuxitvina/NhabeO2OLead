@@ -59,6 +59,9 @@ model Leads {
   crop_type          String?
   area_m2            Decimal? @db.Decimal
   calculator_data    Json     @default("{}")
+  latitude           Float?
+  longitude          Float?
+  distance_km        Float?
   assigned_dealer_id String?  @db.Uuid
   status             String   @default("new")
   created_at         DateTime @default(now()) @db.Timestamptz(6)

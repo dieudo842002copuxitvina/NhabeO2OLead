@@ -1,161 +1,124 @@
 /**
- * AgriFlow Connect — Geo-Matching Engine
- * Haversine algorithm + expanding radius + stock-priority ranking
+ * ╔═══════════════════════════════════════════════════════════════════════════════╗
+ * ║  GEO UTILITIES - Haversine Distance Calculation                       ║
+ * ║  Spatial mathematics for dealer-lead matching                            ║
+ * ╚═══════════════════════════════════════════════════════════════════════════════╝
  */
 
-export interface GeoCoord {
-  lat: number;
-  lng: number;
-}
-
-export interface GeoMatchResult<T> {
-  item: T;
-  distance: number; // km
-}
-
+/**
+ * Earth's radius in kilometers
+ */
 const EARTH_RADIUS_KM = 6371;
 
-/** Haversine distance between two coordinates in km */
-export function haversineDistance(a: GeoCoord, b: GeoCoord): number {
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const sinDLat = Math.sin(dLat / 2);
-  const sinDLng = Math.sin(dLng / 2);
-  const h = sinDLat * sinDLat + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * sinDLng * sinDLng;
-  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-}
-
-function toRad(deg: number): number {
-  return deg * (Math.PI / 180);
+/**
+ * Convert degrees to radians
+ */
+function toRadians(degrees: number): number {
+  return degrees * (Math.PI / 180);
 }
 
 /**
- * Geo-match: find items within radius, sorted by distance, return top N
+ * Calculate the great-circle distance between two points on Earth
+ * using the Haversine formula.
+ * 
+ * @param lat1 - Latitude of point 1 (in degrees)
+ * @param lon1 - Longitude of point 1 (in degrees)
+ * @param lat2 - Latitude of point 2 (in degrees)
+ * @param lon2 - Longitude of point 2 (in degrees)
+ * @returns Distance in kilometers
+ * 
+ * @example
+ * // Distance from Ho Chi Minh City to Hanoi
+ * const distance = calculateDistance(10.8231, 106.6297, 21.0285, 105.8542);
+ * // Returns approximately 1154.5 km
  */
-export function geoMatch<T>(
-  origin: GeoCoord,
-  items: T[],
-  getCoord: (item: T) => GeoCoord,
-  radiusKm = 50,
-  topN = 3
-): GeoMatchResult<T>[] {
-  return items
-    .map(item => ({
-      item,
-      distance: Math.round(haversineDistance(origin, getCoord(item)))
-    }))
-    .filter(r => r.distance <= radiusKm)
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, topN);
+export function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  // Validate inputs
+  if (!isValidCoordinate(lat1, lon1) || !isValidCoordinate(lat2, lon2)) {
+    throw new Error("Invalid coordinates provided");
+  }
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return Number((EARTH_RADIUS_KM * c).toFixed(3));
 }
 
 /**
- * Expanding radius search: 15km → 30km → 50km
- * Returns first non-empty result set, plus the radius used.
+ * Validate latitude and longitude values
+ * 
+ * @param lat - Latitude value
+ * @param lon - Longitude value
+ * @returns True if coordinates are valid
  */
-export function expandingRadiusSearch<T>(
-  origin: GeoCoord,
-  items: T[],
-  getCoord: (item: T) => GeoCoord,
-  topN = 3,
-  steps: number[] = [15, 30, 50]
-): { results: GeoMatchResult<T>[]; radiusUsed: number; expanded: boolean } {
-  for (let i = 0; i < steps.length; i++) {
-    const r = steps[i];
-    const found = geoMatch(origin, items, getCoord, r, topN);
-    if (found.length > 0) {
-      return { results: found, radiusUsed: r, expanded: i > 0 };
+export function isValidCoordinate(lat: number, lon: number): boolean {
+  if (lat === null || lat === undefined || isNaN(lat)) return false;
+  if (lon === null || lon === undefined || isNaN(lon)) return false;
+  if (lat < -90 || lat > 90) return false;
+  if (lon < -180 || lon > 180) return false;
+  return true;
+}
+
+/**
+ * Find the nearest dealer to a given location
+ * 
+ * @param latitude - Customer's latitude
+ * @param longitude - Customer's longitude
+ * @param dealers - Array of dealers with latitude and longitude
+ * @returns The nearest dealer and distance, or null if no valid dealers found
+ */
+export function findNearestDealer<T extends { id: string; latitude?: number | null; longitude?: number | null }>(
+  latitude: number,
+  longitude: number,
+  dealers: T[]
+): { dealer: T; distanceKm: number } | null {
+  if (!isValidCoordinate(latitude, longitude)) {
+    return null;
+  }
+
+  let nearestDealer: T | null = null;
+  let minDistance = Infinity;
+
+  for (const dealer of dealers) {
+    const dealerLat = dealer.latitude;
+    const dealerLon = dealer.longitude;
+
+    if (dealerLat === null || dealerLat === undefined || dealerLon === null || dealerLon === undefined) {
+      continue;
+    }
+
+    if (!isValidCoordinate(dealerLat, dealerLon)) {
+      continue;
+    }
+
+    const distance = calculateDistance(latitude, longitude, dealerLat, dealerLon);
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestDealer = dealer;
     }
   }
-  return { results: [], radiusUsed: steps[steps.length - 1], expanded: true };
+
+  if (nearestDealer === null) {
+    return null;
+  }
+
+  return {
+    dealer: nearestDealer,
+    distanceKm: Number(minDistance.toFixed(3)),
+  };
 }
-
-/**
- * Stock-priority ranking: in_stock first, then by distance.
- * Threshold: stock > 0 AND stock >= inStockThreshold → "in_stock", else "on_order".
- */
-export type StockStatus = 'in_stock' | 'on_order';
-
-export function getStockStatus(stock: number | undefined, inStockThreshold = 1): StockStatus {
-  return (stock ?? 0) >= inStockThreshold ? 'in_stock' : 'on_order';
-}
-
-export function rankByStockThenDistance<T>(
-  results: GeoMatchResult<T>[],
-  getStock: (item: T) => number | undefined,
-  inStockThreshold = 1
-): Array<GeoMatchResult<T> & { stockStatus: StockStatus }> {
-  return results
-    .map(r => ({ ...r, stockStatus: getStockStatus(getStock(r.item), inStockThreshold) }))
-    .sort((a, b) => {
-      if (a.stockStatus !== b.stockStatus) return a.stockStatus === 'in_stock' ? -1 : 1;
-      return a.distance - b.distance;
-    });
-}
-
-/* =========================================================================
-   Composite scoring (Admin-tunable weights)
-   Score = W1*distance + W2*stockGap + W3*reputationGap, normalized 0..1.
-   Lower = better.
-   ========================================================================= */
-
-export interface CompositeRankInput<T> {
-  result: GeoMatchResult<T>;
-  stock: number;        // current stock for the product (or aggregate)
-  reputation: number;   // 0..1 (1 = best)
-}
-
-export interface CompositeRankOutput<T> extends GeoMatchResult<T> {
-  stockStatus: StockStatus;
-  score: number;        // 0..1
-}
-
-export interface RankWeights { distance: number; stock: number; reputation: number }
-
-const DEFAULT_RANK_WEIGHTS: RankWeights = { distance: 0.6, stock: 0.25, reputation: 0.15 };
-
-function normalizeW(w: RankWeights): RankWeights {
-  const s = w.distance + w.stock + w.reputation || 1;
-  return { distance: w.distance / s, stock: w.stock / s, reputation: w.reputation / s };
-}
-
-export function rankByComposite<T>(
-  inputs: CompositeRankInput<T>[],
-  weights: RankWeights = DEFAULT_RANK_WEIGHTS,
-  opts: { maxRadiusKm?: number; inStockThreshold?: number; stockSaturation?: number } = {},
-): CompositeRankOutput<T>[] {
-  const w = normalizeW(weights);
-  const maxR = opts.maxRadiusKm ?? GEO_CONFIG.MAX_RADIUS_KM;
-  const sat = opts.stockSaturation ?? 20; // stock at/above this counts as "fully in stock"
-  const thr = opts.inStockThreshold ?? GEO_CONFIG.IN_STOCK_THRESHOLD;
-
-  return inputs
-    .map((i) => {
-      const distance01 = Math.min(1, Math.max(0, i.result.distance / maxR));
-      const stock01 = 1 - Math.min(1, Math.max(0, i.stock / sat));
-      const reputation01 = 1 - Math.min(1, Math.max(0, i.reputation));
-      const score = w.distance * distance01 + w.stock * stock01 + w.reputation * reputation01;
-      return {
-        ...i.result,
-        stockStatus: getStockStatus(i.stock, thr),
-        score,
-      };
-    })
-    .sort((a, b) => a.score - b.score);
-}
-
-/** Default user location (HCM area) */
-export const DEFAULT_LOCATION: GeoCoord = { lat: 10.82, lng: 106.63 };
-
-/** Geo-matching config */
-export const GEO_CONFIG = {
-  RADIUS_STEPS: [15, 30, 50] as number[],
-  MIN_RADIUS_KM: 15,
-  MAX_RADIUS_KM: 50,
-  DEFAULT_RADIUS_KM: 30,
-  TOP_N: 3,
-  IN_STOCK_THRESHOLD: 1,
-  HOTLINE: '1900636737',
-  HOTLINE_DISPLAY: '1900 636 737',
-};
-

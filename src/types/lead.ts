@@ -21,6 +21,9 @@ export interface Lead {
   crop_type: string | null;
   area_m2: Prisma.Decimal | null;
   calculator_data: Prisma.JsonValue;
+  latitude: number | null;
+  longitude: number | null;
+  distance_km: Prisma.Decimal | null;
   assigned_dealer_id: string | null;
   status: string;
   created_at: Date;
@@ -42,6 +45,9 @@ export interface LeadNormalized {
   cropType: string | null;
   areaM2: number | null;
   calculatorData: Prisma.JsonValue;
+  latitude: number | null;
+  longitude: number | null;
+  distanceKm: number | null;
   assignedDealerId: string | null;
   status: string;
   createdAt: Date;
