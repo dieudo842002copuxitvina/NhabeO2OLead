@@ -41,7 +41,7 @@ function normalizeLead(lead: Lead): LeadNormalized {
     calculatorData: lead.calculator_data,
     latitude: lead.latitude ?? null,
     longitude: lead.longitude ?? null,
-    distanceKm: lead.distance_km ?? null,
+    distanceKm: lead.distance_km ? Number(lead.distance_km) : null,
     assignedDealerId: lead.assigned_dealer_id,
     status: lead.status,
     createdAt: lead.created_at,
@@ -121,7 +121,7 @@ export async function getLeads(options?: {
 
     return {
       success: true,
-      data: data.map(normalizeLead),
+      data: data.map((lead) => normalizeLead(lead as unknown as Lead)),
       count,
     };
   } catch (error) {
@@ -156,7 +156,7 @@ export async function getLeadById(id: string): Promise<LeadResult> {
       return { success: false, error: "Không tìm thấy lead" };
     }
 
-    return { success: true, data: normalizeLead(lead) };
+    return { success: true, data: normalizeLead(lead as unknown as Lead) };
   } catch (error) {
     console.error("getLeadById error:", error);
     return {
@@ -258,7 +258,7 @@ export async function assignLeadToDealer(
 
     return {
       success: true,
-      data: normalizeLead(updatedLead),
+      data: normalizeLead(updatedLead as unknown as Lead),
     };
   } catch (error) {
     console.error("assignLeadToDealer error:", error);
@@ -314,7 +314,7 @@ export async function updateLeadStatus(
 
     revalidatePath("/admin/leads");
 
-    return { success: true, data: normalizeLead(updatedLead) };
+    return { success: true, data: normalizeLead(updatedLead as unknown as Lead) };
   } catch (error) {
     console.error("updateLeadStatus error:", error);
     return {
@@ -410,7 +410,7 @@ export async function submitCalculatorAndCreateLead(
         area_m2: data.areaM2 ? new Prisma.Decimal(data.areaM2) : null,
         latitude: typeof data.latitude === 'number' ? data.latitude : null,
         longitude: typeof data.longitude === 'number' ? data.longitude : null,
-        distance_km: typeof distanceKm === 'number' ? new Prisma.Decimal(distanceKm) : null,
+        distance_km: typeof distanceKm === 'number' ? distanceKm : null,
         calculator_data: {
           type: data.calculatorType,
           submitted_at: new Date().toISOString(),

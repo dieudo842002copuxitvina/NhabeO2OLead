@@ -11,7 +11,10 @@ import {
   MapPin,
   Send,
   Info,
-  ChevronRight
+  ChevronRight,
+  User,
+  Phone,
+  Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +25,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { calculatePumpRequirement, HydraulicInput, HydraulicOutput } from "@/lib/agri-engine/hydraulic";
 import { formatVND } from "@/lib/agri-engine/utils";
+import { getProvinceCoords } from "@/lib/hydraulic";
+import { submitCalculatorAndCreateLead } from "@/app/actions/lead";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +55,53 @@ const EMITTER_FLOW_OPTIONS = [
 ];
 
 /* ─────────────────────────────────────────────────────────────────────────────
+ * CONTACT FORM TYPES
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+interface ContactInfo {
+  customerName: string;
+  customerPhone: string;
+  province: string;
+}
+
+interface ContactErrors {
+  customerName?: string;
+  customerPhone?: string;
+}
+
+const DEFAULT_CONTACT: ContactInfo = {
+  customerName: "",
+  customerPhone: "",
+  province: "",
+};
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * VALIDATION
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+function validateContact(contact: ContactInfo): ContactErrors {
+  const errors: ContactErrors = {};
+  
+  if (!contact.customerName?.trim()) {
+    errors.customerName = "Vui lòng nhập họ tên";
+  } else if (contact.customerName.trim().length < 2) {
+    errors.customerName = "Tên phải có ít nhất 2 ký tự";
+  }
+  
+  if (!contact.customerPhone?.trim()) {
+    errors.customerPhone = "Vui lòng nhập số điện thoại";
+  } else {
+    const phoneRegex = /^(0[0-9]{9,10})$/;
+    const cleanPhone = contact.customerPhone.replace(/\s/g, '');
+    if (!phoneRegex.test(cleanPhone)) {
+      errors.customerPhone = "Số điện thoại không hợp lệ (VD: 0912345678)";
+    }
+  }
+  
+  return errors;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
  * DEFAULT VALUES
  * ───────────────────────────────────────────────────────────────────────────── */
 
@@ -72,7 +124,7 @@ interface ResultMetricProps {
   value: string;
   unit: string;
   highlight?: boolean;
-  color?: "emerald" | "blue" | "orange" | "purple" | "red";
+  color?: "emerald" | "blue" | "orange" | "purple" | "red" | "slate";
 }
 
 function ResultMetric({ icon: Icon, label, value, unit, highlight, color = "emerald" }: ResultMetricProps) {
@@ -82,6 +134,7 @@ function ResultMetric({ icon: Icon, label, value, unit, highlight, color = "emer
     orange: "bg-orange-50 text-orange-600 border-orange-200",
     purple: "bg-purple-50 text-purple-600 border-purple-200",
     red: "bg-red-50 text-red-600 border-red-200",
+    slate: "bg-slate-50 text-slate-400 border-slate-100",
   };
 
   return (
@@ -114,18 +167,15 @@ function ResultMetric({ icon: Icon, label, value, unit, highlight, color = "emer
 interface ResultsDisplayProps {
   result: HydraulicOutput;
   input: HydraulicInput;
+  contact: ContactInfo;
+  contactErrors: ContactErrors;
+  onContactChange: (field: keyof ContactInfo, value: string) => void;
+  onSubmit: () => Promise<void>;
+  isSubmitting: boolean;
 }
 
-function ResultsDisplay({ result, input }: ResultsDisplayProps) {
+function ResultsDisplay({ result, input, contact, contactErrors, onContactChange, onSubmit, isSubmitting }: ResultsDisplayProps) {
   const { toast } = useToast();
-
-  const handleSendToDealer = () => {
-    toast({
-      title: "Đã gửi cấu hình!",
-      description: "Thông tin hệ thống tưới đã được gửi đến đại lý gần nhất. Họ sẽ liên hệ trong 24 giờ.",
-      className: "bg-emerald-50 border-emerald-200 text-emerald-800",
-    });
-  };
 
   const riskColors = {
     low: "bg-green-100 text-green-700 border-green-200",
@@ -232,9 +282,9 @@ function ResultsDisplay({ result, input }: ResultsDisplayProps) {
         </div>
       )}
 
-      {/* Cost Estimate */}
+      {/* Cost Estimate + Contact Form */}
       <Card className="bg-slate-50 border-slate-200">
-        <CardContent className="p-4">
+        <CardContent className="p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center">
@@ -247,11 +297,80 @@ function ResultsDisplay({ result, input }: ResultsDisplayProps) {
                 </p>
               </div>
             </div>
-            <Button onClick={handleSendToDealer} className="gap-2 bg-orange-500 hover:bg-orange-600">
-              <Send className="w-4 h-4" />
-              Gửi cho Đại lý
-            </Button>
           </div>
+
+          <Separator />
+
+          {/* Contact Form */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-slate-700">Nhận tư vấn từ đại lý gần nhất</h4>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-1">
+                  <User className="w-3 h-3 text-slate-400" />
+                  <Label htmlFor="customerName" className="text-xs">Họ và tên</Label>
+                </div>
+                <Input
+                  id="customerName"
+                  placeholder="VD: Nguyễn Văn A"
+                  value={contact.customerName}
+                  onChange={(e) => onContactChange("customerName", e.target.value)}
+                  className={cn(contactErrors.customerName && "border-red-500 focus:border-red-500")}
+                />
+                {contactErrors.customerName && (
+                  <p className="text-xs text-red-500">{contactErrors.customerName}</p>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-slate-400" />
+                  <Label htmlFor="customerPhone" className="text-xs">Số điện thoại</Label>
+                </div>
+                <Input
+                  id="customerPhone"
+                  type="tel"
+                  placeholder="VD: 0912345678"
+                  value={contact.customerPhone}
+                  onChange={(e) => onContactChange("customerPhone", e.target.value)}
+                  className={cn(contactErrors.customerPhone && "border-red-500 focus:border-red-500")}
+                />
+                {contactErrors.customerPhone && (
+                  <p className="text-xs text-red-500">{contactErrors.customerPhone}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="province" className="text-xs">Tỉnh/Thành phố (tùy chọn)</Label>
+              <Input
+                id="province"
+                placeholder="VD: Đắk Lắk"
+                value={contact.province}
+                onChange={(e) => onContactChange("province", e.target.value)}
+              />
+              <p className="text-xs text-slate-400">Giúp hệ thống phân bổ đại lý gần bạn nhất</p>
+            </div>
+          </div>
+
+          <Button 
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            className="w-full gap-2 bg-orange-500 hover:bg-orange-600"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Đang gửi yêu cầu...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                Gửi cho Đại lý
+              </>
+            )}
+          </Button>
         </CardContent>
       </Card>
 
@@ -286,27 +405,130 @@ export default function TinhToanPage() {
   const [input, setInput] = useState<HydraulicInput>(DEFAULT_INPUT);
   const [result, setResult] = useState<HydraulicOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  
+  // Contact form state
+  const [contact, setContact] = useState<ContactInfo>(DEFAULT_CONTACT);
+  const [contactErrors, setContactErrors] = useState<ContactErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleContactChange = (field: keyof ContactInfo, value: string) => {
+    setContact(prev => ({ ...prev, [field]: value }));
+    // Clear error when user types
+    if (contactErrors[field as keyof ContactErrors]) {
+      setContactErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
 
   const handleCalculate = () => {
     setIsCalculating(true);
     
     // Simulate calculation delay for UX
     setTimeout(() => {
-      const calculatedResult = calculatePumpRequirement(input);
-      setResult(calculatedResult);
-      setIsCalculating(false);
-      
-      toast({
-        title: "Tính toán hoàn tất",
-        description: `Hệ thống tưới cho ${input.areaHa}Ha cần bơm ${calculatedResult.requiredPumpHP}HP`,
-        className: "bg-emerald-50 border-emerald-200 text-emerald-800",
-      });
+      try {
+        const calculatedResult = calculatePumpRequirement(input);
+        setResult(calculatedResult);
+        
+        toast({
+          title: "Tính toán hoàn tất",
+          description: `Hệ thống tưới cho ${input.areaHa}Ha cần bơm ${calculatedResult.requiredPumpHP}HP`,
+          className: "bg-emerald-50 border-emerald-200 text-emerald-800",
+        });
+      } catch (error) {
+        toast({
+          title: "Lỗi tính toán",
+          description: error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCalculating(false);
+      }
     }, 500);
+  };
+
+  const handleSubmitToDealer = async () => {
+    // Validate contact info
+    const errors = validateContact(contact);
+    if (Object.keys(errors).length > 0) {
+      setContactErrors(errors);
+      toast({
+        title: "Thông tin không hợp lệ",
+        description: "Vui lòng kiểm tra lại tên và số điện thoại",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!result) {
+      toast({
+        title: "Chưa có kết quả tính toán",
+        description: "Vui lòng nhấn 'Tính Toán' trước",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Get province coordinates for geo-matching
+      const provinceCoords = contact.province ? getProvinceCoords(contact.province) : null;
+
+      const leadResult = await submitCalculatorAndCreateLead({
+        customerName: contact.customerName.trim(),
+        customerPhone: contact.customerPhone.replace(/\s/g, ''),
+        province: contact.province || undefined,
+        cropType: undefined,
+        areaM2: input.areaHa * 10000,
+        calculatorType: 'pump',
+        calculatorData: {
+          areaHa: input.areaHa,
+          elevationM: input.elevationM,
+          pipeLengthM: input.pipeLengthM,
+          pipeDiameterMm: input.pipeDiameterMm,
+          emitterFlowLPH: input.emitterFlowLPH,
+          emitterCount: input.emitterCount,
+          results: result,
+        },
+        latitude: provinceCoords?.lat,
+        longitude: provinceCoords?.lon,
+      });
+
+      if (leadResult.success) {
+        toast({
+          title: "Gửi yêu cầu thành công!",
+          description: leadResult.assignedDealerId 
+            ? "Chúng tôi đã phân bổ đại lý gần nhất. Họ sẽ liên hệ trong 24 giờ."
+            : "Yêu cầu của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ trong 24 giờ.",
+          className: "bg-emerald-50 border-emerald-200 text-emerald-800",
+        });
+
+        // Reset contact form
+        setContact(DEFAULT_CONTACT);
+        setContactErrors({});
+      } else {
+        toast({
+          title: "Gửi thất bại",
+          description: leadResult.error || "Đã xảy ra lỗi, vui lòng thử lại",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Submit lead error:", error);
+      toast({
+        title: "Lỗi kết nối",
+        description: "Không thể kết nối với máy chủ, vui lòng thử lại sau",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setInput(DEFAULT_INPUT);
     setResult(null);
+    setContact(DEFAULT_CONTACT);
+    setContactErrors({});
   };
 
   return (
@@ -517,7 +739,15 @@ export default function TinhToanPage() {
           {/* Right Column - Results */}
           <div className="space-y-6">
             {result ? (
-              <ResultsDisplay result={result} input={input} />
+              <ResultsDisplay 
+                result={result} 
+                input={input}
+                contact={contact}
+                contactErrors={contactErrors}
+                onContactChange={handleContactChange}
+                onSubmit={handleSubmitToDealer}
+                isSubmitting={isSubmitting}
+              />
             ) : (
               <Card className="border-dashed">
                 <CardContent className="p-12 text-center">

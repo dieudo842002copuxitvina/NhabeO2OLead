@@ -34,6 +34,10 @@ interface NormalizedLead {
   district: string | null;
   cropType: string | null;
   areaM2: number | null;
+  calculatorData: Prisma.JsonValue;
+  latitude: number | null;
+  longitude: number | null;
+  distanceKm: number | null;
   assignedDealerId: string | null;
   status: string;
   createdAt: Date;
@@ -74,6 +78,10 @@ async function getLeadsWithDealers(): Promise<NormalizedLead[]> {
       district: lead.district,
       cropType: lead.crop_type,
       areaM2: lead.area_m2 ? Number(lead.area_m2) : null,
+      calculatorData: lead.calculator_data,
+      latitude: lead.latitude ?? null,
+      longitude: lead.longitude ?? null,
+      distanceKm: lead.distance_km ? Number(lead.distance_km) : null,
       assignedDealerId: lead.assigned_dealer_id,
       status: lead.status,
       createdAt: lead.created_at,
