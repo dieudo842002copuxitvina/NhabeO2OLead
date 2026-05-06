@@ -19,6 +19,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import { PrismaClient, Prisma } from "@prisma/client";
+import { rateLimit, createRateLimitResponse } from "@/lib/rate-limit";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT (singleton pattern)
@@ -412,6 +413,17 @@ export async function POST(request: NextRequest) {
       { error: "Configuration Error", message: "CRON_SECRET is not configured" },
       { status: 500 }
     );
+  }
+
+  // 3. Rate limiting (only 1 request per minute for cron endpoint)
+  const rateLimitResult = await rateLimit(request, {
+    limit: 1,
+    windowMs: 60000, // 1 minute
+  });
+
+  if (!rateLimitResult.success) {
+    console.warn(`[Scraper] Rate limit exceeded. Retry after ${rateLimitResult.reset}s`);
+    return createRateLimitResponse(rateLimitResult);
   }
 
   console.log("[Scraper] Starting price scrape job...");

@@ -4,14 +4,11 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
-}
-
-{
+  ],
   "crons": [
     {
       "path": "/api/cron/scrape-prices",
-      "schedule": "0 6 * * *"
+      "schedule": "0 */6 * * *"
     }
   ]
 }

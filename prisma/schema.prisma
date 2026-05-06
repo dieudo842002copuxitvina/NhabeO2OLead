@@ -18,6 +18,7 @@ model Profile {
   dealers    Dealer?    @relation(fields: [dealer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users      users      @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user_roles UserRole[]
+  posts      Post[]
 
   @@map("profiles")
   @@schema("public")
@@ -847,6 +848,90 @@ enum oauth_authorization_status {
   expired
 
   @@schema("auth")
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+ * BLOG MODELS - Posts, Categories, Tags
+ * ══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/// Blog Post model with SEO metadata
+model Post {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
+  slug         String   @unique
+  description  String?  @db.VarChar(320)
+  content      String?  @db.Text
+  
+  // Media
+  thumbnail    String?
+  
+  // Publishing
+  published    Boolean  @default(false)
+  publishedAt  DateTime? @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+  
+  // SEO Metadata
+  metaTitle    String?  @db.VarChar(70)
+  canonicalUrl String?
+  structuredData Json?  @db.Json
+  
+  // Relations
+  authorId     String?  @db.Uuid
+  categoryId   String?  @db.Uuid
+  author       Profile? @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  category     PostCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  tags         PostTag[]
+  
+  @@index([slug])
+  @@index([publishedAt(sort: Desc)])
+  @@index([published, publishedAt])
+  @@map("posts")
+  @@schema("public")
+}
+
+/// Blog Categories for organizing posts
+model PostCategory {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+  
+  posts       Post[]
+  
+  @@map("post_categories")
+  @@schema("public")
+}
+
+/// Tags for cross-category post organization
+model PostTag {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  
+  posts     Post[]
+  
+  @@map("post_tags")
+  @@schema("public")
+}
+
+/// Many-to-many junction for Post-Tag relationship
+model PostToTag {
+  postId String @db.Uuid
+  tagId  String @db.Uuid
+  
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tag    PostTag @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  
+  @@id([postId, tagId])
+  @@map("post_to_tags")
+  @@schema("public")
 }
 
 enum oauth_client_type {
