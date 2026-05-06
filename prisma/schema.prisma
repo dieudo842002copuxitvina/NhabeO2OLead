@@ -14,6 +14,8 @@ model Profile {
   phone      String?
   avatar_url String?
   updated_at DateTime?  @default(now()) @db.Timestamptz(6)
+  dealer_id  String?    @db.Uuid
+  dealers    Dealer?    @relation(fields: [dealer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users      users      @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user_roles UserRole[]
 
@@ -34,7 +36,7 @@ model UserRole {
 }
 
 model Dealer {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
   phone      String?
   address    String?
@@ -42,9 +44,10 @@ model Dealer {
   district   String?
   latitude   Float?
   longitude  Float?
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now()) @db.Timestamptz(6)
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
   leads      Leads[]
+  profiles   Profile[]
 
   @@map("dealers")
   @@schema("public")
@@ -59,12 +62,12 @@ model Leads {
   crop_type          String?
   area_m2            Decimal? @db.Decimal
   calculator_data    Json     @default("{}")
-  latitude           Float?
-  longitude          Float?
-  distance_km        Float?
   assigned_dealer_id String?  @db.Uuid
   status             String   @default("new")
   created_at         DateTime @default(now()) @db.Timestamptz(6)
+  distance_km        Float?
+  latitude           Float?
+  longitude          Float?
   dealers            Dealer?  @relation(fields: [assigned_dealer_id], references: [id], onUpdate: NoAction)
 
   @@map("leads")
@@ -608,9 +611,9 @@ model categories {
   id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name             String
   slug             String             @unique
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
   description      String?
   updated_at       DateTime?          @default(now()) @db.Timestamptz(6)
-  created_at       DateTime           @default(now()) @db.Timestamptz(6)
   category_schemas category_schemas[]
   posts            posts[]
   products         products[]
@@ -658,6 +661,40 @@ model crop_tags {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// Giá nông sản hiện tại theo vùng
+model MarketPrice {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cropName   String   // Tên cây trồng (VD: "Sầu riêng Monthong")
+  cropSlug   String   // Slug để query (VD: "sau-rieng-monthong")
+  price      Decimal  @db.Decimal // Giá (VD: 120000)
+  unit       String   @default("kg") // Đơn vị (VD: "kg", "quả", "tấn")
+  region     String   // Vùng miền (VD: "Đắk Lắk", "Tiền Giang")
+  source     String?  // Nguồn dữ liệu (VD: "Bộ NN", "Sở NN tỉnh")
+  recordedAt DateTime @default(now()) @db.Timestamptz(6) // Ngày ghi nhận
+  updatedAt  DateTime @default(now()) @db.Timestamptz(6) // Ngày cập nhật gần nhất
+
+  @@index([cropSlug])
+  @@index([region])
+  @@index([recordedAt(sort: Desc)])
+  @@schema("public")
+}
+
+/// Lịch sử giá nông sản - phục vụ vẽ biểu đồ xu hướng
+model PriceHistory {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cropSlug   String   // Slug cây trồng (VD: "sau-rieng-monthong")
+  cropName   String   // Tên cây trồng
+  region     String   // Vùng miền
+  priceMin   Decimal  @db.Decimal // Giá thấp nhất
+  priceMax   Decimal  @db.Decimal // Giá cao nhất
+  priceAvg   Decimal  @db.Decimal // Giá trung bình
+  recordedAt DateTime @default(now()) @db.Timestamptz(6) // Ngày ghi nhận
+
+  @@index([cropSlug, region])
+  @@index([recordedAt(sort: Desc)])
+  @@schema("public")
+}
+
 model market_prices {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   crop_name    String
@@ -692,25 +729,25 @@ model posts {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model products {
   id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sku            String     @unique @db.VarChar(100)
+  category_id    String     @db.Uuid
   name           String
   slug           String     @unique
-  category_id    String     @db.Uuid
   description    String?
   image_url      String?
-  pdf_url        String?
-  specifications Json       @default("{}")
   features       Json       @default("{}")
   is_active      Boolean    @default(true)
-  in_stock       Boolean    @default(true)
   created_at     DateTime   @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime?  @default(now()) @db.Timestamptz(6)
   gallery_images String[]   @default([])
   variants       Json?      @default("[]")
   shipping_info  Json?      @default("{}")
   stock_quantity Int?       @default(0)
   base_price     Int?       @default(0)
+  sku            String     @unique @db.VarChar(100)
   brand          String?
+  specifications Json       @default("{}")
+  in_stock       Boolean    @default(true)
+  pdf_url        String?
+  updated_at     DateTime?  @default(now()) @db.Timestamptz(6)
   categories     categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@schema("public")

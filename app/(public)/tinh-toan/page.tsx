@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { 
   Calculator, 
   Droplets, 
@@ -14,7 +15,11 @@ import {
   ChevronRight,
   User,
   Phone,
-  Loader2
+  Loader2,
+  Package,
+  Wrench,
+  Trash2,
+  MessageCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { calculatePumpRequirement, HydraulicInput, HydraulicOutput } from "@/lib/agri-engine/hydraulic";
 import { formatVND } from "@/lib/agri-engine/utils";
 import { getProvinceCoords } from "@/lib/hydraulic";
+import { generateBOM, type BOMResult, type BOMItem } from "@/lib/bom";
 import { submitCalculatorAndCreateLead } from "@/app/actions/lead";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -164,17 +170,200 @@ function ResultMetric({ icon: Icon, label, value, unit, highlight, color = "emer
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * BOM TABLE COMPONENT
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+interface BOMTableProps {
+  bom: BOMResult;
+  isLoading: boolean;
+}
+
+function BOMTable({ bom, isLoading }: BOMTableProps) {
+  if (isLoading) {
+    return (
+      <Card className="bg-slate-50 border-slate-200">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Package className="w-5 h-5 text-emerald-600" />
+            <CardTitle>Danh sách vật tư dự kiến</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+            <span className="ml-2 text-muted-foreground">Đang tải danh sách vật tư...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!bom || bom.items.length === 0) {
+    return (
+      <Card className="bg-slate-50 border-slate-200">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Package className="w-5 h-5 text-emerald-600" />
+            <CardTitle>Danh sách vật tư dự kiến</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6 text-muted-foreground">
+            <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
+            <p>Không có vật tư phù hợp trong database</p>
+            <p className="text-sm">Cần tư vấn trực tiếp từ kỹ thuật</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const categoryIcons: Record<string, string> = {
+    'Ống chính': '🔵',
+    'Bộ lọc': '🟡',
+    'Máy bơm': '🟢',
+    'Béc tưới': '🟠',
+    'Phụ kiện': '⚪',
+  };
+
+  return (
+    <Card className="bg-slate-50 border-slate-200">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Package className="w-5 h-5 text-emerald-600" />
+            <CardTitle>Danh sách vật tư dự kiến</CardTitle>
+          </div>
+          {bom.requiresManualReview && (
+            <Badge variant="outline" className="text-amber-600 border-amber-300">
+              <AlertTriangle className="w-3 h-3 mr-1" />
+              Cần rà soát
+            </Badge>
+          )}
+        </div>
+        {bom.message && (
+          <CardDescription className="text-amber-600">
+            {bom.message}
+          </CardDescription>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* BOM Items Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-slate-100/50">
+                <th className="text-left py-2 px-3 font-medium text-muted-foreground">Sản phẩm</th>
+                <th className="text-center py-2 px-3 font-medium text-muted-foreground w-20">SL</th>
+                <th className="text-right py-2 px-3 font-medium text-muted-foreground w-28">Đơn giá</th>
+                <th className="text-right py-2 px-3 font-medium text-muted-foreground w-32">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bom.items.map((item, index) => (
+                <tr key={item.productId + index} className="border-b border-slate-100 hover:bg-slate-100/50">
+                  <td className="py-3 px-3">
+                    <div className="flex items-center gap-3">
+                      {/* Product Image */}
+                      <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                        {item.productId !== 'TBD' ? (
+                          <Image
+                            src={`/api/products/${item.productId}/image`}
+                            alt={item.name}
+                            width={48}
+                            height={48}
+                            className="object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <Wrench className="w-5 h-5 text-slate-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900 line-clamp-1">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {categoryIcons[item.category] || '⚫'} {item.category} • SKU: {item.sku}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3 px-3 text-center">
+                    <span className="font-medium">{item.quantity.toLocaleString('vi-VN')}</span>
+                    <span className="text-muted-foreground ml-1">{item.unit}</span>
+                  </td>
+                  <td className="py-3 px-3 text-right text-muted-foreground">
+                    {formatVND(item.unitPrice)}
+                  </td>
+                  <td className="py-3 px-3 text-right font-medium text-slate-900">
+                    {formatVND(item.totalPrice)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-emerald-50">
+                <td colSpan={3} className="py-3 px-3 text-right font-semibold text-emerald-700">
+                  Tổng cộng:
+                </td>
+                <td className="py-3 px-3 text-right font-bold text-emerald-700">
+                  {formatVND(bom.totalCost)}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* Warnings */}
+        {bom.warnings && bom.warnings.length > 0 && (
+          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-amber-800">Lưu ý:</p>
+                <ul className="list-disc list-inside text-amber-700 mt-1 space-y-1">
+                  {bom.warnings.map((warning, i) => (
+                    <li key={i}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground text-center">
+          * Giá tham khảo, có thể thay đổi theo thực tế công trình
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 interface ResultsDisplayProps {
   result: HydraulicOutput;
   input: HydraulicInput;
   contact: ContactInfo;
   contactErrors: ContactErrors;
+  bom: BOMResult | null;
+  isBomLoading: boolean;
   onContactChange: (field: keyof ContactInfo, value: string) => void;
   onSubmit: () => Promise<void>;
   isSubmitting: boolean;
 }
 
-function ResultsDisplay({ result, input, contact, contactErrors, onContactChange, onSubmit, isSubmitting }: ResultsDisplayProps) {
+function ResultsDisplay({ 
+  result, 
+  input, 
+  contact, 
+  contactErrors,
+  bom,
+  isBomLoading,
+  onContactChange, 
+  onSubmit, 
+  isSubmitting 
+}: ResultsDisplayProps) {
   const { toast } = useToast();
 
   const riskColors = {
@@ -266,6 +455,9 @@ function ResultsDisplay({ result, input, contact, contactErrors, onContactChange
           highlight={result.recommendedPipeMm > input.pipeDiameterMm}
         />
       </div>
+
+      {/* BOM Materials Table */}
+      <BOMTable bom={bom} isLoading={isBomLoading} />
 
       {/* Warning if undersized pipe */}
       {result.recommendedPipeMm > input.pipeDiameterMm && (
@@ -371,6 +563,19 @@ function ResultsDisplay({ result, input, contact, contactErrors, onContactChange
               </>
             )}
           </Button>
+
+          {/* Zalo Button - Gửi báo giá qua Zalo/SĐT */}
+          {bom && bom.items.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={onSubmit}
+              disabled={isSubmitting}
+              className="w-full gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Gửi báo giá cho tôi qua Zalo/SĐT
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -405,6 +610,8 @@ export default function TinhToanPage() {
   const [input, setInput] = useState<HydraulicInput>(DEFAULT_INPUT);
   const [result, setResult] = useState<HydraulicOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [bom, setBom] = useState<BOMResult | null>(null);
+  const [isBomLoading, setIsBomLoading] = useState(false);
   
   // Contact form state
   const [contact, setContact] = useState<ContactInfo>(DEFAULT_CONTACT);
@@ -419,30 +626,58 @@ export default function TinhToanPage() {
     }
   };
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     setIsCalculating(true);
+    setBom(null);
+    setIsBomLoading(true);
     
-    // Simulate calculation delay for UX
-    setTimeout(() => {
-      try {
-        const calculatedResult = calculatePumpRequirement(input);
-        setResult(calculatedResult);
-        
+    try {
+      // 1. Calculate hydraulic requirements
+      const calculatedResult = calculatePumpRequirement(input);
+      setResult(calculatedResult);
+      
+      toast({
+        title: "Tính toán hoàn tất",
+        description: `Hệ thống tưới cho ${input.areaHa}Ha cần bơm ${calculatedResult.requiredPumpHP}HP`,
+        className: "bg-emerald-50 border-emerald-200 text-emerald-800",
+      });
+
+      // 2. Generate BOM from database
+      const bomResult = await generateBOM({
+        totalFlowM3H: calculatedResult.totalFlowM3H,
+        pipeDiameterMm: input.pipeDiameterMm,
+        emitterCount: input.emitterCount,
+        totalHeadM: calculatedResult.totalHeadM,
+        frictionLossM: calculatedResult.frictionLossM,
+        emitterFlowLPH: input.emitterFlowLPH,
+        pumpHP: calculatedResult.requiredPumpHP,
+        pumpKW: calculatedResult.requiredPumpKW,
+        pipeLengthM: input.pipeLengthM,
+        elevationM: input.elevationM,
+      }, {
+        pipeLengthM: input.pipeLengthM,
+      });
+
+      setBom(bomResult);
+
+      if (bomResult.warnings && bomResult.warnings.length > 0) {
         toast({
-          title: "Tính toán hoàn tất",
-          description: `Hệ thống tưới cho ${input.areaHa}Ha cần bơm ${calculatedResult.requiredPumpHP}HP`,
-          className: "bg-emerald-50 border-emerald-200 text-emerald-800",
+          title: "Cảnh báo",
+          description: bomResult.warnings[0],
+          variant: "default",
+          className: "bg-amber-50 border-amber-200 text-amber-800",
         });
-      } catch (error) {
-        toast({
-          title: "Lỗi tính toán",
-          description: error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định",
-          variant: "destructive",
-        });
-      } finally {
-        setIsCalculating(false);
       }
-    }, 500);
+    } catch (error) {
+      toast({
+        title: "Lỗi tính toán",
+        description: error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCalculating(false);
+      setIsBomLoading(false);
+    }
   };
 
   const handleSubmitToDealer = async () => {
@@ -488,6 +723,16 @@ export default function TinhToanPage() {
           emitterFlowLPH: input.emitterFlowLPH,
           emitterCount: input.emitterCount,
           results: result,
+          bom: bom ? {
+            items: bom.items.map(item => ({
+              name: item.name,
+              sku: item.sku,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              totalPrice: item.totalPrice,
+            })),
+            totalCost: bom.totalCost,
+          } : null,
         },
         latitude: provinceCoords?.lat,
         longitude: provinceCoords?.lon,
@@ -527,6 +772,7 @@ export default function TinhToanPage() {
   const handleReset = () => {
     setInput(DEFAULT_INPUT);
     setResult(null);
+    setBom(null);
     setContact(DEFAULT_CONTACT);
     setContactErrors({});
   };
@@ -744,6 +990,8 @@ export default function TinhToanPage() {
                 input={input}
                 contact={contact}
                 contactErrors={contactErrors}
+                bom={bom}
+                isBomLoading={isBomLoading}
                 onContactChange={handleContactChange}
                 onSubmit={handleSubmitToDealer}
                 isSubmitting={isSubmitting}

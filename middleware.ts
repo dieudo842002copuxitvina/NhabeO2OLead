@@ -1,26 +1,135 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════╗
- * ║  MIDDLEWARE - Route Protection                                   ║
- * ║  Protects admin routes and manages auth redirects              ║
+ * ║  MIDDLEWARE - Route Protection with Role-Based Access Control (RBAC)    ║
+ * ║  Protects routes based on user roles from Supabase                     ║
  * ╚═══════════════════════════════════════════════════════════════════════════════╝
  * 
- * This middleware:
- * 1. Protects /admin/* routes - redirects to /login if not authenticated
- * 2. Redirects authenticated users away from /login
- * 3. Manages session refresh
+ * Access Rules:
+ * - /admin/* → Requires 'ADMIN' role
+ * - /dealer/* → Requires 'DEALER' role  
+ * - /tinh-toan → Public (anyone can view), but needs auth to save leads
+ * - /login, /register, /forgot-password → Public auth pages
  */
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * ROLE DEFINITIONS
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+type UserRole = 'ADMIN' | 'DEALER' | 'USER' | string
+
+const ROLE_REQUIREMENTS: Record<string, UserRole[]> = {
+  '/admin': ['ADMIN'],
+  '/dealer': ['DEALER'],
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * PUBLIC PATHS (No authentication required)
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+const PUBLIC_PATHS = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/tinh-toan',
+  '/dai-ly',
+  '/danh-muc',
+  '/san-pham',
+  '/blog',
+  '/tin-tuc',
+  '/gia-nong-san',
+  '/giai-phap',
+  '/cong-cu',
+]
+
+const PUBLIC_PREFIXES = [
+  '/api/auth',
+  '/_next',
+  '/favicon',
+  '/images',
+  '/static',
+]
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * HELPER FUNCTIONS
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Check if a path is public (doesn't require authentication)
+ */
+function isPublicPath(pathname: string): boolean {
+  // Check exact matches
+  if (PUBLIC_PATHS.includes(pathname)) {
+    return true
+  }
+
+  // Check prefix matches
+  for (const prefix of PUBLIC_PREFIXES) {
+    if (pathname.startsWith(prefix)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Get required roles for a given path
+ */
+function getRequiredRoles(pathname: string): UserRole[] | null {
+  for (const [route, roles] of Object.entries(ROLE_REQUIREMENTS)) {
+    if (pathname.startsWith(route)) {
+      return roles
+    }
+  }
+  return null
+}
+
+/**
+ * Fetch user roles from Supabase
+ */
+async function fetchUserRoles(
+  supabase: ReturnType<typeof createServerClient>,
+  userId: string
+): Promise<UserRole[]> {
+  try {
+    // Query user_roles table (case-insensitive role match)
+    const { data: userRoles, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+
+    if (error || !userRoles) {
+      console.error('[Middleware] Error fetching roles:', error?.message)
+      return []
+    }
+
+    // Normalize roles to uppercase
+    return userRoles.map(r => r.role.toUpperCase() as UserRole)
+  } catch (err) {
+    console.error('[Middleware] Exception fetching roles:', err)
+    return []
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * MAIN MIDDLEWARE FUNCTION
+ * ───────────────────────────────────────────────────────────────────────────── */
+
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
   const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   })
 
-  // Create Supabase client for this middleware
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * CREATE SUPABASE CLIENT
+   * ───────────────────────────────────────────────────────────────────────────── */
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -30,13 +139,11 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          // Set cookie on request for downstream handlers
           request.cookies.set({
             name,
             value,
             ...options,
           })
-          // Set cookie on response for the browser
           response.cookies.set({
             name,
             value,
@@ -44,13 +151,11 @@ export async function middleware(request: NextRequest) {
           })
         },
         remove(name: string, options: CookieOptions) {
-          // Remove cookie on request
           request.cookies.set({
             name,
             value: '',
             ...options,
           })
-          // Remove cookie on response
           response.cookies.set({
             name,
             value: '',
@@ -61,59 +166,94 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Get the current user session
-  const { data: { user }, error } = await supabase.auth.getUser()
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * CHECK AUTHENTICATION
+   * ───────────────────────────────────────────────────────────────────────────── */
 
-  // Check if the user is logged in
-  const isAuthenticated = !!user && !error
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  const isAuthenticated = !!user && !authError
 
-  // Get the current path
-  const pathname = request.nextUrl.pathname
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * HANDLE PUBLIC PATHS
+   * ───────────────────────────────────────────────────────────────────────────── */
 
-  // Define public paths that don't require authentication
-  const publicPaths = [
-    '/login',
-    '/register',
-    '/forgot-password',
-    '/api/auth',
-  ]
+  if (isPublicPath(pathname)) {
+    // If authenticated user visits login page, redirect to admin
+    if (isAuthenticated && pathname === '/login') {
+      const redirectUrl = new URL('/admin', request.url)
+      const returnTo = request.nextUrl.searchParams.get('redirectTo')
+      if (returnTo?.startsWith('/')) {
+        redirectUrl.pathname = returnTo
+      }
+      return NextResponse.redirect(redirectUrl)
+    }
 
-  // Check if current path is public
-  const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+    // Allow public access
+    return response
+  }
 
-  // If accessing admin routes without authentication, redirect to login
-  if (pathname.startsWith('/admin') && !isAuthenticated) {
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * HANDLE PROTECTED ROUTES
+   * ───────────────────────────────────────────────────────────────────────────── */
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
     const redirectUrl = new URL('/login', request.url)
-    // Add the return URL so we can redirect back after login
     redirectUrl.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(redirectUrl)
   }
 
-  // If authenticated user is accessing public auth pages, redirect to admin
-  if (isPublicPath && isAuthenticated && pathname === '/login') {
-    const redirectUrl = new URL('/admin', request.url)
-    // Check for return URL
-    const returnTo = request.nextUrl.searchParams.get('redirectTo')
-    if (returnTo && returnTo.startsWith('/')) {
-      redirectUrl.pathname = returnTo
+  // Check role requirements for this path
+  const requiredRoles = getRequiredRoles(pathname)
+
+  if (requiredRoles) {
+    // Fetch user roles from database
+    const userRoles = await fetchUserRoles(supabase, user!.id)
+
+    // Check if user has any of the required roles
+    const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role))
+
+    if (!hasRequiredRole) {
+      console.warn(
+        `[Middleware] Access denied for user ${user!.id} to ${pathname}`,
+        { requiredRoles, userRoles }
+      )
+
+      // Redirect to appropriate page based on role
+      if (userRoles.includes('ADMIN')) {
+        return NextResponse.redirect(new URL('/admin', request.url))
+      }
+      if (userRoles.includes('DEALER')) {
+        return NextResponse.redirect(new URL('/dealer', request.url))
+      }
+
+      // No valid role, redirect to login
+      const redirectUrl = new URL('/login', request.url)
+      redirectUrl.searchParams.set('error', 'insufficient_permissions')
+      return NextResponse.redirect(redirectUrl)
     }
-    return NextResponse.redirect(redirectUrl)
   }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * ALLOW ACCESS
+   * ───────────────────────────────────────────────────────────────────────────── */
 
   return response
 }
 
-// Configure which routes the middleware applies to
+/* ─────────────────────────────────────────────────────────────────────────────
+ * ROUTE MATCHER - Optimize by only running on necessary routes
+ * ───────────────────────────────────────────────────────────────────────────── */
+
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files
-     * - api routes (except auth)
+     * Match all paths EXCEPT:
+     * - Static files (_next/static, _next/image)
+     * - Favicon
+     * - Media files (svg, png, jpg, jpeg, gif, webp, ico)
+     * - API routes that don't need auth (except /api/auth/*)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }

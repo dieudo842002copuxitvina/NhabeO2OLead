@@ -11,6 +11,22 @@
 const EARTH_RADIUS_KM = 6371;
 
 /**
+ * GeoCoord type for location coordinates
+ */
+export interface GeoCoord {
+  lat: number;
+  lon: number;
+}
+
+/**
+ * Default location (Ho Chi Minh City)
+ */
+export const DEFAULT_LOCATION: GeoCoord = {
+  lat: 10.8231,
+  lon: 106.6297,
+};
+
+/**
  * Convert degrees to radians
  */
 function toRadians(degrees: number): number {
