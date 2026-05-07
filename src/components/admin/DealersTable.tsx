@@ -41,6 +41,7 @@ import {
   Edit,
   Trash2,
   Phone,
+  Mail,
   MapPin,
   Building2,
   RefreshCw,
@@ -57,11 +58,19 @@ import { deleteDealer, type Dealer } from "@/app/actions/dealer";
 import { useToast } from "@/components/ui/use-toast";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+ * TYPES
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+interface DealerWithEmail extends Dealer {
+  email?: string | null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
  * PROPS
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 interface DealersTableProps {
-  initialDealers: Dealer[];
+  initialDealers: DealerWithEmail[];
   totalCount: number;
 }
 
@@ -74,7 +83,7 @@ export default function DealersTable({ initialDealers, totalCount }: DealersTabl
   const { toast } = useToast();
   
   // State
-  const [dealers, setDealers] = useState<Dealer[]>(initialDealers);
+  const [dealers, setDealers] = useState<DealerWithEmail[]>(initialDealers);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -110,13 +119,13 @@ export default function DealersTable({ initialDealers, totalCount }: DealersTabl
     setFormOpen(true);
   };
 
-  const handleEdit = (dealer: Dealer) => {
+  const handleEdit = (dealer: DealerWithEmail) => {
     setSelectedDealer(dealer);
     setFormMode("edit");
     setFormOpen(true);
   };
 
-  const handleDelete = async (dealer: Dealer) => {
+  const handleDelete = async (dealer: DealerWithEmail) => {
     if (!confirm(`Bạn có chắc muốn xóa đại lý "${dealer.name}"?\n\nHành động này không thể hoàn tác.`)) {
       return;
     }
@@ -221,8 +230,9 @@ export default function DealersTable({ initialDealers, totalCount }: DealersTabl
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="font-semibold w-[35%]">Tên đại lý</TableHead>
+                <TableHead className="font-semibold w-[30%]">Tên đại lý</TableHead>
                 <TableHead className="font-semibold">Liên hệ</TableHead>
+                <TableHead className="font-semibold">Email</TableHead>
                 <TableHead className="font-semibold">Địa chỉ</TableHead>
                 <TableHead className="font-semibold text-center">Trạng thái</TableHead>
                 <TableHead className="font-semibold text-right w-[80px]">Thao tác</TableHead>
@@ -231,7 +241,7 @@ export default function DealersTable({ initialDealers, totalCount }: DealersTabl
             <TableBody>
               {filteredDealers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center">
+                  <TableCell colSpan={6} className="h-32 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <AlertCircle className="h-8 w-8" />
                       <p className="text-sm">
@@ -289,6 +299,21 @@ export default function DealersTable({ initialDealers, totalCount }: DealersTabl
                           <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </div>
+                    </TableCell>
+
+                    {/* Email */}
+                    <TableCell>
+                      {(dealer as any).email ? (
+                        <a
+                          href={`mailto:${(dealer as any).email}`}
+                          className="flex items-center gap-1.5 text-sm text-foreground hover:text-emerald-600 transition-colors max-w-[180px]"
+                        >
+                          <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                          <span className="truncate">{(dealer as any).email}</span>
+                        </a>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
                     </TableCell>
 
                     {/* Địa chỉ */}

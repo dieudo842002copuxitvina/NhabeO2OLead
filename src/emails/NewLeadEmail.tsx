@@ -1,7 +1,8 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════╗
- * ║  NEW LEAD EMAIL TEMPLATE                                        ║
- * ║  React Email template for notifying dealers about new leads               ║
+ * ║  NEW LEAD EMAIL TEMPLATE - React Email                            ║
+ * ║  Email notification sent to dealer when a new lead is assigned     ║
+ * ║  Nhà Bè Agri O2O Lead Management System                           ║
  * ╚═══════════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -13,11 +14,19 @@ import {
   Heading,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
+  Row,
   Section,
   Text,
 } from "@react-email/components";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * PROPS INTERFACE
+ * ═══════════════════════════════════════════════════════════════════════════════ */
 
 interface NewLeadEmailProps {
   dealerName: string;
@@ -27,104 +36,22 @@ interface NewLeadEmailProps {
   district?: string;
   cropType?: string;
   areaHa?: number;
-  leadId: string;
   dashboardUrl: string;
+  leadId: string;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * EMAIL TEMPLATE STYLES
+ * CONSTANTS
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
-const styles = {
-  container: {
-    backgroundColor: "#f8fafc",
-    fontFamily: "sans-serif",
-    padding: "20px",
-  },
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: "12px",
-    border: "1px solid #e2e8f0",
-    padding: "32px",
-    maxWidth: "600px",
-    margin: "0 auto",
-  },
-  header: {
-    background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
-    borderRadius: "8px 8px 0 0",
-    padding: "24px",
-    textAlign: "center" as const,
-    margin: "-32px -32px 32px -32px",
-  },
-  heading: {
-    color: "#ffffff",
-    fontSize: "24px",
-    fontWeight: "bold" as const,
-    margin: "0 0 8px 0",
-  },
-  subheading: {
-    color: "#d1fae5",
-    fontSize: "14px",
-    margin: "0",
-  },
-  section: {
-    marginBottom: "24px",
-  },
-  label: {
-    color: "#64748b",
-    fontSize: "12px",
-    fontWeight: "600" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.5px",
-    marginBottom: "4px",
-  },
-  value: {
-    color: "#1e293b",
-    fontSize: "16px",
-    fontWeight: "500" as const,
-    margin: "0",
-  },
-  highlightBox: {
-    backgroundColor: "#fef3c7",
-    border: "1px solid #f59e0b",
-    borderRadius: "8px",
-    padding: "16px",
-    marginBottom: "24px",
-  },
-  ctaButton: {
-    backgroundColor: "#059669",
-    borderRadius: "8px",
-    color: "#ffffff",
-    fontSize: "16px",
-    fontWeight: "600" as const,
-    padding: "14px 28px",
-    display: "inline-block",
-    textDecoration: "none",
-  },
-  footer: {
-    marginTop: "32px",
-    paddingTop: "24px",
-    borderTop: "1px solid #e2e8f0",
-    textAlign: "center" as const,
-  },
-  footerText: {
-    color: "#64748b",
-    fontSize: "12px",
-    margin: "0 0 8px 0",
-  },
-  badge: {
-    display: "inline-block",
-    backgroundColor: "#d1fae5",
-    color: "#065f46",
-    padding: "4px 12px",
-    borderRadius: "9999px",
-    fontSize: "12px",
-    fontWeight: "600" as const,
-  },
-};
+const BRAND_COLOR = "#059669"; // emerald-600
+const BRAND_COLOR_LIGHT = "#d1fae5"; // emerald-100
+const TEXT_COLOR = "#1f2937"; // gray-800
+const MUTED_COLOR = "#6b7280"; // gray-500
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://nhaBeAgri.vn";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * COMPONENT
+ * EMAIL COMPONENT
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 export function NewLeadEmail({
@@ -135,141 +62,133 @@ export function NewLeadEmail({
   district,
   cropType,
   areaHa,
-  leadId,
   dashboardUrl,
+  leadId,
 }: NewLeadEmailProps) {
-  const fullAddress = [district, province].filter(Boolean).join(", ");
+  const currentDate = format(new Date(), "dd/MM/yyyy 'lúc' HH:mm", { locale: vi });
+  const displayName = customerName || "Khách hàng mới";
+  const location = [district, province].filter(Boolean).join(", ") || "Chưa cung cấp";
+  const areaDisplay = areaHa ? `${areaHa.toFixed(2)} ha` : "Chưa cung cấp";
 
   return (
     <Html>
       <Head />
       <Preview>
-        🔔 Lead mới từ Nhà Bè Agri - Khách hàng {customerName || "nông dân"} cần tư vấn
+        Nhà Bè Agri: Bạn có Lead mới từ {displayName} ({province || "N/A"})
       </Preview>
-      <Body style={styles.container}>
-        <Container style={styles.card}>
+
+      <Body style={styles.body}>
+        <Container style={styles.container}>
           {/* Header */}
-          <div style={styles.header}>
-            <Heading style={styles.heading}>🔔 Lead Mới</Heading>
-            <Text style={styles.subheading}>
-              Có khách hàng mới cần được tư vấn từ Nhà Bè Agri
+          <Section style={styles.header}>
+            <Row>
+              <Text style={styles.logo}>🌾 Nhà Bè Agri</Text>
+            </Row>
+            <Heading style={styles.headerTitle}>Lead Mới Được Phân Bổ</Heading>
+            <Text style={styles.headerSubtitle}>
+              Bạn vừa nhận được một Lead tiềm năng từ khu vực của bạn
             </Text>
-          </div>
+          </Section>
+
+          <Hr style={styles.divider} />
 
           {/* Greeting */}
           <Section style={styles.section}>
-            <Text style={{ ...styles.value, marginBottom: "16px" }}>
-              Xin chào <strong>{dealerName}</strong>,
-            </Text>
-            <Text style={{ ...styles.value, color: "#475569", lineHeight: "1.6" }}>
-              Bạn vừa nhận được một Lead mới từ hệ thống Nhà Bè Agri. 
-              Vui lòng liên hệ khách hàng trong thời gian sớm nhất để tư vấn và hỗ trợ.
+            <Text style={styles.greeting}>Xin chào {dealerName},</Text>
+            <Text style={styles.text}>
+              Hệ thống Nhà Bè Agri đã phân bổ cho bạn một Lead mới từ{" "}
+              <strong>{province || "khu vực của bạn"}</strong>.
             </Text>
           </Section>
 
-          {/* Customer Info */}
-          <Section style={styles.section}>
-            <Heading 
-              style={{ 
-                fontSize: "14px", 
-                fontWeight: "600", 
-                color: "#1e293b", 
-                marginBottom: "16px",
-                borderBottom: "2px solid #059669",
-                paddingBottom: "8px",
-                display: "inline-block",
-              }}
-            >
-              📋 Thông Tin Khách Hàng
-            </Heading>
+          {/* Lead Details Card */}
+          <Section style={styles.card}>
+            <Heading style={styles.cardTitle}>📋 Thông Tin Lead</Heading>
 
-            <div style={{ display: "grid", gap: "16px" }}>
-              {/* Customer Name */}
-              <div>
-                <Text style={styles.label}>Tên khách hàng</Text>
-                <Text style={styles.value}>
-                  {customerName || "Khách hàng ẩn danh"}
-                  {customerName && (
-                    <span style={{ marginLeft: "8px", fontSize: "12px" }}>
-                      <span style={styles.badge}>Khách hàng tiềm năng</span>
-                    </span>
-                  )}
-                </Text>
-              </div>
+            <Row style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Khách hàng:</Text>
+              <Text style={styles.detailValue}>{displayName}</Text>
+            </Row>
 
-              {/* Phone - Highlighted */}
-              <div style={styles.highlightBox}>
-                <Text style={{ ...styles.label, color: "#92400e", marginBottom: "4px" }}>
-                  📞 Số điện thoại
-                </Text>
-                <Text style={{ ...styles.value, fontSize: "20px", fontWeight: "bold", color: "#1e293b" }}>
-                  <a href={`tel:${customerPhone}`} style={{ color: "#059669", textDecoration: "none" }}>
-                    {customerPhone}
-                  </a>
-                </Text>
-              </div>
+            <Row style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Số điện thoại:</Text>
+              <Text style={styles.detailValue}>
+                <Link href={`tel:${customerPhone}`} style={styles.phoneLink}>
+                  {customerPhone}
+                </Link>
+              </Text>
+            </Row>
 
-              {/* Location */}
-              {fullAddress && (
-                <div>
-                  <Text style={styles.label}>📍 Khu vực</Text>
-                  <Text style={styles.value}>{fullAddress}</Text>
-                </div>
-              )}
+            <Row style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Khu vực:</Text>
+              <Text style={styles.detailValue}>{location}</Text>
+            </Row>
 
-              {/* Crop Type */}
-              {cropType && (
-                <div>
-                  <Text style={styles.label}>🌱 Loại cây trồng</Text>
-                  <Text style={styles.value}>{cropType}</Text>
-                </div>
-              )}
+            {cropType && (
+              <Row style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Loại cây trồng:</Text>
+                <Text style={styles.detailValue}>{cropType}</Text>
+              </Row>
+            )}
 
-              {/* Area */}
-              {areaHa && (
-                <div>
-                  <Text style={styles.label}>📐 Diện tích</Text>
-                  <Text style={styles.value}>{areaHa.toLocaleString("vi-VN")} ha</Text>
-                </div>
-              )}
-            </div>
+            <Row style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Diện tích:</Text>
+              <Text style={styles.detailValue}>{areaDisplay}</Text>
+            </Row>
+
+            <Row style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Thời gian nhận:</Text>
+              <Text style={styles.detailValue}>{currentDate}</Text>
+            </Row>
+
+            <Row style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Mã Lead:</Text>
+              <Text style={styles.detailValueSmall}>#{leadId.slice(0, 8)}...</Text>
+            </Row>
           </Section>
 
           {/* CTA Button */}
-          <Section style={{ ...styles.section, textAlign: "center" as const }}>
-            <Button 
-              href={dashboardUrl} 
+          <Section style={styles.ctaSection}>
+            <Text style={styles.ctaText}>
+              Nhấn vào nút bên dưới để xem chi tiết dự toán vật tư (BOM) và liên hệ khách hàng ngay:
+            </Text>
+            <Button
+              href={dashboardUrl}
               style={styles.ctaButton}
             >
-              📊 Xem Chi Tiết & Dự Toán Vật Tư (BOM)
+              Xem Chi Tiết & Liên Hệ Khách Hàng
             </Button>
           </Section>
 
-          {/* Note */}
+          <Hr style={styles.divider} />
+
+          {/* Tips */}
           <Section style={styles.section}>
-            <Text style={{ ...styles.value, fontSize: "13px", color: "#64748b", fontStyle: "italic" }}>
-              💡 <strong>Lưu ý:</strong> Sau khi liên hệ khách hàng, bạn có thể cập nhật 
-              trạng thái Lead (Đã liên hệ, Đang xử lý, Thành công, Thất bại) tại trang Dashboard.
-            </Text>
+            <Heading style={styles.tipsTitle}>💡 Mẹo xử lý Lead hiệu quả</Heading>
+            <ul style={styles.tipsList}>
+              <li style={styles.tipsItem}>Liên hệ khách hàng trong vòng 24 giờ để tăng tỷ lệ chuyển đổi</li>
+              <li style={styles.tipsItem}>Chuẩn bị mẫu BOM phù hợp với loại cây trồng và diện tích</li>
+              <li style={styles.tipsItem}>Cập nhật trạng thái Lead thường xuyên để theo dõi</li>
+            </ul>
           </Section>
 
+          <Hr style={styles.divider} />
+
           {/* Footer */}
-          <Hr style={{ borderColor: "#e2e8f0", margin: "24px 0" }} />
-          <div style={styles.footer}>
+          <Section style={styles.footer}>
             <Text style={styles.footerText}>
-              <strong>Nhà Bè Agri</strong> - Hệ thống tưới tiêu thông minh
+              Email này được gửi tự động từ hệ thống Nhà Bè Agri.
             </Text>
             <Text style={styles.footerText}>
-              📞 Hotline: 1900 1234 | 🌐 www.nhabe-agri.com
-            </Text>
-            <Text style={{ ...styles.footerText, marginTop: "16px", fontSize: "10px", color: "#94a3b8" }}>
-              Email này được gửi tự động từ hệ thống Nhà Bè Agri. 
               Vui lòng không trả lời trực tiếp email này.
             </Text>
-            <Text style={{ ...styles.footerText, fontSize: "10px", color: "#94a3b8" }}>
-              Lead ID: {leadId.slice(0, 8)}...
+            <Link href={APP_URL} style={styles.footerLink}>
+              Truy cập Nhà Bè Agri Dashboard
+            </Link>
+            <Text style={styles.footerMuted}>
+              © {new Date().getFullYear()} Nhà Bè Agri. Hệ thống O2O quản lý khách hàng tiềm năng.
             </Text>
-          </div>
+          </Section>
         </Container>
       </Body>
     </Html>
@@ -277,9 +196,164 @@ export function NewLeadEmail({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * EXPORT PROPS FOR TYPE SAFETY
+ * STYLES
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+const styles = {
+  body: {
+    backgroundColor: "#f3f4f6",
+    fontFamily: "system-ui, -apple-system, sans-serif",
+  },
+  container: {
+    backgroundColor: "#ffffff",
+    margin: "0 auto",
+    padding: "40px 20px",
+    maxWidth: "600px",
+    borderRadius: "12px",
+    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+  },
+  header: {
+    backgroundColor: BRAND_COLOR,
+    margin: "-40px -20px 0",
+    padding: "40px 30px 30px",
+    borderRadius: "12px 12px 0 0",
+    textAlign: "center" as const,
+  },
+  logo: {
+    fontSize: "24px",
+    fontWeight: "bold",
+    color: "#ffffff",
+    margin: "0 0 10px 0",
+  },
+  headerTitle: {
+    fontSize: "26px",
+    fontWeight: "bold",
+    color: "#ffffff",
+    margin: "0 0 10px 0",
+  },
+  headerSubtitle: {
+    fontSize: "14px",
+    color: "#d1fae5",
+    margin: "0",
+  },
+  divider: {
+    borderColor: "#e5e7eb",
+    margin: "30px 0",
+  },
+  section: {
+    padding: "0 10px",
+  },
+  greeting: {
+    fontSize: "16px",
+    color: TEXT_COLOR,
+    margin: "0 0 15px 0",
+  },
+  text: {
+    fontSize: "15px",
+    color: TEXT_COLOR,
+    lineHeight: "1.6",
+    margin: "0 0 20px 0",
+  },
+  card: {
+    backgroundColor: "#f9fafb",
+    border: "1px solid #e5e7eb",
+    borderRadius: "8px",
+    padding: "25px",
+    margin: "20px 0",
+  },
+  cardTitle: {
+    fontSize: "18px",
+    fontWeight: "600",
+    color: TEXT_COLOR,
+    margin: "0 0 20px 0",
+  },
+  detailRow: {
+    marginBottom: "12px",
+  },
+  detailLabel: {
+    fontSize: "14px",
+    color: MUTED_COLOR,
+    width: "140px",
+    display: "inline-block",
+    margin: "0",
+  },
+  detailValue: {
+    fontSize: "15px",
+    color: TEXT_COLOR,
+    fontWeight: "500",
+    margin: "0",
+  },
+  detailValueSmall: {
+    fontSize: "13px",
+    color: MUTED_COLOR,
+    fontFamily: "monospace",
+    margin: "0",
+  },
+  phoneLink: {
+    color: BRAND_COLOR,
+    textDecoration: "none",
+    fontWeight: "600",
+  },
+  ctaSection: {
+    textAlign: "center" as const,
+    padding: "10px 0",
+  },
+  ctaText: {
+    fontSize: "14px",
+    color: MUTED_COLOR,
+    margin: "0 0 20px 0",
+  },
+  ctaButton: {
+    backgroundColor: BRAND_COLOR,
+    borderRadius: "8px",
+    color: "#ffffff",
+    fontSize: "16px",
+    fontWeight: "600",
+    padding: "14px 28px",
+    textDecoration: "none",
+    display: "inline-block",
+  },
+  tipsTitle: {
+    fontSize: "16px",
+    fontWeight: "600",
+    color: TEXT_COLOR,
+    margin: "0 0 15px 0",
+  },
+  tipsList: {
+    paddingLeft: "20px",
+    margin: "0",
+  },
+  tipsItem: {
+    fontSize: "14px",
+    color: MUTED_COLOR,
+    lineHeight: "1.8",
+    margin: "0 0 5px 0",
+  },
+  footer: {
+    textAlign: "center" as const,
+    padding: "10px 0",
+  },
+  footerText: {
+    fontSize: "13px",
+    color: MUTED_COLOR,
+    margin: "0 0 8px 0",
+  },
+  footerLink: {
+    fontSize: "13px",
+    color: BRAND_COLOR,
+    textDecoration: "none",
+    display: "inline-block",
+    marginBottom: "15px",
+  },
+  footerMuted: {
+    fontSize: "12px",
+    color: "#9ca3af",
+    margin: "10px 0 0 0",
+  },
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * EXPORT DEFAULT
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 export default NewLeadEmail;
-
-export type NewLeadEmailPropsType = NewLeadEmailProps;

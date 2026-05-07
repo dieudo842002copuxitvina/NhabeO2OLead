@@ -50,6 +50,7 @@ const GROUPS: NavGroup[] = [
     label: 'Cấu hình Hệ thống',
     items: [
       { title: 'Nhân sự (RBAC)', url: '/admin/staff', icon: UserCog },
+      { title: 'Người dùng', url: '/admin/users', icon: Users },
       { title: 'Cổng kết nối', url: '/admin/integrations', icon: Webhook },
       { title: 'Tracking Logs', url: '/admin/tracking-logs', icon: ScrollText },
       { title: 'Cấu hình chung', url: '/admin/config', icon: Settings },

@@ -1,7 +1,7 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════╗
- * ║  RESEND EMAIL CLIENT                                            ║
- * ║  Configuration for sending transactional emails                           ║
+ * ║  RESEND EMAIL CLIENT                                              ║
+ * ║  Configuration for sending emails via Resend API                        ║
  * ╚═══════════════════════════════════════════════════════════════════════════════╝
  */
 
@@ -13,41 +13,64 @@ import { Resend } from "resend";
 
 const globalForResend = globalThis as unknown as { resend: Resend | undefined };
 
-export const resend = globalForResend.resend ?? new Resend(process.env.RESEND_API_KEY);
+// Create Resend client with API key
+const resend = globalForResend.resend ?? new Resend({
+  apiKey: process.env.RESEND_API_KEY,
+});
 
+// Save to global in development to prevent recreation on hot reload
 if (process.env.NODE_ENV !== "production") {
   globalForResend.resend = resend;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * EMAIL CONSTANTS
+ * EMAIL CONFIGURATION
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
-export const EMAIL_CONFIG = {
-  from: process.env.EMAIL_FROM || "Nhà Bè Agri <noreply@nhabe-agri.com>",
-  companyName: "Nhà Bè Agri",
-  companyPhone: "1900 1234",
-  companyWebsite: "https://nhabe-agri.com",
-  dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dealer/dashboard`,
-} as const;
+// Default sender email (configured in Resend dashboard)
+const DEFAULT_FROM_EMAIL = process.env.EMAIL_FROM || "Nhà Bè Agri <noreply@nhaBeAgri.vn>";
+const DEFAULT_REPLY_TO = process.env.EMAIL_REPLY_TO || "contact@nhaBeAgri.vn";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * HELPER: Send email with error handling
+ * EXPORTS
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
-export interface SendEmailResult {
-  success: boolean;
-  emailId?: string;
-  error?: string;
-}
+export { resend, DEFAULT_FROM_EMAIL, DEFAULT_REPLY_TO };
 
-export async function sendEmail(params: {
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * EMAIL TYPES
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+export interface SendEmailOptions {
   to: string | string[];
   subject: string;
-  html: string;
+  html?: string;
   text?: string;
-}): Promise<SendEmailResult> {
-  // Skip if no API key configured
+  from?: string;
+  replyTo?: string;
+  cc?: string | string[];
+  bcc?: string | string[];
+  attachments?: Array<{
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }>;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * HELPER: Send Email
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Send an email using Resend
+ * Non-fatal: errors are logged but not thrown to prevent blocking main flows
+ */
+export async function sendEmail(options: SendEmailOptions): Promise<{
+  success: boolean;
+  id?: string;
+  error?: string;
+}> {
+  // Check if Resend is configured
   if (!process.env.RESEND_API_KEY) {
     console.warn("[Email] RESEND_API_KEY not configured, skipping email send");
     return { success: false, error: "Email service not configured" };
@@ -55,23 +78,28 @@ export async function sendEmail(params: {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: EMAIL_CONFIG.from,
-      to: params.to,
-      subject: params.subject,
-      html: params.html,
-      text: params.text,
+      from: options.from || DEFAULT_FROM_EMAIL,
+      to: options.to,
+      replyTo: options.replyTo || DEFAULT_REPLY_TO,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+      cc: options.cc,
+      bcc: options.bcc,
     });
 
     if (error) {
-      console.error("[Email] Failed to send:", error);
+      console.error("[Email] Resend API error:", error);
       return { success: false, error: error.message };
     }
 
     console.log(`[Email] Sent successfully: ${data?.id}`);
-    return { success: true, emailId: data?.id };
+    return { success: true, id: data?.id };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[Email] Exception:", message);
-    return { success: false, error: message };
+    console.error("[Email] Unexpected error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error"
+    };
   }
 }

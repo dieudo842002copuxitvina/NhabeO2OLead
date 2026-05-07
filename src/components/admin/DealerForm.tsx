@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Save, MapPin, Phone, Building2, X } from "lucide-react";
+import { Loader2, Save, MapPin, Phone, Building2, X, Mail } from "lucide-react";
 import { createDealer, updateDealer, type Dealer } from "@/app/actions/dealer";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -33,6 +33,7 @@ import { createDealer, updateDealer, type Dealer } from "@/app/actions/dealer";
 const dealerFormSchema = z.object({
   name: z.string().min(1, "Tên đại lý không được để trống").max(255),
   phone: z.string().max(20).optional().default(""),
+  email: z.string().email("Email không hợp lệ").optional().or(z.literal("")).default(""),
   address: z.string().max(500).optional().default(""),
   province: z.string().max(100).optional().default(""),
   district: z.string().max(100).optional().default(""),
@@ -82,6 +83,7 @@ export default function DealerForm({
     defaultValues: {
       name: dealer?.name || "",
       phone: dealer?.phone || "",
+      email: (dealer as any)?.email || "",
       address: dealer?.address || "",
       province: dealer?.province || "",
       district: dealer?.district || "",
@@ -100,6 +102,7 @@ export default function DealerForm({
       const input = {
         name: data.name,
         phone: data.phone || undefined,
+        email: data.email || undefined,
         address: data.address || undefined,
         province: data.province || undefined,
         district: data.district || undefined,
@@ -228,6 +231,27 @@ export default function DealerForm({
             {errors.phone && (
               <p className="text-xs text-red-500 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" /> {errors.phone.message}
+              </p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+              <Mail className="w-4 h-4 text-emerald-600" />
+              Email nhận Lead
+              <span className="text-xs text-muted-foreground font-normal">(để nhận thông báo Lead mới)</span>
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="VD: dailynam@gmail.com"
+              className="h-11 border-border/60 focus:border-emerald-500 focus:ring-emerald-500/20"
+              {...register("email")}
+            />
+            {errors.email && (
+              <p className="text-xs text-red-500 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.email.message}
               </p>
             )}
           </div>

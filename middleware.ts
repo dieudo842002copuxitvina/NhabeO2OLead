@@ -31,7 +31,7 @@ const ROLE_REQUIREMENTS: Record<string, UserRole[]> = {
 
 const PUBLIC_PATHS = [
   '/login',
-  '/register',
+  '/signup',
   '/forgot-password',
   '/tinh-toan',
   '/dai-ly',
@@ -42,6 +42,7 @@ const PUBLIC_PATHS = [
   '/gia-nong-san',
   '/giai-phap',
   '/cong-cu',
+  '/auth/callback',
 ]
 
 const PUBLIC_PREFIXES = [
@@ -178,14 +179,20 @@ export async function middleware(request: NextRequest) {
    * ───────────────────────────────────────────────────────────────────────────── */
 
   if (isPublicPath(pathname)) {
-    // If authenticated user visits login page, redirect to admin
-    if (isAuthenticated && pathname === '/login') {
-      const redirectUrl = new URL('/admin', request.url)
-      const returnTo = request.nextUrl.searchParams.get('redirectTo')
-      if (returnTo?.startsWith('/')) {
-        redirectUrl.pathname = returnTo
+    // If authenticated user visits login/signup page, redirect based on role
+    if (isAuthenticated && (pathname === '/login' || pathname === '/signup')) {
+      // Fetch user roles to determine redirect
+      const userRoles = await fetchUserRoles(supabase, user!.id);
+      const roles = userRoles.map(r => r.toLowerCase());
+      
+      if (roles.includes('admin')) {
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
       }
-      return NextResponse.redirect(redirectUrl)
+      if (roles.includes('dealer')) {
+        return NextResponse.redirect(new URL('/dealer/dashboard', request.url));
+      }
+      // Default for customers - redirect to calculator
+      return NextResponse.redirect(new URL('/tinh-toan', request.url));
     }
 
     // Allow public access

@@ -39,6 +39,7 @@ model Dealer {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name           String
   phone          String?
+  email          String?   // Email for lead notifications
   address        String?
   province       String?
   district       String?

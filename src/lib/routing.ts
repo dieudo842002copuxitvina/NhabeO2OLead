@@ -16,6 +16,8 @@
 
 import { PrismaClient } from "@prisma/client";
 import { calculateDistance, isValidCoordinate } from "@/lib/geo";
+import { sendEmail } from "@/lib/mail";
+import { NewLeadEmail } from "@/emails/NewLeadEmail";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT (singleton pattern)
@@ -422,6 +424,17 @@ export async function createLeadWithRouting(
       };
     });
 
+    // Step 3: Send email notification to dealer (non-blocking)
+    if (result.dealerId && result.dealerName) {
+      sendLeadNotificationEmail({
+        dealerId: result.dealerId,
+        leadData,
+        leadId: result.leadId,
+      }).catch((emailError) => {
+        console.error("[O2O Routing] Failed to send email notification:", emailError);
+      });
+    }
+
     return {
       success: true,
       ...result,
@@ -435,6 +448,70 @@ export async function createLeadWithRouting(
       matchType: "none",
       error: error instanceof Error ? error.message : "Unknown error",
     };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * EMAIL NOTIFICATION
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+interface SendEmailParams {
+  dealerId: string;
+  leadData: LeadData;
+  leadId: string;
+}
+
+/**
+ * Send email notification to dealer about new lead
+ * Non-fatal: errors are caught and logged but don't affect main flow
+ */
+async function sendLeadNotificationEmail(params: SendEmailParams): Promise<void> {
+  const { dealerId, leadData, leadId } = params;
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://nhaBeAgri.vn";
+
+  try {
+    // Fetch dealer email from database
+    const dealer = await prisma.dealer.findUnique({
+      where: { id: dealerId },
+      select: { name: true, email: true },
+    });
+
+    if (!dealer) {
+      console.warn(`[Email] Dealer ${dealerId} not found for email notification`);
+      return;
+    }
+
+    // Check if dealer has email
+    if (!dealer.email) {
+      console.warn(`[Email] Dealer "${dealer.name}" has no email configured`);
+      return;
+    }
+
+    // Send email notification
+    const emailResult = await sendEmail({
+      to: dealer.email,
+      subject: `Nhà Bè Agri: Bạn có Lead mới từ ${leadData.province || "khu vực của bạn"}`,
+      react: NewLeadEmail({
+        dealerName: dealer.name,
+        customerName: leadData.customer_name,
+        customerPhone: leadData.customer_phone,
+        province: leadData.province,
+        district: leadData.district,
+        cropType: leadData.crop_type,
+        areaHa: leadData.area_ha ? Number(leadData.area_ha) : undefined,
+        dashboardUrl: `${APP_URL}/dealer/dashboard`,
+        leadId,
+      }),
+    });
+
+    if (emailResult.success) {
+      console.log(`[Email] Notification sent to ${dealer.email} for lead ${leadId}`);
+    } else {
+      console.warn(`[Email] Failed to send notification to ${dealer.email}: ${emailResult.error}`);
+    }
+  } catch (error) {
+    console.error("[Email] Error sending lead notification:", error);
+    // Don't throw - email errors should not affect the main flow
   }
 }
 

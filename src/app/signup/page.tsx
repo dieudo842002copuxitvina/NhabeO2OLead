@@ -2,42 +2,41 @@
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════╗
- * ║  LOGIN PAGE - Nhà Bè Agri                                    ║
- * ║  Modern authentication form with Nhà Bè Agri branding           ║
+ * ║  SIGNUP PAGE - Nhà Bè Agri                                   ║
+ * ║  User registration form with Nhà Bè Agri branding            ║
  * ╚═══════════════════════════════════════════════════════════════════════════════╝
  */
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { loginAction, signInWithGoogleAction } from "./actions";
+import { signupAction, signInWithGoogleAction } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail, Lock, AlertCircle, Leaf, ArrowRight, TrendingUp } from "lucide-react";
+import { AlertCircle, Leaf, Mail, Lock, User, Phone, ArrowRight, CheckCircle2, Loader2, TrendingUp } from "lucide-react";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/tinh-toan";
 
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     setFieldErrors({});
+    setSuccessMessage(null);
 
     const formData = new FormData(e.currentTarget);
-    formData.set("redirectTo", redirectTo);
 
     try {
-      const result = await loginAction(formData);
+      const result = await signupAction(formData);
 
       if (!result.success) {
         if (result.fieldErrors) {
@@ -46,29 +45,31 @@ export default function LoginPage() {
         if (result.error) {
           setError(result.error);
         }
+        if (result.needsEmailConfirmation) {
+          setSuccessMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản trước khi đăng nhập.");
+        }
       }
     } catch (err) {
-      console.error("Login error:", err);
-      setError("Đã xảy ra lỗi khi đăng nhập");
+      console.error("Signup error:", err);
+      setError("Đã xảy ra lỗi khi đăng ký");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
     setIsGoogleLoading(true);
     setError(null);
 
     try {
-      const result = await signInWithGoogleAction(redirectTo);
+      const result = await signInWithGoogleAction("/tinh-toan");
       if (result.error) {
         setError(result.error);
         setIsGoogleLoading(false);
       }
-      // If success, redirect happens via URL
     } catch (err) {
-      console.error("Google login error:", err);
-      setError("Đã xảy ra lỗi khi đăng nhập với Google");
+      console.error("Google signup error:", err);
+      setError("Đã xảy ra lỗi khi đăng ký với Google");
       setIsGoogleLoading(false);
     }
   };
@@ -116,7 +117,7 @@ export default function LoginPage() {
           </h2>
 
           <p className="text-green-100/80 text-lg mb-10 max-w-md leading-relaxed">
-            Công cụ tính toán tưới tiêu thông minh, kết nối nông dân với đại lý ủy quyền trên toàn quốc.
+            Tham gia cùng hàng nghìn nông dân và chuyên gia nông nghiệp Việt Nam để sử dụng công cụ tính toán tưới tiêu thông minh.
           </p>
 
           {/* Feature List */}
@@ -125,7 +126,7 @@ export default function LoginPage() {
               <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
                 <TrendingUp className="w-4 h-4" />
               </div>
-              <span>Tính toán chi phí tưới tiêu chính xác</span>
+              <span>Tăng năng suất cây trồng lên đến 40%</span>
             </div>
             <div className="flex items-center gap-3 text-white/90">
               <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
@@ -133,7 +134,7 @@ export default function LoginPage() {
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span>Kết nối đại lý ủy quyền gần bạn</span>
+              <span>Tiết kiệm đến 60% chi phí nước</span>
             </div>
             <div className="flex items-center gap-3 text-white/90">
               <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
@@ -141,14 +142,14 @@ export default function LoginPage() {
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span>Hỗ trợ kỹ thuật 24/7</span>
+              <span>Hỗ trợ từ đội ngũ kỹ thuật chuyên nghiệp</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right Panel - Login Form */}
-      <div className="flex-1 flex items-center justify-center px-6 sm:px-12 bg-slate-50/50">
+      {/* Right Panel - Signup Form */}
+      <div className="flex-1 flex items-center justify-center px-6 sm:px-12 bg-slate-50/50 overflow-y-auto py-12">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
@@ -157,19 +158,17 @@ export default function LoginPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Nhà Bè Agri</h1>
-              <p className="text-sm text-muted-foreground">Đăng nhập tài khoản</p>
+              <p className="text-sm text-muted-foreground">Đăng ký tài khoản mới</p>
             </div>
           </div>
 
-          {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground mb-2">
-              Chào mừng trở lại
-            </h2>
-            <p className="text-muted-foreground">
-              Đăng nhập để sử dụng công cụ tính toán
-            </p>
-          </div>
+          {/* Success Message */}
+          {successMessage && (
+            <Alert className="mb-6 bg-green-50 border-green-200 text-green-800">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
+          )}
 
           {/* Error Alert */}
           {error && (
@@ -179,12 +178,48 @@ export default function LoginPage() {
             </Alert>
           )}
 
-          {/* Login Form */}
+          {/* Header */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Tạo tài khoản mới
+            </h2>
+            <p className="text-muted-foreground">
+              Đăng ký để bắt đầu sử dụng công cụ tính toán
+            </p>
+          </div>
+
+          {/* Signup Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Full Name Field */}
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-sm font-medium">
+                Họ và tên <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  placeholder="Nguyễn Văn A"
+                  autoComplete="name"
+                  className={`pl-11 h-12 ${fieldErrors.fullName ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                  disabled={isLoading}
+                  required
+                />
+              </div>
+              {fieldErrors.fullName && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {fieldErrors.fullName}
+                </p>
+              )}
+            </div>
+
             {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
-                Email
+                Email <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -207,30 +242,42 @@ export default function LoginPage() {
               )}
             </div>
 
+            {/* Phone Field (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium">
+                Số điện thoại <span className="text-slate-400">(tùy chọn)</span>
+              </Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="0901 234 567"
+                  autoComplete="tel"
+                  className="pl-11 h-12"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
             {/* Password Field */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Mật khẩu
-                </Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-green-600 hover:text-green-700 font-medium"
-                >
-                  Quên mật khẩu?
-                </Link>
-              </div>
+              <Label htmlFor="password" className="text-sm font-medium">
+                Mật khẩu <span className="text-red-500">*</span>
+              </Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="password"
                   name="password"
                   type="password"
-                  placeholder="••••••••"
-                  autoComplete="current-password"
+                  placeholder="Ít nhất 8 ký tự"
+                  autoComplete="new-password"
                   className={`pl-11 h-12 ${fieldErrors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                   disabled={isLoading}
                   required
+                  minLength={8}
                 />
               </div>
               {fieldErrors.password && (
@@ -239,6 +286,54 @@ export default function LoginPage() {
                   {fieldErrors.password}
                 </p>
               )}
+            </div>
+
+            {/* Confirm Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                Xác nhận mật khẩu <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Nhập lại mật khẩu"
+                  autoComplete="new-password"
+                  className={`pl-11 h-12 ${fieldErrors.confirmPassword ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                  disabled={isLoading}
+                  required
+                />
+              </div>
+              {fieldErrors.confirmPassword && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {fieldErrors.confirmPassword}
+                </p>
+              )}
+            </div>
+
+            {/* Terms Agreement */}
+            <div className="flex items-start gap-3 pt-2">
+              <input
+                type="checkbox"
+                id="terms"
+                name="terms"
+                required
+                className="mt-1 w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+              />
+              <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed">
+                Tôi đồng ý với{" "}
+                <Link href="/terms" className="text-green-600 hover:text-green-700 font-medium">
+                  Điều khoản sử dụng
+                </Link>{" "}
+                và{" "}
+                <Link href="/privacy" className="text-green-600 hover:text-green-700 font-medium">
+                  Chính sách bảo mật
+                </Link>{" "}
+                của Nhà Bè Agri
+              </Label>
             </div>
 
             {/* Submit Button */}
@@ -250,11 +345,11 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Đang đăng nhập...
+                  Đang đăng ký...
                 </>
               ) : (
                 <>
-                  Đăng nhập
+                  Đăng ký
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </>
               )}
@@ -267,16 +362,16 @@ export default function LoginPage() {
               <div className="w-full border-t border-slate-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-slate-50 px-3 text-muted-foreground">Hoặc tiếp tục với</span>
+              <span className="bg-slate-50 px-3 text-muted-foreground">Hoặc đăng ký với</span>
             </div>
           </div>
 
-          {/* Google Login Button */}
+          {/* Google Signup Button */}
           <Button
             type="button"
             variant="outline"
             disabled={isLoading || isGoogleLoading}
-            onClick={handleGoogleLogin}
+            onClick={handleGoogleSignup}
             className="w-full h-12 border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all duration-200"
           >
             {isGoogleLoading ? (
@@ -301,15 +396,15 @@ export default function LoginPage() {
                 />
               </svg>
             )}
-            <span className="font-medium">Đăng nhập với Google</span>
+            <span className="font-medium">Đăng ký với Google</span>
           </Button>
 
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-slate-200 text-center text-sm text-muted-foreground">
             <p>
-              Chưa có tài khoản?{" "}
-              <Link href="/signup" className="text-green-600 hover:text-green-700 font-medium">
-                Đăng ký ngay
+              Đã có tài khoản?{" "}
+              <Link href="/login" className="text-green-600 hover:text-green-700 font-medium">
+                Đăng nhập ngay
               </Link>
             </p>
           </div>

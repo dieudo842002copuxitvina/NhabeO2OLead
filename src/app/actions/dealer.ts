@@ -33,6 +33,7 @@ export interface Dealer {
   id: string;
   name: string;
   phone: string | null;
+  email: string | null;
   address: string | null;
   province: string | null;
   district: string | null;
@@ -47,6 +48,7 @@ export interface DealerNormalized {
   id: string;
   name: string;
   phone: string | null;
+  email: string | null;
   address: string | null;
   province: string | null;
   district: string | null;
@@ -59,6 +61,7 @@ export interface DealerNormalized {
 export interface CreateDealerInput {
   name: string;
   phone?: string;
+  email?: string;
   address?: string;
   province?: string;
   district?: string;
@@ -92,6 +95,7 @@ function normalizeDealer(dealer: Dealer): DealerNormalized {
     id: dealer.id,
     name: dealer.name,
     phone: dealer.phone,
+    email: dealer.email,
     address: dealer.address,
     province: dealer.province,
     district: dealer.district,
@@ -109,6 +113,7 @@ function normalizeDealer(dealer: Dealer): DealerNormalized {
 const createDealerSchema = z.object({
   name: z.string().min(1, "Tên đại lý không được để trống").max(255),
   phone: z.string().max(20).optional().nullable(),
+  email: z.string().email("Email không hợp lệ").optional().nullable().or(z.literal("")),
   address: z.string().max(500).optional().nullable(),
   province: z.string().max(100).optional().nullable(),
   district: z.string().max(100).optional().nullable(),
@@ -214,6 +219,7 @@ export async function createDealer(input: CreateDealerInput): Promise<DealerResu
       data: {
         name: validated.name,
         phone: validated.phone,
+        email: validated.email || null,
         address: validated.address,
         province: validated.province,
         district: validated.district,
@@ -262,6 +268,7 @@ export async function updateDealer(
     const updateData: Prisma.DealerUpdateInput = {
       ...(validated.name !== undefined && { name: validated.name }),
       ...(validated.phone !== undefined && { phone: validated.phone }),
+      ...(validated.email !== undefined && { email: validated.email || null }),
       ...(validated.address !== undefined && { address: validated.address }),
       ...(validated.province !== undefined && { province: validated.province }),
       ...(validated.district !== undefined && { district: validated.district }),
