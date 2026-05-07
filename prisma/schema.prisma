@@ -35,6 +35,20 @@ model UserRole {
   @@schema("public")
 }
 
+model Invitation {
+  id         String    @id @default(cuid())
+  email      String
+  role       String
+  token      String    @unique
+  status     String    @default("PENDING")
+  expires_at DateTime? @default(now()) @db.Timestamptz(6)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  created_by String?   @db.Uuid
+
+  @@map("invitations")
+  @@schema("public")
+}
+
 model Dealer {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name           String
@@ -45,12 +59,20 @@ model Dealer {
   district       String?
   latitude       Float?
   longitude      Float?
+  slug           String?   @unique // URL-friendly identifier for SEO
+  meta_title     String?   // SEO meta title
+  meta_description String? // SEO meta description
+  cover_image    String?   // Dealer cover/banner image
+  zalo_number    String?   // Zalo contact number
+  about_us       String?   // About/business description
+  opening_hours  String?   @default("07:00 - 17:30") // Business hours
   is_active      Boolean   @default(true)
   created_at     DateTime  @default(now()) @db.Timestamptz(6)
   lastAssignedAt DateTime? @db.Timestamptz(6) // Track last lead assignment for Round-Robin
   leads          Leads[]
   calculator_leads calculator_leads[]
   profiles       Profile[]
+  inventories    DealerInventory[]
 
   @@map("dealers")
   @@schema("public")
@@ -792,7 +814,25 @@ model products {
   pdf_url        String?
   updated_at     DateTime?  @default(now()) @db.Timestamptz(6)
   categories     categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  inventories    DealerInventory[]
 
+  @@schema("public")
+}
+
+/// Dealer-specific inventory: tracks which products are available at each dealer
+/// and whether they are physically in stock or pre-order
+model DealerInventory {
+  id          String   @id @default(cuid())
+  dealer_id   String   @db.Uuid
+  product_id  String   @db.Uuid
+  in_stock    Boolean  @default(true) // true: Hàng có sẵn, false: Đặt trước (1-3 ngày)
+  updated_at  DateTime @updatedAt @db.Timestamptz(6)
+
+  dealer      Dealer    @relation(fields: [dealer_id], references: [id], onDelete: Cascade)
+  product     products  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([dealer_id, product_id])
+  @@map("dealer_inventory")
   @@schema("public")
 }
 

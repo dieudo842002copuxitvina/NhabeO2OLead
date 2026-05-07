@@ -5,10 +5,10 @@
  * ╚═══════════════════════════════════════════════════════════════════════════════╝
  * 
  * Access Rules:
- * - /admin/* → Requires 'ADMIN' role
- * - /dealer/* → Requires 'DEALER' role  
+ * - /admin/* → Requires 'admin' role
+ * - /dealer/* → Requires 'dealer' role
  * - /tinh-toan → Public (anyone can view), but needs auth to save leads
- * - /login, /register, /forgot-password → Public auth pages
+ * - /login, /signup, /forgot-password → Public auth pages
  */
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
@@ -18,11 +18,11 @@ import { NextResponse, type NextRequest } from 'next/server'
  * ROLE DEFINITIONS
  * ───────────────────────────────────────────────────────────────────────────── */
 
-type UserRole = 'ADMIN' | 'DEALER' | 'USER' | string
+type UserRole = 'admin' | 'dealer' | 'customer' | string
 
 const ROLE_REQUIREMENTS: Record<string, UserRole[]> = {
-  '/admin': ['ADMIN'],
-  '/dealer': ['DEALER'],
+  '/admin': ['admin'],
+  '/dealer': ['dealer'],
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -107,8 +107,8 @@ async function fetchUserRoles(
       return []
     }
 
-    // Normalize roles to uppercase
-    return userRoles.map(r => r.role.toUpperCase() as UserRole)
+    // Normalize roles to lowercase for consistent comparison
+    return userRoles.map(r => r.role.toLowerCase() as UserRole)
   } catch (err) {
     console.error('[Middleware] Exception fetching roles:', err)
     return []
@@ -227,11 +227,11 @@ export async function middleware(request: NextRequest) {
       )
 
       // Redirect to appropriate page based on role
-      if (userRoles.includes('ADMIN')) {
-        return NextResponse.redirect(new URL('/admin', request.url))
+      if (userRoles.includes('admin')) {
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
       }
-      if (userRoles.includes('DEALER')) {
-        return NextResponse.redirect(new URL('/dealer', request.url))
+      if (userRoles.includes('dealer')) {
+        return NextResponse.redirect(new URL('/dealer/dashboard', request.url));
       }
 
       // No valid role, redirect to login

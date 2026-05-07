@@ -4,14 +4,9 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   MapPin, 
-  Phone, 
-  MessageCircle, 
-  Navigation, 
-  Search, 
-  Filter, 
-  Star, 
+  Phone,
+  Search,
   CheckCircle2,
-  Clock,
   ArrowLeft,
   Radar,
   ChevronRight
@@ -45,18 +40,20 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
+// --- Type: Dealer from real DB columns ---
 type Dealer = {
   id: string;
   name: string;
-  province: string;
-  address: string;
-  phone: string;
-  lat: number;
-  lng: number;
-  rating: number;
-  status: string;
-  image?: string;
-  stock_status?: any;
+  province: string | null;
+  district: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  slug: string | null;
+  cover_image: string | null;
+  is_active: boolean;
 };
 
 export default function DaiLyPage() {
@@ -69,8 +66,10 @@ export default function DaiLyPage() {
   useEffect(() => {
     async function fetchDealers() {
       const { data, error } = await supabase
-        .from("dealers" as any)
-        .select("*");
+        .from("dealers")
+        .select("id, name, province, district, address, phone, email, latitude, longitude, slug, cover_image, is_active")
+        .eq("is_active", true)
+        .order("name", { ascending: true });
       
       if (data) setDealers(data as unknown as Dealer[]);
       setLoading(false);
@@ -90,7 +89,9 @@ export default function DaiLyPage() {
   const filteredDealers = useMemo(() => {
     let result = dealers.map(d => ({
       ...d,
-      distance: userLocation ? calculateDistance(userLocation.lat, userLocation.lng, d.lat, d.lng) : null
+      distance: userLocation && d.latitude && d.longitude
+        ? calculateDistance(userLocation.lat, userLocation.lng, d.latitude, d.longitude)
+        : null
     }));
 
     if (searchQuery) {
@@ -150,48 +151,54 @@ export default function DaiLyPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
                 >
-                  <Card className="bg-white/5 border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer group overflow-hidden">
-                    <CardContent className="p-4">
-                      <div className="flex gap-4">
-                        <div className="w-20 h-20 rounded-xl bg-white/10 overflow-hidden flex-shrink-0 relative">
-                          <img 
-                            src={dealer.image || "/placeholder.svg"} 
-                            alt={dealer.name} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                          {dealer.distance && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-white/60 backdrop-blur-md text-[10px] text-center py-0.5 text-emerald-400 font-bold">
-                              {dealer.distance.toFixed(1)} km
+                  <Link href={`/dai-ly/${dealer.slug || dealer.id}`} className="block group">
+                    <Card className="bg-white/5 border-white/5 hover:border-emerald-500/30 transition-all overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className="flex gap-4">
+                          <div className="w-20 h-20 rounded-xl bg-emerald-900/50 overflow-hidden flex-shrink-0 relative flex items-center justify-center">
+                            {dealer.cover_image ? (
+                              <img 
+                                src={dealer.cover_image}
+                                alt={dealer.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              />
+                            ) : (
+                              <div className="text-2xl">🌾</div>
+                            )}
+                            {dealer.distance != null && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-md text-[10px] text-center py-0.5 text-emerald-400 font-bold">
+                                {dealer.distance.toFixed(1)} km
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                              <h3 className="font-bold text-white truncate text-sm">{dealer.name}</h3>
+                              <Badge variant="outline" className="text-[10px] h-4 border-emerald-500/30 text-emerald-400">
+                                Active
+                              </Badge>
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-grow min-w-0">
-                          <div className="flex justify-between items-start mb-1">
-                            <h3 className="font-bold text-white truncate text-sm">{dealer.name}</h3>
-                            <Badge variant="outline" className="text-[10px] h-4 border-emerald-500/30 text-emerald-400">
-                              Active
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-slate-400 mb-2 truncate flex items-center gap-1">
-                            <MapPin className="w-3 h-3" /> {dealer.province}
-                          </p>
-                          <div className="flex items-center gap-1 mb-3">
-                            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                            <span className="text-xs font-bold">{dealer.rating}</span>
-                          </div>
-                          
-                          <div className="flex gap-2">
-                             <Button size="sm" className="h-8 flex-grow bg-emerald-500 hover:bg-emerald-600 text-xs">
-                               <MessageCircle className="w-3 h-3 mr-1" /> Zalo
-                             </Button>
-                             <Button size="sm" variant="outline" className="h-8 flex-grow border-white/10 text-xs">
-                               <Phone className="w-3 h-3 mr-1" /> Gọi
-                             </Button>
+                            <p className="text-xs text-slate-400 mb-2 truncate flex items-center gap-1">
+                              <MapPin className="w-3 h-3" /> {dealer.province || "Việt Nam"}
+                            </p>
+                            
+                            <div className="flex gap-2">
+                              {dealer.phone && (
+                                <a href={`tel:${dealer.phone}`} onClick={e => e.stopPropagation()}>
+                                  <Button size="sm" variant="outline" className="h-8 flex-grow border-white/10 text-xs hover:bg-white/10">
+                                    <Phone className="w-3 h-3 mr-1" /> Gọi
+                                  </Button>
+                                </a>
+                              )}
+                              <Button size="sm" className="h-8 flex-grow bg-emerald-500 hover:bg-emerald-600 text-xs">
+                                <ChevronRight className="w-3 h-3 mr-1" /> Xem
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 </motion.div>
               ))
             )}
@@ -220,14 +227,16 @@ export default function DaiLyPage() {
             )}
 
             {filteredDealers.map(d => (
-              <Marker key={d.id} position={[d.lat, d.lng]}>
+              d.latitude && d.longitude ? (
+              <Marker key={d.id} position={[d.latitude, d.longitude]}>
                 <Popup>
                   <div className="p-2 text-slate-900">
                     <h4 className="font-bold">{d.name}</h4>
-                    <p className="text-xs">{d.address}</p>
+                    <p className="text-xs">{d.address || d.province}</p>
                   </div>
                 </Popup>
               </Marker>
+              ) : null
             ))}
           </MapContainer>
         </div>

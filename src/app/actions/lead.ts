@@ -380,6 +380,8 @@ export interface CalculatorLeadData {
   longitude?: number;
   calculatorType: 'pump' | 'roi' | 'bom';
   calculatorData: Record<string, any>;
+  // Pre-assigned dealer (bypass Round-Robin, e.g. from dealer profile CTA)
+  assignedDealer?: string | null;
   // UTM Tracking
   utmSource?: string | null;
   utmMedium?: string | null;
@@ -556,10 +558,34 @@ export async function submitCalculatorLeadWithRouting(
       return { success: false, error: 'Số điện thoại không hợp lệ (VD: 0912345678)' };
     }
 
-    // 3. O2O Routing: Find the best dealer based on province/district
+    // 3. O2O Routing: Direct assignment or Round-Robin
     let routingResult: RoutingResult = { dealerId: null, dealerName: null, matchType: "none" };
-    
-    if (data.province) {
+
+    if (data.assignedDealer) {
+      // Direct assignment: bypass Round-Robin (from dealer profile CTA)
+      try {
+        const assignedDealer = await prisma.dealer.findUnique({
+          where: { id: data.assignedDealer },
+          select: { id: true, name: true, is_active: true },
+        });
+
+        if (assignedDealer && assignedDealer.is_active) {
+          routingResult = {
+            dealerId: assignedDealer.id,
+            dealerName: assignedDealer.name,
+            matchType: "direct_assignment",
+          };
+          console.log(`[O2O Routing] Direct assignment: ${assignedDealer.name} (${assignedDealer.id})`);
+        } else {
+          console.warn(`[O2O Routing] Assigned dealer "${data.assignedDealer}" not found/inactive, falling back to Round-Robin`);
+        }
+      } catch (err) {
+        console.error("[O2O Routing] Error validating assigned dealer:", err);
+      }
+    }
+
+    // If no direct assignment, use Round-Robin
+    if (!routingResult.dealerId && data.province) {
       try {
         routingResult = await assignLeadToDealer(
           data.province,
@@ -567,10 +593,9 @@ export async function submitCalculatorLeadWithRouting(
           data.latitude,
           data.longitude
         );
-        console.log(`[O2O Routing] ${data.province}/${data.district || 'N/A'} → ${routingResult.dealerName || 'No match'} (${routingResult.matchType})`);
+        console.log(`[O2O Routing] Round-Robin: ${data.province}/${data.district || 'N/A'} → ${routingResult.dealerName || 'No match'} (${routingResult.matchType})`);
       } catch (routingError) {
-        console.error('[O2O Routing] Error during routing:', routingError);
-        // Continue without routing - lead will be in queue for admin
+        console.error('[O2O Routing] Error during Round-Robin routing:', routingError);
       }
     }
 

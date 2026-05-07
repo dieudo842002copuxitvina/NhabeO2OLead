@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children, allowedRoles }: Props) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.replace(`/auth?from=${encodeURIComponent(pathname)}`);
+        router.replace(`/login?redirectTo=${encodeURIComponent(pathname)}`);
       } else {
         const ok = allowedRoles.some((r) => roles.includes(r));
         if (!ok) {

@@ -7,6 +7,7 @@
 
 import { getUsers } from "@/app/actions/user";
 import UsersTable from "@/components/admin/UsersTable";
+import InviteUserButton from "./_components/InviteUserButton";
 import { Users, Shield, Building2, User } from "lucide-react";
 
 export const metadata = {
@@ -23,13 +24,16 @@ export default async function UsersPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Quản lý Người dùng
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Quản lý tài khoản và phân quyền người dùng trong hệ thống
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Quản lý Người dùng
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Quản lý tài khoản và phân quyền người dùng trong hệ thống
+          </p>
+        </div>
+        <InviteUserButton />
       </div>
 
       {/* Stats Cards */}

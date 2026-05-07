@@ -15,22 +15,25 @@ import { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Phone, 
-  MapPin, 
-  Sprout, 
-  Calendar, 
+import {
+  Phone,
+  MapPin,
+  Sprout,
+  Calendar,
   Eye,
   TrendingUp,
   Users,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Settings,
+  Package,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { getServerClient } from "@/utils/supabase/server";
 import { PrismaClient } from "@prisma/client";
 import DealerLeadsTable from "./_components/DealerLeadsTable";
+import DealerStats from "./_components/DealerStats";
 import type { DealerLeadsWithBOM } from "./_components/DealerLeadsTable";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -61,6 +64,8 @@ interface DealerInfo {
   name: string;
   province: string | null;
   phone: string | null;
+  zalo_number: string | null;
+  address: string | null;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -79,7 +84,7 @@ async function getDealerInfo(supabaseUserId: string): Promise<DealerInfo | null>
 
     const dealer = await prisma.dealer.findUnique({
       where: { id: profile.dealer_id },
-      select: { id: true, name: true, province: true, phone: true },
+      select: { id: true, name: true, province: true, phone: true, zalo_number: true, address: true },
     });
 
     return dealer;
@@ -200,40 +205,40 @@ export default async function DealerDashboardPage() {
                 <p className="text-xs text-slate-500">{dealer.name}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-600">
-              <MapPin className="w-4 h-4" />
-              <span>{dealer.province || "Chưa có khu vực"}</span>
+            <div className="flex items-center gap-3">
+              {dealer.address && (
+                <span className="hidden sm:flex items-center gap-1.5 text-sm text-slate-600">
+                  <MapPin className="w-4 h-4" />
+                  <span>{dealer.address}</span>
+                </span>
+              )}
+              <Button variant="outline" size="sm" asChild>
+                <a href="/dealer/dashboard/inventory">
+                  <Package className="w-4 h-4 mr-1.5" />
+                  Quản lý tồn kho
+                </a>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/dealer/dashboard/profile">
+                  <Settings className="w-4 h-4 mr-1.5" />
+                  Sửa thông tin cửa hàng
+                </a>
+              </Button>
             </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            icon={Users}
-            label="Tổng Lead"
-            value={stats.total}
-            color="blue"
-          />
-          <StatCard
-            icon={Clock}
-            label="Chưa liên hệ"
-            value={stats.total - stats.contacted}
-            color="amber"
-          />
-          <StatCard
-            icon={Phone}
-            label="Đã liên hệ"
-            value={stats.contacted}
-            color="purple"
-          />
-          <StatCard
-            icon={CheckCircle2}
-            label="Chốt Sale"
-            value={stats.won}
-            color="emerald"
+        {/* Stats Section */}
+        <div className="mb-8">
+          <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+            Thống kê hiệu suất
+          </h2>
+          <DealerStats
+            totalLeads={stats.total}
+            wonLeads={stats.won}
+            conversionRate={stats.conversionRate}
           />
         </div>
 
@@ -258,45 +263,6 @@ export default async function DealerDashboardPage() {
         </Card>
       </main>
     </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
- * STAT CARD COMPONENT
- * ═══════════════════════════════════════════════════════════════════════════════ */
-
-function StatCard({ 
-  icon: Icon, 
-  label, 
-  value, 
-  color 
-}: { 
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: number;
-  color: "blue" | "amber" | "purple" | "emerald";
-}) {
-  const colorClasses = {
-    blue: "bg-blue-50 text-blue-600",
-    amber: "bg-amber-50 text-amber-600",
-    purple: "bg-purple-50 text-purple-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-  };
-
-  return (
-    <Card className="bg-white shadow-sm border-slate-200">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
-            <Icon className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-slate-900">{value}</p>
-            <p className="text-xs text-slate-500">{label}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 

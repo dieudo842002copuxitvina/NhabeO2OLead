@@ -37,7 +37,7 @@ if (process.env.NODE_ENV !== "production") {
 export interface RoutingResult {
   dealerId: string | null;
   dealerName: string | null;
-  matchType: "exact_district" | "province_only" | "nearest_geo" | "none";
+  matchType: "exact_district" | "province_only" | "nearest_geo" | "none" | "direct_assignment";
   distanceKm?: number;
 }
 
@@ -325,52 +325,75 @@ export async function assignLeadToDealer(
  * Create a calculator lead with automatic dealer routing using Round-Robin
  * 
  * This function performs the following atomically:
- * 1. Route lead to appropriate dealer using Round-Robin
- * 2. Insert the lead into calculator_leads table with assigned dealer
- * 3. Update dealer's lastAssignedAt timestamp
+ * 1. If assigned_dealer is provided and valid, skip routing and use that dealer directly
+ * 2. Otherwise, route lead to appropriate dealer using Round-Robin
+ * 3. Insert the lead into calculator_leads table with assigned dealer
+ * 4. Update dealer's lastAssignedAt timestamp
  * 
  * @param leadData - Lead information from calculator
  * @param customerLat - Customer's latitude (optional, for geo-matching)
  * @param customerLon - Customer's longitude (optional, for geo-matching)
+ * @param assignedDealerId - Pre-assigned dealer ID from URL (bypasses Round-Robin)
  * @returns CreateLeadWithRoutingResult with lead ID and routing info
  * 
  * @example
- * const result = await createLeadWithRouting({
- *   customer_name: "Nguyễn Văn A",
- *   customer_phone: "0909123456",
- *   province: "Đắk Lắk",
- *   district: "Buôn Ma Thuột",
- *   crop_type: "Sầu riêng"
- * });
- * if (result.success) {
- *   console.log(`Lead ${result.leadId} assigned to ${result.dealerName}`);
- * }
+ * // Normal routing (Round-Robin)
+ * const result = await createLeadWithRouting({ customer_phone: "0909...", province: "Đắk Lắk" });
+ * 
+ * // Direct assignment (from dealer profile CTA)
+ * const result = await createLeadWithRouting({ customer_phone: "0909...", province: "Đắk Lắk" }, undefined, undefined, "dealer-uuid");
  */
 export async function createLeadWithRouting(
   leadData: LeadData,
   customerLat?: number,
-  customerLon?: number
+  customerLon?: number,
+  assignedDealerId?: string | null
 ): Promise<CreateLeadWithRoutingResult> {
   const { province, district } = leadData;
 
-  if (!province?.trim()) {
-    return {
-      success: false,
-      dealerId: null,
-      dealerName: null,
-      matchType: "none",
-      error: "Province is required for routing",
-    };
-  }
-
   try {
-    // Step 1: Get routing decision
-    const routingResult = await assignLeadToDealer(
-      province,
-      district,
-      customerLat,
-      customerLon
-    );
+    let routingResult: RoutingResult;
+
+    // Step 1: Check for pre-assigned dealer (bypass Round-Robin)
+    if (assignedDealerId) {
+      // Validate the assigned dealer exists and is active
+      const assignedDealer = await prisma.dealer.findUnique({
+        where: { id: assignedDealerId },
+        select: { id: true, name: true, is_active: true },
+      });
+
+      if (assignedDealer && assignedDealer.is_active) {
+        console.log(
+          `[O2O Routing] Direct assignment bypass — using pre-assigned dealer: ` +
+          `"${assignedDealer.name}" (${assignedDealer.id})`
+        );
+        routingResult = {
+          dealerId: assignedDealer.id,
+          dealerName: assignedDealer.name,
+          matchType: "direct_assignment",
+        };
+      } else {
+        console.warn(
+          `[O2O Routing] Assigned dealer "${assignedDealerId}" not found or inactive, ` +
+          `falling back to Round-Robin`
+        );
+        // Fall through to normal routing
+        routingResult = await assignLeadToDealer(
+          province || "",
+          district,
+          customerLat,
+          customerLon
+        );
+      }
+    } else {
+      // Step 2: Normal routing (Round-Robin)
+      routingResult = await assignLeadToDealer(
+        province || "",
+        district,
+        customerLat,
+        customerLon
+      );
+    }
 
     const now = new Date();
 
