@@ -80,7 +80,7 @@ interface ProductWithInventory {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * GENERATE METADATA (SEO)
+ * GENERATE METADATA (SEO - Local SEO optimized)
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 export async function generateMetadata({
@@ -101,8 +101,10 @@ export async function generateMetadata({
       meta_title: true,
       meta_description: true,
       slug: true,
+      cover_image: true,
       zalo_number: true,
       about_us: true,
+      phone: true,
     },
   });
 
@@ -113,17 +115,34 @@ export async function generateMetadata({
     };
   }
 
+  // Local SEO optimized title
   const title = dealer.meta_title ||
-    `${dealer.name} | Đại lý Nhà Bè Agri ${dealer.province || ""}`;
+    `${dealer.name} - Phân phối vật tư nông nghiệp & ống tưới tại ${dealer.district ? `${dealer.district}, ` : ""}${dealer.province || "Việt Nam"}`;
+
+  // Local SEO optimized description
   const description = dealer.meta_description ||
-    `${dealer.name} - Đại lý chính thức Nhà Bè Agri tại ${dealer.district ? `${dealer.district}, ` : ""}${dealer.province || "Việt Nam"}. Chuyên cung cấp vật tư tưới tiêu, dự toán BOM và hỗ trợ kỹ thuật.`;
+    `Đại lý ${dealer.name} chuyên cung cấp thiết bị tưới, máy bơm, vật tư nông nghiệp chính hãng tại ${dealer.district ? `${dealer.district}, ` : ""}${dealer.province || "Việt Nam"}. Xem ngay bảng giá và tồn kho tại đây.`;
+
   const url = dealer.slug
     ? `/dai-ly/${dealer.slug}`
     : `/dai-ly/${dealer.id}`;
 
+  // Base URL for Open Graph image
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://nhabeagri.vn";
+
   return {
     title,
     description,
+    keywords: [
+      dealer.name,
+      "vật tư nông nghiệp",
+      "ống tưới",
+      "thiết bị tưới",
+      "máy bơm nước",
+      dealer.district,
+      dealer.province,
+      "Nhà Bè Agri",
+    ].filter(Boolean),
     openGraph: {
       title,
       description,
@@ -131,14 +150,44 @@ export async function generateMetadata({
       siteName: "Nhà Bè Agri",
       locale: "vi_VN",
       type: "website",
+      // Use dealer's cover image or default
+      images: dealer.cover_image
+        ? [
+            {
+              url: dealer.cover_image,
+              width: 1200,
+              height: 630,
+              alt: `${dealer.name} - Đại lý Nhà Bè Agri tại ${dealer.district || dealer.province || "Việt Nam"}`,
+            },
+          ]
+        : [
+            {
+              url: `${baseUrl}/og-default-dealer.jpg`,
+              width: 1200,
+              height: 630,
+              alt: `${dealer.name} - Nhà Bè Agri`,
+            },
+          ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: dealer.cover_image ? [dealer.cover_image] : [`${baseUrl}/og-default-dealer.jpg`],
     },
     alternates: {
       canonical: url,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
     },
   };
 }
@@ -461,7 +510,7 @@ function DealerContact({ dealer }: { dealer: DealerProfile }) {
 
         {dealer.zalo_number && (
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#0068FF]/10 text-[#0068FF]">
               <MessageCircle className="h-5 w-5" />
             </div>
             <div>
@@ -470,7 +519,7 @@ function DealerContact({ dealer }: { dealer: DealerProfile }) {
                 href={`https://zalo.me/${dealer.zalo_number.replace(/\D/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-blue-600 hover:text-blue-700 transition-colors text-sm"
+                className="font-medium text-[#0068FF] hover:text-[#0052CC] transition-colors text-sm"
               >
                 {dealer.zalo_number}
               </a>
@@ -701,7 +750,7 @@ export default async function DealerProfilePage({
                 href={`https://zalo.me/${dealer.zalo_number.replace(/\D/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-blue-500 py-3 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-600"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#0068FF] py-3 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0052CC]"
               >
                 <MessageCircle className="h-4 w-4" />
                 <span>Chat Zalo</span>

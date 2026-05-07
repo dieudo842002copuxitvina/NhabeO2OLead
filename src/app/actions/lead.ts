@@ -15,7 +15,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import { z } from "zod";
 import type { Lead, LeadNormalized, DealerBasic, LeadsResult, LeadResult } from "@/types/lead";
 import { calculateDistance, findNearestDealer, isValidCoordinate } from "@/lib/geo";
-import { assignLeadToDealer, type RoutingResult } from "@/lib/routing";
+import { assignLeadToDealer, createLeadWithRouting, type RoutingResult, type LeadData } from "@/lib/routing";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT (singleton pattern for production)
@@ -543,6 +543,7 @@ export async function submitCalculatorLeadWithRouting(
   leadId?: string; 
   assignedDealerId?: string | null;
   assignedDealerName?: string | null;
+  dealerZaloNumber?: string | null;
   routingResult?: RoutingResult;
   error?: string 
 }> {
@@ -558,91 +559,89 @@ export async function submitCalculatorLeadWithRouting(
       return { success: false, error: 'Số điện thoại không hợp lệ (VD: 0912345678)' };
     }
 
-    // 3. O2O Routing: Direct assignment or Round-Robin
+    // 3. O2O Routing: Use createLeadWithRouting from routing.ts (handles Round-Robin atomically)
     let routingResult: RoutingResult = { dealerId: null, dealerName: null, matchType: "none" };
 
-    if (data.assignedDealer) {
-      // Direct assignment: bypass Round-Robin (from dealer profile CTA)
-      try {
-        const assignedDealer = await prisma.dealer.findUnique({
-          where: { id: data.assignedDealer },
-          select: { id: true, name: true, is_active: true },
-        });
-
-        if (assignedDealer && assignedDealer.is_active) {
-          routingResult = {
-            dealerId: assignedDealer.id,
-            dealerName: assignedDealer.name,
-            matchType: "direct_assignment",
-          };
-          console.log(`[O2O Routing] Direct assignment: ${assignedDealer.name} (${assignedDealer.id})`);
-        } else {
-          console.warn(`[O2O Routing] Assigned dealer "${data.assignedDealer}" not found/inactive, falling back to Round-Robin`);
-        }
-      } catch (err) {
-        console.error("[O2O Routing] Error validating assigned dealer:", err);
-      }
+    // Fetch UTM from URL params
+    let utmSource: string | null = data.utmSource || null;
+    let utmMedium: string | null = data.utmMedium || null;
+    let utmCampaign: string | null = data.utmCampaign || null;
+    let utmContent: string | null = data.utmContent || null;
+    let utmTerm: string | null = data.utmTerm || null;
+    
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      utmSource = params.get('utm_source') || utmSource;
+      utmMedium = params.get('utm_medium') || utmMedium;
+      utmCampaign = params.get('utm_campaign') || utmCampaign;
+      utmContent = params.get('utm_content') || utmContent;
+      utmTerm = params.get('utm_term') || utmTerm;
     }
 
-    // If no direct assignment, use Round-Robin
-    if (!routingResult.dealerId && data.province) {
-      try {
-        routingResult = await assignLeadToDealer(
-          data.province,
-          data.district,
-          data.latitude,
-          data.longitude
-        );
-        console.log(`[O2O Routing] Round-Robin: ${data.province}/${data.district || 'N/A'} → ${routingResult.dealerName || 'No match'} (${routingResult.matchType})`);
-      } catch (routingError) {
-        console.error('[O2O Routing] Error during Round-Robin routing:', routingError);
-      }
-    }
-
-    // 4. Prepare calculator_data with BOM items
-    const calculatorData = {
-      type: data.calculatorType,
-      submitted_at: new Date().toISOString(),
+    const leadData: LeadData = {
+      customer_name: data.customerName,
+      customer_phone: data.customerPhone.replace(/\s/g, ''),
       crop_type: data.cropType,
-      area_ha: data.areaM2 ? data.areaM2 / 10000 : null, // Convert m² to ha
-      bomItems: data.bomItems || [],
-      totalCost: data.totalCost || 0,
-      ...data.calculatorData,
+      area_ha: data.areaM2 ? data.areaM2 / 10000 : undefined,
+      province: data.province,
+      district: data.district,
+      calculator_data: {
+        type: data.calculatorType,
+        submitted_at: new Date().toISOString(),
+        crop_type: data.cropType,
+        area_ha: data.areaM2 ? data.areaM2 / 10000 : null,
+        bomItems: data.bomItems || [],
+        totalCost: data.totalCost || 0,
+        ...data.calculatorData,
+      },
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+      utm_content: utmContent,
+      utm_term: utmTerm,
     };
 
-    // 5. Insert into calculator_leads with Prisma
-    const newLead = await prisma.calculator_leads.create({
-      data: {
-        customer_name: data.customerName?.trim() || null,
-        customer_phone: data.customerPhone.replace(/\s/g, ''),
-        province: data.province || null,
-        district: data.district || null,
-        crop_type: data.cropType || null,
-        area_ha: data.areaM2 ? new Prisma.Decimal(data.areaM2 / 10000) : null, // m² → ha
-        calculator_data: calculatorData,
-        results: data.totalCost ? { totalCost: data.totalCost } : undefined,
-        assigned_dealer_id: routingResult.dealerId || null,
-        status: routingResult.dealerId ? 'assigned' : 'new',
-        // UTM Tracking
-        utm_source: data.utmSource || null,
-        utm_medium: data.utmMedium || null,
-        utm_campaign: data.utmCampaign || null,
-        utm_content: data.utmContent || null,
-        utm_term: data.utmTerm || null,
-      },
-    });
+    const routingResponse = await createLeadWithRouting(
+      leadData,
+      data.latitude,
+      data.longitude,
+      data.assignedDealer || undefined
+    );
 
-    console.log(`[O2O Routing→CalculatorLeads] Created lead ${newLead.id} assigned to ${routingResult.dealerName || 'Admin Queue'}`);
+    if (!routingResponse.success) {
+      return { success: false, error: routingResponse.error || 'Lỗi khi tạo lead' };
+    }
 
-    // 6. Revalidate pages
-    revalidatePath('/admin/leads');
-    revalidatePath('/dealer/dashboard');
+    routingResult = {
+      dealerId: routingResponse.dealerId || null,
+      dealerName: routingResponse.dealerName || null,
+      matchType: routingResponse.matchType,
+    };
+
+    // 4. Fetch dealer contact info (zalo_number, phone) for Zalo deep link
+    let dealerZaloNumber: string | null = null;
+    
+    if (routingResult.dealerId) {
+      try {
+        const dealerInfo = await prisma.dealer.findUnique({
+          where: { id: routingResult.dealerId },
+          select: { zalo_number: true, phone: true },
+        });
+        // Prefer zalo_number, fall back to phone
+        dealerZaloNumber = dealerInfo?.zalo_number || dealerInfo?.phone || null;
+      } catch (err) {
+        console.error('[O2O] Error fetching dealer zalo_number:', err);
+      }
+    }
+
+    console.log(`[O2O→CalculatorLeads] Created lead ${routingResponse.leadId}, dealer=${routingResult.dealerName}, zalo=${dealerZaloNumber || 'fallback'}`);
 
     return { 
       success: true, 
-      leadId: newLead.id,
+      leadId: routingResponse.leadId,
       assignedDealerId: routingResult.dealerId,
       assignedDealerName: routingResult.dealerName,
+      dealerZaloNumber,
       routingResult,
     };
   } catch (error) {

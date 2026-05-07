@@ -257,7 +257,10 @@ export default async function DealerDashboardPage() {
           </CardHeader>
           <CardContent className="p-0">
             <Suspense fallback={<LoadingSkeleton />}>
-              <DealerLeadsTable leads={leads} />
+              <DealerLeadsTable 
+                leads={leads} 
+                dealerSlug={dealer.slug || dealer.id}
+              />
             </Suspense>
           </CardContent>
         </Card>

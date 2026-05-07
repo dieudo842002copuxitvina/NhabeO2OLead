@@ -8,17 +8,17 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   formatVND,
-  buildSalesMessage,
   type CalculatorResult,
   type CalculatorInput,
 } from '@/lib/calculators/calculatorV2';
 import AnimatedCounter from './AnimatedCounter';
-import { supabase } from '@/integrations/supabase/client';
-import { dealers } from '@/data/mock';
-import { expandingRadiusSearch } from '@/lib/geo';
 import { useApp } from '@/contexts/AppContext';
 import { trackEvent } from '@/lib/tracking';
-import { Droplet, Gauge, MoveHorizontal, MessageCircle, FileText, Sparkles, Loader2 } from 'lucide-react';
+import { Droplet, Gauge, MoveHorizontal, MessageCircle, FileText, Sparkles, Loader2, Share2, Facebook } from 'lucide-react';
+import { submitCalculatorLeadWithRouting } from '@/app/actions/lead';
+
+// Zalo fallback number for Nhà Bè Agri HQ (when no dealer is matched)
+const ZALO_FALLBACK = '0909123456';
 
 const leadFormSchema = z.object({
   customer_name: z.string().trim().min(2, 'Tên tối thiểu 2 ký tự').max(100, 'Tên quá dài'),
@@ -40,18 +40,21 @@ export default function ResultStep({ result, input, cropName, onRestart }: Props
   const [province, setProvince] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [assignedDealer, setAssignedDealer] = useState<string | null>(null);
 
-  /** Find nearest dealer (Haversine) when geo available, else first dealer. */
-  const pickNearestDealer = () => {
-    if (!userLocation) return dealers[0];
-    const search = expandingRadiusSearch(
-      userLocation,
-      dealers,
-      d => ({ lat: d.lat, lng: d.lng }),
-      1,
-      [25, 50, 100, 500],
-    );
-    return search.results[0]?.item ?? dealers[0];
+  // Base URL for sharing
+  const calculatorUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/tinh-toan?utm_source=user_share&utm_medium=organic`
+    : '/tinh-toan';
+
+  const handleShareFacebook = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(calculatorUrl + '&utm_source=facebook&utm_medium=share_button')}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const handleShareZalo = () => {
+    const url = `https://zalo.me/share?link=${encodeURIComponent(calculatorUrl + '&utm_source=zalo&utm_medium=share_button')}&title=${encodeURIComponent('Máy tính dự toán BOM tưới tiêu miễn phí')}&desc=${encodeURIComponent(`Dự toán chi phí hệ thống tưới ${cropName} chỉ trong 30 giây!`)})`;
+    window.open(url, '_blank');
   };
 
   const handleSubmit = async () => {
@@ -64,97 +67,60 @@ export default function ResultStep({ result, input, cropName, onRestart }: Props
       toast.error(parsed.error.errors[0].message);
       return;
     }
-    setSubmitting(true);
-    const dealer = pickNearestDealer();
 
-    const { data, error } = await supabase
-      .from('calculator_leads')
-      .insert({
-        customer_name: parsed.data.customer_name,
-        customer_phone: parsed.data.customer_phone,
-        customer_province: parsed.data.customer_province || null,
-        crop: cropName,
-        area_m2: input.areaM2,
-        spacing: `${input.spacing}×${input.spacing}m`,
+    setSubmitting(true);
+
+    // Call Server Action — handles O2O Routing (Round-Robin) + Prisma insert
+    const actionResult = await submitCalculatorLeadWithRouting({
+      customerName: parsed.data.customer_name,
+      customerPhone: parsed.data.customer_phone,
+      province: parsed.data.customer_province || undefined,
+      cropType: cropName,
+      areaM2: input.areaM2,
+      latitude: userLocation?.lat,
+      longitude: userLocation?.lng,
+      calculatorType: 'bom',
+      calculatorData: {
+        spacing: input.spacing,
         slope: input.slope,
-        water_source: input.waterSource,
-        nozzle_count: result.nozzleCount,
-        pipe_meters: result.pipeMeters,
-        pump_hp: result.pumpHP,
-        total_cost: result.totalCost,
-        dealer_id: dealer?.id ?? null,
-      })
-      .select('id')
-      .single();
+        waterSource: input.waterSource,
+        nozzleCount: result.nozzleCount,
+        pipeMeters: result.pipeMeters,
+        pumpHP: result.pumpHP,
+        trees: result.trees,
+      },
+      bomItems: result.lines.map(l => ({
+        item: l.item,
+        qty: l.qty,
+        unit: l.unit,
+        unitPrice: l.unitPrice,
+        subtotal: l.subtotal,
+      })),
+      totalCost: result.totalCost,
+    });
 
     setSubmitting(false);
 
-    if (error || !data) {
-      toast.error('Không gửi được. Vui lòng thử lại.');
+    if (!actionResult.success || !actionResult.leadId) {
+      toast.error(actionResult.error || 'Không gửi được. Vui lòng thử lại.');
       return;
     }
 
-    const id = data.id;
+    const id = actionResult.leadId;
     setLeadId(id);
-    const shortId = id.slice(0, 8).toUpperCase();
-
-    // Build sales proposal message
-    const message = buildSalesMessage({
-      leadId: shortId,
-      customerName: parsed.data.customer_name,
-      customerPhone: parsed.data.customer_phone,
-      crop: cropName,
-      areaM2: input.areaM2,
-      total: result.totalCost,
-      pumpHP: result.pumpHP,
-      nozzleCount: result.nozzleCount,
-    });
-
-    // Copy to clipboard so user can paste in Zalo (Zalo web doesn't support ?text=)
-    try {
-      await navigator.clipboard.writeText(message);
-    } catch {
-      /* ignore */
-    }
+    setAssignedDealer(actionResult.assignedDealerName || null);
 
     trackEvent('calculator_lead_submit', {
       productId: 'irrigation_calculator',
       customerProvince: parsed.data.customer_province,
     });
 
-    // Forward to n8n via edge function (fire-and-forget)
-    void supabase.functions.invoke('notify-lead', {
-      body: {
-        lead_id: id,
-        customer: {
-          name: parsed.data.customer_name,
-          phone: parsed.data.customer_phone,
-          province: parsed.data.customer_province,
-        },
-        calculator: {
-          crop: cropName,
-          area_m2: input.areaM2,
-          slope: input.slope,
-          water_source: input.waterSource,
-          spacing: `${input.spacing}×${input.spacing}m`,
-          nozzle_count: result.nozzleCount,
-          pipe_meters: result.pipeMeters,
-          pump_hp: result.pumpHP,
-          total_cost: result.totalCost,
-        },
-        dealer: dealer ? { id: dealer.id, name: dealer.name, phone: dealer.phone, zalo: dealer.zalo } : null,
-      },
-    }).catch(() => { /* swallow */ });
+    toast.success('Đang kết nối đại lý...', { duration: 2000 });
 
-    toast.success(
-      `Mã đơn ${shortId} đã tạo • Tin nhắn đã copy vào clipboard. Mở Zalo và dán để gửi đại lý ${dealer?.name}.`,
-      { duration: 7000 },
-    );
-
-    // Open Zalo to nearest dealer
-    if (dealer?.zalo) {
-      window.open(`https://zalo.me/${dealer.zalo.replace(/\D/g, '')}`, '_blank');
-    }
+    // Open Zalo with dealer's zalo_number, or fallback to HQ
+    const zaloNumber = actionResult.dealerZaloNumber || ZALO_FALLBACK;
+    const zaloUrl = `https://zalo.me/${zaloNumber.replace(/\D/g, '')}`;
+    window.location.href = zaloUrl;
   };
 
   return (
@@ -229,11 +195,12 @@ export default function ResultStep({ result, input, cropName, onRestart }: Props
         </div>
       </Card>
 
-      {/* Lead form + CTA */}
+      {/* Zero-Login Lead Form */}
       {!leadId ? (
-        <Card className="p-5 border-2 border-warning/30 bg-warning/5">
-          <h3 className="font-display font-bold text-lg mb-1">
-            🎁 Nhận bản vẽ chi tiết & báo giá qua Zalo
+        <Card className="p-5 border-2 border-[#0068FF]/30 bg-[#0068FF]/5">
+          <h3 className="font-display font-bold text-lg mb-1 flex items-center gap-2">
+            <span className="text-2xl">🎁</span>
+            Nhận bản vẽ chi tiết & báo giá chính thức
           </h3>
           <p className="text-xs text-muted-foreground mb-4">
             Đại lý gần bạn sẽ tư vấn miễn phí trong vòng 30 phút.
@@ -256,14 +223,39 @@ export default function ResultStep({ result, input, cropName, onRestart }: Props
             size="lg"
             onClick={handleSubmit}
             disabled={submitting}
-            className="w-full h-14 bg-gradient-to-r from-warning to-primary hover:opacity-90 text-warning-foreground font-display font-bold text-base shadow-lg shadow-warning/30"
+            className="w-full h-14 bg-[#0068FF] hover:bg-[#0052CC] text-white font-display font-bold text-base shadow-lg shadow-[#0068FF]/30 rounded-xl transition-all"
           >
             {submitting ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Đang gửi...</>
+              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Đang kết nối...</>
             ) : (
-              <><MessageCircle className="w-5 h-5 mr-2" /> Nhận bản vẽ & báo giá qua Zalo</>
+              <><MessageCircle className="w-5 h-5 mr-2" /> Gửi Đại lý & Chat Zalo Ngay</>
             )}
           </Button>
+
+          {/* Viral Share Section */}
+          <div className="pt-2 border-t border-[#0068FF]/20">
+            <p className="text-xs text-center text-muted-foreground mb-3">
+              Chia sẻ công cụ này cho bà con cùng dùng:
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleShareFacebook}
+                className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl border-2 border-[#1877F2]/30 bg-[#1877F2]/5 text-[#1877F2] font-semibold text-sm hover:bg-[#1877F2]/10 transition-all"
+              >
+                <Facebook className="w-4 h-4" />
+                <span>Chia sẻ Facebook</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleShareZalo}
+                className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl border-2 border-[#0068FF]/30 bg-[#0068FF]/5 text-[#0068FF] font-semibold text-sm hover:bg-[#0068FF]/10 transition-all"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Chia sẻ Zalo</span>
+              </button>
+            </div>
+          </div>
         </Card>
       ) : (
         <Card className="p-5 border-2 border-success/40 bg-success/5">
@@ -275,9 +267,10 @@ export default function ResultStep({ result, input, cropName, onRestart }: Props
               <h3 className="font-display font-bold text-lg">Đã gửi yêu cầu thành công!</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 Mã đơn của bạn: <span className="font-mono font-bold text-primary">{leadId.slice(0, 8).toUpperCase()}</span>
+                {assignedDealer && <span className="ml-2 text-muted-foreground">• Phân phối đến: {assignedDealer}</span>}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                Tin nhắn báo giá đã được copy vào clipboard. Cửa sổ Zalo đã mở — chỉ cần dán & gửi để đại lý nhận thông tin.
+                Cửa sổ Zalo đã mở — đại lý sẽ liên hệ tư vấn trong 30 phút.
               </p>
             </div>
           </div>

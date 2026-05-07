@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function CongCuLayout({
   children,
@@ -6,8 +7,8 @@ export default function CongCuLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      <header className="border-b border-gray-200 bg-white">
+    <div className="min-h-screen bg-white text-gray-900 flex flex-col">
+      <header className="border-b border-gray-200 bg-white flex-shrink-0">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center gap-4 overflow-x-auto text-sm">
             <Link href="/cong-cu" className="font-semibold text-[#2F8E36]">
@@ -29,7 +30,11 @@ export default function CongCuLayout({
         </div>
       </header>
 
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">{children}</main>
+      
+      <div className="flex-shrink-0">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

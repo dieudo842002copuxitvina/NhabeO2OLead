@@ -21,7 +21,10 @@ import {
   Loader2,
   Package,
   CheckCircle,
-  MessageSquare
+  MessageSquare,
+  Copy,
+  Share2,
+  Link as LinkIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,23 +80,127 @@ const CROP_EMOJI: Record<string, string> = {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+ * EMPTY STATE COMPONENT
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+function EmptyLeadsState({ dealerSlug }: { dealerSlug: string }) {
+  const [copied, setCopied] = useState(false);
+  
+  const dealerUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}/dai-ly/${dealerSlug}` 
+    : `/dai-ly/${dealerSlug}`;
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(dealerUrl);
+      setCopied(true);
+      toast.success("Đã copy link cửa hàng!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Không thể copy link");
+    }
+  };
+
+  const handleShareZalo = () => {
+    const zaloShareUrl = `https://zalo.me/share?link=${encodeURIComponent(dealerUrl)}&title=${encodeURIComponent("Tư vấn hệ thống tưới tiêu miễn phí")}&desc=${encodeURIComponent("Nhận dự toán BOM và báo giá chi tiết từ đại lý Nhà Bè Agri")}`;
+    window.open(zaloShareUrl, '_blank');
+  };
+
+  return (
+    <div className="p-8 md:p-12 text-center">
+      {/* Icon */}
+      <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
+        <Sprout className="w-10 h-10 text-emerald-500" />
+      </div>
+      
+      {/* Title & Description */}
+      <h3 className="text-xl font-bold text-slate-800 mb-2">Chưa có khách hàng nào</h3>
+      <p className="text-slate-500 mb-6 max-w-md mx-auto">
+        Chia sẻ link cửa hàng của bạn để nhận thêm khách hàng tiềm năng từ khu vực. 
+        Khi nông dân tính toán dự toán, họ sẽ được kết nối trực tiếp đến bạn.
+      </p>
+      
+      {/* Share Link Section */}
+      <div className="bg-slate-50 rounded-xl p-4 max-w-lg mx-auto mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <LinkIcon className="w-4 h-4 text-slate-500" />
+          <span className="text-sm font-medium text-slate-700">Link cửa hàng của bạn:</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <input 
+            type="text" 
+            readOnly 
+            value={dealerUrl}
+            className="flex-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-mono"
+          />
+          <Button 
+            variant="outline"
+            size="sm" 
+            onClick={handleCopyLink}
+            className="gap-2 shrink-0"
+          >
+            {copied ? (
+              <>
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
+                <span className="text-emerald-600">Đã copy!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                Copy
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+      
+      {/* Share Buttons */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <Button 
+          onClick={handleShareZalo}
+          className="w-full sm:w-auto bg-[#0068FF] hover:bg-[#0052CC] gap-2 min-h-[48px]"
+        >
+          <MessageSquare className="w-5 h-5" />
+          Chia sẻ qua Zalo
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={handleCopyLink}
+          className="w-full sm:w-auto gap-2 min-h-[48px]"
+        >
+          <Share2 className="w-5 h-5" />
+          Chia sẻ link khác
+        </Button>
+      </div>
+      
+      {/* Tips */}
+      <div className="mt-8 p-4 bg-blue-50 rounded-xl max-w-lg mx-auto text-left">
+        <p className="text-sm font-medium text-blue-800 mb-2">💡 Mẹo để nhận nhiều Lead hơn:</p>
+        <ul className="text-sm text-blue-700 space-y-1">
+          <li>• Chia sẻ link lên Zalo cá nhân và nhóm nông dân</li>
+          <li>• Đăng lên Facebook page hoặc các hội nhóm nông nghiệp</li>
+          <li>• Gửi SMS hoặc Zalo cho khách hàng cũ của bạn</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
  * MAIN COMPONENT
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
-export default function DealerLeadsTable({ leads }: { leads: DealerLeadsWithBOM[] }) {
+interface DealerLeadsTableProps {
+  leads: DealerLeadsWithBOM[];
+  dealerSlug: string;
+}
+
+export default function DealerLeadsTable({ leads, dealerSlug }: DealerLeadsTableProps) {
   const [selectedLead, setSelectedLead] = useState<DealerLeadsWithBOM | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   if (leads.length === 0) {
-    return (
-      <div className="p-12 text-center">
-        <Sprout className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-slate-700 mb-2">Chưa có khách hàng nào</h3>
-        <p className="text-slate-500">
-          Khách hàng tiềm năng sẽ xuất hiện ở đây khi có người tính toán dự toán tại khu vực của bạn.
-        </p>
-      </div>
-    );
+    return <EmptyLeadsState dealerSlug={dealerSlug} />;
   }
 
   const handleStatusUpdate = async (leadId: string, newStatus: string) => {
@@ -437,7 +544,7 @@ function BOMDialog({
                   size="sm"
                   onClick={() => onStatusUpdate(lead.id, "contacted")}
                   disabled={isUpdating}
-                  className="gap-2"
+                  className="gap-2 border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300"
                 >
                   {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
                   Đánh dấu đã gọi

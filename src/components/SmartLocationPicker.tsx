@@ -7,6 +7,7 @@
  */
 import { useState, useCallback } from 'react';
 import { MapPin, Loader2, CheckCircle2, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 import { VN_PROVINCES } from '@/data/vnAdministrative';
 
 // Nearest province lookup by lat/lng (simple bounding-box mapping for offline)
@@ -109,10 +110,15 @@ export default function SmartLocationPicker({
       (err) => {
         setGeoState('error');
         if (err.code === err.PERMISSION_DENIED) {
-          setGeoMsg('Bạn đã từ chối cho phép định vị. Vui lòng chọn thủ công.');
+          setGeoMsg('Bạn đã từ chối cho phép định vị. Vui lòng chọn tỉnh/thành phố bên dưới.');
         } else {
-          setGeoMsg('Không thể xác định vị trí. Vui lòng chọn thủ công.');
+          setGeoMsg('Không thể xác định vị trí. Vui lòng chọn tỉnh/thành phố bên dưới.');
         }
+        // Show toast notification
+        toast.error("Không lấy được vị trí", {
+          description: "Vui lòng chọn Tỉnh/TP thủ công để được kết nối đại lý gần nhất.",
+          duration: 5000,
+        });
       },
       { timeout: 8000, maximumAge: 60_000 }
     );
@@ -123,7 +129,7 @@ export default function SmartLocationPicker({
     : 'text-sm font-semibold text-foreground mb-1.5 block';
 
   return (
-    <div className="space-y-4">
+    <div id="smart-location-picker" className="space-y-4">
       {/* Geo-locate button */}
       <button
         type="button"

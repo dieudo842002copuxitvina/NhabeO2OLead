@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { toast } from 'sonner';
 import { UserRole, CartItem, Product } from '@/data/types';
 import { DEFAULT_LOCATION, type GeoCoord } from '@/lib/geo';
 
@@ -40,9 +41,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           setGeoDetected(true);
         },
-        () => {
+        (err) => {
           // Fallback to default HCM location
           setGeoDetected(false);
+          // Show toast with guidance
+          toast.info(
+            "Không lấy được vị trí của bạn",
+            {
+              description: "Đang dùng vị trí mặc định TP.HCM. Bạn có thể chọn Tỉnh/TP thủ công để xem đại lý gần nhất.",
+              duration: 6000,
+              action: {
+                label: "Chọn vị trí",
+                onClick: () => {
+                  // Scroll to location picker if exists
+                  const el = document.getElementById('smart-location-picker');
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }
+            }
+          );
         },
         { timeout: 5000 }
       );
