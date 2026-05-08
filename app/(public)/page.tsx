@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { 
@@ -401,17 +402,21 @@ function NutritionEngineerCard() {
 interface DealerItemProps {
   dealer: typeof DEALERS[0];
   isSelected: boolean;
-  onClick: () => void;
+  onSelect: () => void;
+  onHover: () => void;
+  onLeave: () => void;
 }
 
-function DealerItem({ dealer, isSelected, onClick }: DealerItemProps) {
+function DealerItem({ dealer, isSelected, onSelect, onHover, onLeave }: DealerItemProps) {
   return (
     <div
-      onClick={onClick}
+      onClick={onSelect}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
       className={cn(
         "p-4 rounded-xl border transition-all cursor-pointer",
         isSelected
-          ? "bg-emerald-50 border-emerald-300 shadow-sm"
+          ? "bg-emerald-50 border-emerald-300 shadow-md scale-[1.02]"
           : "bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm"
       )}
     >
@@ -425,46 +430,66 @@ function DealerItem({ dealer, isSelected, onClick }: DealerItemProps) {
             {dealer.distance}
           </p>
         </div>
-        <Badge 
-          variant="outline" 
+        <Badge
+          variant="outline"
           className={cn(
             "text-[10px]",
-            dealer.isOpen 
-              ? "text-green-600 border-green-200 bg-green-50" 
+            dealer.isOpen
+              ? "text-green-600 border-green-200 bg-green-50"
               : "text-slate-500"
           )}
         >
           {dealer.isOpen ? "Đang mở" : "Đóng cửa"}
         </Badge>
       </div>
-      
+
       <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{dealer.address}</p>
-      
-      <div className="flex items-center gap-2">
-        <Button 
-          size="sm" 
-          className={cn(
-            "h-7 text-xs gap-1",
-            dealer.isOpen 
-              ? "bg-orange-500 hover:bg-orange-600" 
-              : "bg-slate-200 hover:bg-slate-300 text-slate-500"
-          )}
-          disabled={!dealer.isOpen}
+
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <a
+          href={`tel:${dealer.phone.replace(/\s/g, "")}`}
+          onClick={(e) => e.stopPropagation()}
         >
-          <Phone className="w-3 h-3" />
-          Gọi ngay
-        </Button>
-        <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
-          <MapPin className="w-3 h-3" />
-          Chỉ đường
-        </Button>
+          <Button
+            size="sm"
+            className={cn(
+              "h-7 text-xs gap-1",
+              dealer.isOpen
+                ? "bg-orange-500 hover:bg-orange-600"
+                : "bg-slate-200 hover:bg-slate-300 text-slate-500"
+            )}
+            disabled={!dealer.isOpen}
+          >
+            <Phone className="w-3 h-3" />
+            Gọi ngay
+          </Button>
+        </a>
+        <a
+          href={`https://maps.google.com/maps?q=${dealer.lat},${dealer.lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
+            <MapPin className="w-3 h-3" />
+            Chỉ đường
+          </Button>
+        </a>
       </div>
     </div>
   );
 }
 
 function DealerMapSection() {
+  const router = useRouter();
+  const [hoveredDealer, setHoveredDealer] = useState<number | null>(null);
   const [selectedDealer, setSelectedDealer] = useState<number | null>(null);
+
+  const handleDealerSelect = (dealer: typeof DEALERS[0]) => {
+    // Navigate to dealer public profile
+    const slug = `dealer-${dealer.id}`;
+    router.push(`/dai-ly/${slug}`);
+  };
 
   return (
     <section className="py-16 bg-slate-50">
@@ -502,10 +527,11 @@ function DealerMapSection() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="h-[400px] lg:h-[450px]">
-                <DealerMap 
-                  dealers={DEALERS} 
+                <DealerMap
+                  dealers={DEALERS}
                   center={[12.6667, 108.0383]}
                   zoom={8}
+                  activeId={hoveredDealer}
                 />
               </div>
             </CardContent>
@@ -526,8 +552,10 @@ function DealerMapSection() {
                     <DealerItem
                       key={dealer.id}
                       dealer={dealer}
-                      isSelected={selectedDealer === dealer.id}
-                      onClick={() => setSelectedDealer(dealer.id)}
+                      isSelected={hoveredDealer === dealer.id || selectedDealer === dealer.id}
+                      onSelect={() => handleDealerSelect(dealer)}
+                      onHover={() => setHoveredDealer(dealer.id)}
+                      onLeave={() => setHoveredDealer(null)}
                     />
                   ))}
                 </div>
