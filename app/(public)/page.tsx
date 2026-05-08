@@ -738,8 +738,8 @@ function HeroBanner() {
               className="h-12 px-8 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold shadow-lg hover:shadow-xl transition-all"
             >
               <Link href="/tinh-toan" className="gap-2">
-                <Zap className="w-5 h-5" />
-                Tính Toán Vật Tư Tự Động
+                <span className="text-xl">🔥</span>
+                Tính Toán Vật Tư
               </Link>
             </Button>
             
@@ -869,8 +869,8 @@ export default function HomePage() {
                 className="h-12 px-8 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold shadow-lg shrink-0"
               >
                 <Link href="/tinh-toan" className="gap-2">
-                  <Calculator className="w-5 h-5" />
-                  Tính Toán Ngay
+                  <span className="text-xl">🔥</span>
+                  Tính Vật Tư Ngay
                 </Link>
               </Button>
             </div>
