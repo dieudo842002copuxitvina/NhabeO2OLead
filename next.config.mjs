@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // Fix Vercel build error: Cannot get final name for export 'encodeXML'
+    serverComponentsExternalPackages: [
+      'html-to-text',
+      '@react-email/components',
+      '@react-email/render',
+      'entities',
+    ],
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
