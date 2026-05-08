@@ -23,7 +23,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, UserPlus, MapPin, Phone, X, CheckCircle2, AlertCircle, Sprout } from "lucide-react";
-import { assignLeadToDealer } from "@/app/actions/lead";
+import { assignLeadToDealerAction } from "@/app/actions/lead";
 import type { DealerBasic } from "@/types/lead";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -94,7 +94,7 @@ export default function AssignLeadModal({
     setIsSubmitting(true);
 
     try {
-      const result = await assignLeadToDealer(leadId, selectedDealerId);
+      const result = await assignLeadToDealerAction(leadId, selectedDealerId);
 
       if (!result.success) {
         toast({

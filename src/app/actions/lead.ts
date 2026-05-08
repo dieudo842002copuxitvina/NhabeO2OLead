@@ -207,7 +207,7 @@ export async function getActiveDealers(): Promise<DealerBasic[]> {
  * Assign a lead to a dealer
  * Updates the assigned_dealer_id and changes status to 'progress'
  */
-export async function assignLeadToDealer(
+export async function assignLeadToDealerAction(
   leadId: string,
   dealerId: string
 ): Promise<{ success: boolean; data?: LeadNormalized; error?: string }> {
@@ -264,7 +264,7 @@ export async function assignLeadToDealer(
       data: normalizeLead(updatedLead as unknown as Lead),
     };
   } catch (error) {
-    console.error("assignLeadToDealer error:", error);
+    console.error("assignLeadToDealerAction error:", error);
 
     if (error instanceof z.ZodError) {
       return {
