@@ -7,7 +7,7 @@ import {
   Sprout, BarChart3, Users, Truck, Package, MapPin, ClipboardList, Menu, X,
   TrendingUp, Lightbulb, Phone, Inbox, Coins, UserPlus, Calculator, Hammer,
   Sparkles, Activity, Briefcase, BookOpen, Award, ChevronDown, LogIn, Info,
-  Wrench, Layers, Network,
+  Wrench, Layers, Network, Zap,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -122,8 +122,23 @@ export default function TopNav() {
 
             {/* Desktop nav — grouped dropdowns for customers */}
             {isCustomer ? (
-              <div className="hidden lg:flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-1">
                 <ProductMegaMenu />
+                
+                {/* Standalone Giải pháp — prominent link */}
+                <Link
+                  href="/giai-phap"
+                  className={cn(
+                    'flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-md transition-colors',
+                    pathname?.startsWith('/giai-phap')
+                      ? 'text-primary bg-primary/10'
+                      : 'text-foreground hover:text-primary hover:bg-muted/50',
+                  )}
+                >
+                  <Lightbulb className="w-4 h-4" />
+                  Giải pháp
+                </Link>
+                
                 <NavigationMenu>
                   <NavigationMenuList className="gap-1">
                     {[ECOSYSTEM, NETWORK].map((group) => (
@@ -206,6 +221,20 @@ export default function TopNav() {
 
             {/* Right cluster */}
             <div className="flex items-center gap-2 shrink-0">
+              {/* Primary CTA — Tính toán vật tư (Desktop only) */}
+              {isCustomer && (
+                <Button
+                  asChild
+                  size="sm"
+                  className="hidden lg:inline-flex bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold shadow-sm hover:shadow-md transition-all duration-200 gap-1.5"
+                >
+                  <Link href="/tinh-toan">
+                    <Zap className="w-4 h-4" />
+                    Tính toán vật tư
+                  </Link>
+                </Button>
+              )}
+
               {/* Admin-only BI Dashboard quick link */}
               {isAdmin && (
                 <Button
@@ -403,27 +432,44 @@ export default function TopNav() {
 
             {/* Sticky bottom CTAs */}
             {isCustomer && (
-              <div className="border-t bg-background p-4 space-y-2 shrink-0">
+              <div className="border-t bg-gradient-to-t from-background to-background/95 backdrop-blur-sm p-4 space-y-2 shrink-0 safe-area-inset-bottom">
+                {/* Primary CTA — Sticky on mobile */}
                 <Button
                   asChild
                   size="lg"
-                  className="w-full"
-                  onClick={() => setMobileOpen(false)}
+                  className="w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  <a href="tel:1900000000">
-                    <Phone className="w-5 h-5 mr-2" /> Gọi tư vấn miễn phí
-                  </a>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="w-full border-primary/40 text-primary"
-                >
-                  <Link href="/auth?role=dealer" onClick={() => setMobileOpen(false)}>
-                    <LogIn className="w-5 h-5 mr-2" /> Đại lý đăng nhập
+                  <Link href="/tinh-toan" onClick={() => setMobileOpen(false)} className="gap-2">
+                    <Zap className="w-5 h-5" />
+                    Tính toán vật tư
                   </Link>
                 </Button>
+                
+                {/* Secondary CTAs */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-12 border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <a href="tel:1900000000" className="gap-2">
+                      <Phone className="w-4 h-4" />
+                      Gọi tư vấn
+                    </a>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-12 border-muted-foreground/30 text-foreground hover:bg-muted"
+                  >
+                    <Link href="/auth?role=dealer" onClick={() => setMobileOpen(false)} className="gap-2">
+                      <LogIn className="w-4 h-4" />
+                      Kênh Đại lý
+                    </Link>
+                  </Button>
+                </div>
               </div>
             )}
           </aside>

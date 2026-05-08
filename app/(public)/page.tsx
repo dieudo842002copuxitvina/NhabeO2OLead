@@ -7,7 +7,7 @@ import {
   Search, Droplets, Thermometer, CloudRain, Wind, Sun, 
   TrendingUp, TrendingDown, MapPin, Phone, Leaf, Calculator,
   ChevronRight, Sprout, AlertTriangle, ArrowRight,
-  Globe, Newspaper, BookOpen, Clock, User
+  Globe, Newspaper, BookOpen, Clock, User, Zap, Lightbulb, Package
 } from "lucide-react";
 import { 
   Card, 
@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import CropSolutionsTabs from "@/components/CropSolutionsTabs";
 
 /* ─────────────────────────────────────────────
  * Dynamic Import - SSR Disabled for Leaflet
@@ -695,6 +696,95 @@ function ProductSlider() {
 }
 
 /* ─────────────────────────────────────────────
+ * Hero Banner — Primary CTA Section
+ * ───────────────────────────────────────────── */
+
+function HeroBanner() {
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)"/>
+        </svg>
+      </div>
+      
+      <div className="container mx-auto px-4 py-12 md:py-16 relative">
+        <div className="max-w-3xl">
+          <Badge className="mb-4 bg-white/20 text-white border-0 backdrop-blur">
+            <Sprout className="w-3 h-3 mr-1" />
+            Hệ thống tưới tiêu thông minh #1 Việt Nam
+          </Badge>
+          
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
+            Tưới tiết kiệm 60% nước.<br />
+            <span className="text-emerald-200">Tính vật tư chỉ 3 giây.</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-emerald-100 mb-8 max-w-xl">
+            Hệ thống tưới tự động cho sầu riêng, cà phê, cây ăn trái — 
+            Báo giá trọn gói, lắp đặt tại farm.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 px-8 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold shadow-lg hover:shadow-xl transition-all"
+            >
+              <Link href="/tinh-toan" className="gap-2">
+                <Zap className="w-5 h-5" />
+                Tính Toán Vật Tư Tự Động
+              </Link>
+            </Button>
+            
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="h-12 px-8 bg-transparent border-white/40 text-white hover:bg-white/10 font-semibold backdrop-blur"
+            >
+              <Link href="/giai-phap" className="gap-2">
+                <Lightbulb className="w-5 h-5" />
+                Khám Phá Giải Pháp
+              </Link>
+            </Button>
+          </div>
+        </div>
+        
+        {/* Stats Badge */}
+        <div className="mt-8 flex flex-wrap gap-4 text-sm text-emerald-100">
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+            500+ đại lý toàn quốc
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+            Lắp đặt trong 48h
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+            Bảo hành 2 năm
+          </span>
+        </div>
+      </div>
+      
+      {/* Decorative Wave */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+          <path d="M0 50L48 45C96 40 192 30 288 35C384 40 480 60 576 65C672 70 768 60 864 50C960 40 1056 30 1152 35C1248 40 1344 60 1392 70L1440 80V100H0V50Z" fill="#f8fafc"/>
+        </svg>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────
  * Main Page Component
  * ───────────────────────────────────────────── */
 
@@ -702,52 +792,96 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50">
       
-      {/* ── Tier 1: Daily Habit Section ── */}
-      <section className="py-8 md:py-12">
+      {/* ── VỊ TRÍ 1: Hero Banner ── */}
+      <HeroBanner />
+
+      {/* ── VỊ TRÍ 2: Giải Pháp (Solutions) ── */}
+      <section className="bg-white border-b border-slate-100">
+        <CropSolutionsTabs />
+      </section>
+
+      {/* ── VỊ TRÍ 3: Sản Phẩm Lõi ── */}
+      <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
-                <Sprout className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-                  Agri Command Center
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Trạm điều phối dữ liệu & dịch vụ nông nghiệp
-                </p>
-              </div>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+              <Package className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Thiết Bị Gợi Ý Theo Mùa Vụ</h2>
+              <p className="text-sm text-muted-foreground">Phù hợp với nhu cầu hiện tại của bạn</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-4">
-              <WeatherRadar />
-            </div>
-
-            <div className="lg:col-span-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Thanh Command</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CommandSearch />
-                </CardContent>
-              </Card>
-            </div>
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
+            {SUGGESTED_PRODUCTS.map((product) => (
+              <div 
+                key={product.id}
+                className="flex-shrink-0 w-48 bg-white rounded-xl border border-slate-100 p-4 hover:border-slate-200 hover:shadow-sm transition-all"
+              >
+                <div className="w-full h-24 rounded-lg bg-gradient-to-br from-slate-100 to-slate-50 mb-3 flex items-center justify-center">
+                  <Droplets className="w-8 h-8 text-slate-300" />
+                </div>
+                
+                <h4 className="font-medium text-sm text-slate-900 mb-2 line-clamp-2">
+                  {product.name}
+                </h4>
+                <p className="text-sm font-bold text-emerald-600 mb-3">
+                  {new Intl.NumberFormat("vi-VN").format(product.price)} 
+                  <span className="text-xs font-normal text-muted-foreground ml-1">{product.unit}</span>
+                </p>
+                
+                <Button variant="outline" className="w-full h-9 text-sm gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" />
+                  Xem Điểm Bán
+                </Button>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-6 text-center">
+            <Button asChild variant="outline" className="gap-2">
+              <Link href="/danh-muc">
+                Xem toàn bộ danh mục <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* ── Tier 2: High-Intent Tools ── */}
-      <section className="py-12 bg-white">
+      {/* ── VỊ TRÍ 4: Công Cụ / O2O Trap ── */}
+      <section className="py-12 bg-gradient-to-br from-slate-50 to-emerald-50/30">
         <div className="container mx-auto px-4">
-          <div className="flex items-center gap-3 mb-8">
+          {/* Banner CTA */}
+          <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl p-6 md:p-8 mb-8 text-white">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold mb-2">
+                  Chỉ mất 3 giây để có bản vẽ vật tư
+                </h2>
+                <p className="text-emerald-100">
+                  Thử ngay máy tính thủy lực miễn phí — Không cần đăng ký
+                </p>
+              </div>
+              <Button
+                asChild
+                size="lg"
+                className="h-12 px-8 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold shadow-lg shrink-0"
+              >
+                <Link href="/tinh-toan" className="gap-2">
+                  <Calculator className="w-5 h-5" />
+                  Tính Toán Ngay
+                </Link>
+              </Button>
+            </div>
+          </div>
+          
+          {/* Tool Cards */}
+          <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
               <Calculator className="w-4 h-4 text-orange-600" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">Bộ Công Cụ Tính Toán Nông Vụ</h2>
+            <h2 className="text-xl font-bold text-slate-900">Bộ Công Cụ Tính Toán</h2>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -757,14 +891,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Tier 3: O2O Dealer Map ── */}
-      <DealerMapSection />
-
-      {/* ── Tier 4: News & Guides ── */}
+      {/* ── VỊ TRÍ 5: Tin Tức / Kiến Thức ── */}
       <NewsSection />
 
-      {/* ── Tier 5: Product Cross-sell Slider ── */}
-      <ProductSlider />
+      {/* ── VỊ TRÍ 6: Dealer Map / Trust Signals ── */}
+      <DealerMapSection />
 
       {/* ── Bottom Stats ── */}
       <section className="py-8 bg-white border-t border-slate-100">
