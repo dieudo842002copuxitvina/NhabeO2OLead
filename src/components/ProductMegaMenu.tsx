@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronRight, Phone, ArrowRight, Sprout } from 'lucide-react';
+import { ChevronDown, ChevronRight, Phone, ArrowRight, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import menuData from '@/data/megaMenuData.json';
 
@@ -30,9 +30,9 @@ export default function ProductMegaMenu({ isMobile = false, onMobileClose }: Pro
       <div className="w-full">
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="mega-menu" className="border-none">
-            <AccordionTrigger className="flex items-center gap-3 px-4 min-h-[52px] rounded-lg text-base font-medium hover:bg-muted py-0 hover:no-underline [&[data-state=open]]:bg-primary/10 [&[data-state=open]]:text-primary transition-colors">
+            <AccordionTrigger className="flex items-center gap-3 px-4 min-h-[52px] rounded-lg text-base font-medium hover:bg-emerald-50 py-0 hover:no-underline [&[data-state=open]]:bg-emerald-50 [&[data-state=open]]:text-emerald-600 transition-colors">
               <span className="flex items-center gap-3">
-                <Sprout className="w-5 h-5" />
+                <Package className="w-5 h-5" />
                 Danh Mục Sản Phẩm
               </span>
             </AccordionTrigger>
@@ -86,22 +86,35 @@ export default function ProductMegaMenu({ isMobile = false, onMobileClose }: Pro
   // -----------------------------------------------------
   return (
     <div 
-      className="relative group" 
+      className="relative" 
       onMouseEnter={() => setIsOpen(true)} 
       onMouseLeave={() => setIsOpen(false)}
     >
-      <button className="flex items-center gap-1.5 h-9 px-3 text-sm font-medium bg-transparent hover:text-primary transition-colors rounded-md group-hover:bg-muted/50">
-        <Sprout className="w-4 h-4" />
-        {menuData.title}
-        <ChevronDown className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" />
+      {/* Trigger Button */}
+      <button className={cn(
+        "flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-all duration-200",
+        isOpen 
+          ? "text-emerald-600 bg-emerald-50" 
+          : "text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50"
+      )}>
+        <Package className="w-4 h-4" />
+        Sản phẩm
+        <ChevronDown className={cn(
+          "w-3 h-3 transition-transform duration-200",
+          isOpen ? "rotate-180" : ""
+        )} />
       </button>
 
+      {/* Mega Menu Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 pt-2 z-50">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-[850px] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 pt-2 z-[60]">
+          <div 
+            className="bg-white rounded-xl shadow-2xl border border-slate-200 w-[900px] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+            onMouseEnter={() => setIsOpen(true)}
+          >
             
             {/* Grid Layout cho Mega Menu */}
-            <div className="p-6 grid grid-cols-3 gap-x-8 gap-y-6">
+            <div className="p-6 grid grid-cols-4 gap-x-6 gap-y-5">
               {menuData.categories.map((category) => (
                 <div key={category.id} className="flex flex-col">
                   <h3 className="font-bold text-sm text-slate-800 uppercase tracking-wide mb-3 flex items-center gap-2">
