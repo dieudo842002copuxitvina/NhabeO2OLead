@@ -10,8 +10,9 @@
  *   3. Falls back to Nhà Bè Agri HQ Zalo if no dealer matched
  */
 
-import { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Check, Sprout, Ruler, Droplet, FileText, Calculator, Loader2 } from 'lucide-react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { ArrowLeft, ArrowRight, Check, Sprout, Ruler, Droplet, FileText, Calculator, Loader2, Leaf } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import SeoMeta from '@/components/SeoMeta';
@@ -58,9 +59,45 @@ const DEFAULT_PARAMS: Record<string, number> = {
   price_install_per_m2: 4500,
 };
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * URL CROP PARAMS CAPTURE COMPONENT
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+interface CropParamsState {
+  crop: CropKey | null;
+  source: 'url' | 'default';
+}
+
+function CropParamsCapture({ 
+  onCropDetected 
+}: { 
+  onCropDetected: (crop: CropKey | null) => void;
+}) {
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    const cropParam = searchParams.get('crop');
+    if (cropParam) {
+      // Validate crop is in CROPS list
+      const validCrop = CROPS.find(c => c.key === cropParam);
+      if (validCrop) {
+        console.log('[URL] Detected crop param:', cropParam);
+        onCropDetected(validCrop.key as CropKey);
+      }
+    }
+  }, [searchParams, onCropDetected]);
+  
+  return null;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * MAIN PAGE COMPONENT
+ * ───────────────────────────────────────────────────────────────────────────── */
+
 export default function TinhToanPage() {
   const [step, setStep] = useState(1);
   const [crop, setCrop] = useState<CropKey | null>(null);
+  const [cropSource, setCropSource] = useState<'url' | 'default'>('default');
   const [area, setArea] = useState(5000);
   const [spacing, setSpacing] = useState(6);
   const [slope, setSlope] = useState<SlopeKey | null>(null);
@@ -68,6 +105,16 @@ export default function TinhToanPage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Handle crop detected from URL params
+  const handleCropDetected = (detectedCrop: CropKey | null) => {
+    if (detectedCrop && cropSource === 'default') {
+      setCrop(detectedCrop);
+      setCropSource('url');
+      // Auto-advance to step 2 if crop is detected from URL
+      setStep(2);
+    }
+  };
 
   const result: CalculatorResult | null = useMemo(() => {
     if (!crop || !slope || !waterSource || area < 100) return null;
@@ -100,6 +147,7 @@ export default function TinhToanPage() {
   const handleRestart = () => {
     setStep(1);
     setCrop(null);
+    setCropSource('default');
     setArea(5000);
     setSpacing(6);
     setSlope(null);
@@ -115,8 +163,42 @@ export default function TinhToanPage() {
         canonical="/tinh-toan"
       />
 
+      {/* URL Params Capture (hidden) */}
+      <Suspense fallback={null}>
+        <CropParamsCapture onCropDetected={handleCropDetected} />
+      </Suspense>
+
       <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-background to-blue-50/30">
         <div className="container py-8 max-w-3xl mx-auto px-4">
+          {/* URL Crop Detection Banner */}
+          {cropSource === 'url' && crop && cropMeta && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                <Leaf className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-800">
+                  Đã tự động chọn: <span className="font-bold">{cropMeta.name}</span>
+                </p>
+                <p className="text-xs text-blue-600">
+                  Từ liên kết trên trang Giải pháp — Bạn có thể thay đổi ở bước tiếp theo
+                </p>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setCrop(null);
+                  setCropSource('default');
+                  setStep(1);
+                }}
+                className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+              >
+                Thay đổi
+              </Button>
+            </div>
+          )}
+
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">

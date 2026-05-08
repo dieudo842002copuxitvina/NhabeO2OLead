@@ -20,7 +20,8 @@ import {
   Package,
   Wrench,
   MessageCircle,
-  Store
+  Store,
+  Sprout
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -90,6 +91,7 @@ interface UtmParams {
 interface UrlParams {
   assignedDealer: string | null;
   productInterest: string | null;
+  crop: string | null;
   utmParams: UtmParams;
 }
 
@@ -145,6 +147,7 @@ function UrlParamsCapture({ onCapture }: { onCapture: (params: UrlParams) => voi
     const params: UrlParams = {
       assignedDealer: searchParams.get("assigned_dealer"),
       productInterest: searchParams.get("product_interest"),
+      crop: searchParams.get("crop"),
       utmParams: {
         utm_source: searchParams.get("utm_source"),
         utm_medium: searchParams.get("utm_medium"),
@@ -696,6 +699,7 @@ export default function TinhToanClient() {
   const [urlParams, setUrlParams] = useState<UrlParams>({
     assignedDealer: null,
     productInterest: null,
+    crop: null,
     utmParams: {
       utm_source: null,
       utm_medium: null,
@@ -803,7 +807,7 @@ export default function TinhToanClient() {
         customerName: contact.customerName.trim(),
         customerPhone: contact.customerPhone.replace(/\s/g, ''),
         province: contact.province || undefined,
-        cropType: undefined,
+        cropType: urlParams.crop || undefined,
         areaM2: input.areaHa * 10000,
         latitude: provinceCoords?.lat,
         longitude: provinceCoords?.lon,
@@ -837,29 +841,49 @@ export default function TinhToanClient() {
       });
 
       if (actionResult.success && actionResult.leadId) {
-        toast({
-          title: "Gửi yêu cầu thành công!",
-          description: actionResult.assignedDealerName 
-            ? `Đã gửi đến ${actionResult.assignedDealerName}. Họ sẽ liên hệ trong 24 giờ.`
-            : "Yêu cầu của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ trong 24 giờ.",
-          className: "bg-emerald-50 border-emerald-200 text-emerald-800",
-        });
-
-        // Open Zalo with dealer's number
-        const zaloNumber = actionResult.dealerZaloNumber || ZALO_FALLBACK;
-        const zaloUrl = `https://zalo.me/${zaloNumber.replace(/\D/g, '')}`;
+        // Check if this is a fallback to HQ (white area)
+        const isFallback = actionResult.matchType === "fallback_hq" || actionResult.isFallback;
         
-        toast({
-          title: "Đang kết nối Zalo...",
-          description: "Cửa sổ Zalo sẽ được mở để bạn nhận tư vấn trực tiếp",
-          className: "bg-blue-50 border-blue-200 text-blue-800",
-          duration: 2000,
-        });
+        if (isFallback) {
+          // White area - no local dealer found
+          toast({
+            title: "Gửi yêu cầu thành công!",
+            description: "Đang kết nối bạn với Chuyên gia Nhà Bè Agri...",
+            className: "bg-blue-50 border-blue-200 text-blue-800",
+          });
+          
+          // Open Zalo HQ
+          const zaloUrl = `https://zalo.me/0909123456`;
+          
+          setTimeout(() => {
+            window.location.href = zaloUrl;
+          }, 800);
+        } else {
+          // Normal flow - dealer found
+          toast({
+            title: "Gửi yêu cầu thành công!",
+            description: actionResult.assignedDealerName 
+              ? `Đã gửi đến ${actionResult.assignedDealerName}. Họ sẽ liên hệ trong 24 giờ.`
+              : "Yêu cầu của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ trong 24 giờ.",
+            className: "bg-emerald-50 border-emerald-200 text-emerald-800",
+          });
 
-        // Small delay then redirect to Zalo
-        setTimeout(() => {
-          window.location.href = zaloUrl;
-        }, 500);
+          // Open Zalo with dealer's number
+          const zaloNumber = actionResult.dealerZaloNumber || ZALO_FALLBACK;
+          const zaloUrl = `https://zalo.me/${zaloNumber.replace(/\D/g, '')}`;
+          
+          toast({
+            title: "Đang kết nối Zalo...",
+            description: "Cửa sổ Zalo sẽ được mở để bạn nhận tư vấn trực tiếp",
+            className: "bg-blue-50 border-blue-200 text-blue-800",
+            duration: 2000,
+          });
+
+          // Small delay then redirect to Zalo
+          setTimeout(() => {
+            window.location.href = zaloUrl;
+          }, 500);
+        }
 
         // Reset contact form
         setContact(DEFAULT_CONTACT);
@@ -898,6 +922,27 @@ export default function TinhToanClient() {
         <UrlParamsCapture onCapture={handleUrlParamsCapture} />
       </Suspense>
       
+      {/* Crop Detection Banner */}
+      {urlParams.crop && (
+        <div className="bg-blue-50 border-b border-blue-200">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Sprout className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-blue-800">
+                  Tính toán cho: <span className="font-bold">{urlParams.crop}</span>
+                </p>
+                <p className="text-blue-600 text-xs">
+                  Từ trang Giải pháp — Hệ thống sẽ gửi lead về đại lý chuyên về {urlParams.crop}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
         <div className="container mx-auto px-4 py-12">

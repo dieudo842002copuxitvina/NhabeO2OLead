@@ -229,7 +229,7 @@ export default function TopNav() {
                   className="hidden lg:inline-flex bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold shadow-sm hover:shadow-md transition-all duration-200 gap-1.5"
                 >
                   <Link href="/tinh-toan">
-                    <Zap className="w-4 h-4" />
+                    <span>🔥</span>
                     Tính toán vật tư
                   </Link>
                 </Button>
@@ -440,7 +440,7 @@ export default function TopNav() {
                   className="w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <Link href="/tinh-toan" onClick={() => setMobileOpen(false)} className="gap-2">
-                    <Zap className="w-5 h-5" />
+                    <span>🔥</span>
                     Tính toán vật tư
                   </Link>
                 </Button>

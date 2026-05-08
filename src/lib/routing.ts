@@ -11,13 +11,27 @@
  * 3. Select the first dealer in the sorted list
  * 4. Use transaction to insert lead AND update dealer's lastAssignedAt atomically
  * 5. Fallback to nearest dealer by coordinates (if available)
- * 6. Return null if no dealer found → queue for admin manual handling
+ * 6. Fallback to Default Dealer (Nhà Bè Agri HQ) if no local dealer found
+ * 7. Return null if no dealer found → queue for admin manual handling
  */
 
 import { PrismaClient } from "@prisma/client";
 import { calculateDistance, isValidCoordinate } from "@/lib/geo";
 import { sendEmail } from "@/lib/mail";
 import { NewLeadEmail } from "@/emails/NewLeadEmail";
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * DEFAULT DEALER CONSTANTS (Fallback for white areas)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+export const DEFAULT_DEALER = {
+  id: "default-hq",
+  name: "Tổng đài Nhà Bè Agri",
+  zaloOALink: "https://zalo.me/0909123456",
+  phone: "0909123456",
+} as const;
+
+export const ZALO_OA_FALLBACK = DEFAULT_DEALER.zaloOALink;
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PRISMA CLIENT (singleton pattern)
@@ -37,8 +51,10 @@ if (process.env.NODE_ENV !== "production") {
 export interface RoutingResult {
   dealerId: string | null;
   dealerName: string | null;
-  matchType: "exact_district" | "province_only" | "nearest_geo" | "none" | "direct_assignment";
+  matchType: "exact_district" | "province_only" | "nearest_geo" | "none" | "direct_assignment" | "fallback_hq";
   distanceKm?: number;
+  isFallback?: boolean;
+  fallbackReason?: string;
 }
 
 export interface DealerLocation {
@@ -75,6 +91,8 @@ export interface CreateLeadWithRoutingResult {
   dealerId?: string | null;
   dealerName?: string | null;
   matchType: RoutingResult["matchType"];
+  isFallback?: boolean;
+  fallbackReason?: string;
   error?: string;
 }
 
@@ -131,7 +149,7 @@ function matchesNormalized(source: string, target: string): boolean {
 }
 
 /**
- * Fallback: Find nearest dealer by coordinates
+ * Fallback: Find nearest dealer by coordinates, then fallback to HQ
  */
 async function findNearestDealerFallback(
   activeDealers: DealerLocation[],
@@ -175,7 +193,15 @@ async function findNearestDealerFallback(
     }
   }
 
-  return { dealerId: null, dealerName: null, matchType: "none" };
+  // No dealer found anywhere → Fallback to HQ
+  console.log(`[O2O Routing] No dealers available → Falling back to HQ`);
+  return {
+    dealerId: DEFAULT_DEALER.id,
+    dealerName: DEFAULT_DEALER.name,
+    matchType: "fallback_hq",
+    isFallback: true,
+    fallbackReason: "Không có đại lý trong khu vực",
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -299,7 +325,7 @@ export async function assignLeadToDealer(
       };
     }
 
-    // Fallback: Try nearest by coordinates
+    // Fallback: Try nearest by coordinates if available
     if (
       typeof customerLat === "number" &&
       typeof customerLon === "number" &&
@@ -308,12 +334,25 @@ export async function assignLeadToDealer(
       return await findNearestDealerFallback(activeDealers, customerLat, customerLon);
     }
 
-    // Step 5: No match found → return null (admin manual handling)
-    console.warn(`[O2O Routing] No dealer found for "${province}" / "${district || "N/A"}"`);
-    return { dealerId: null, dealerName: null, matchType: "none" };
+    // Step 5: No match found anywhere → Fallback to HQ
+    console.log(`[O2O Routing] No dealer found for "${province}" / "${district || "N/A"}" → Falling back to HQ`);
+    return {
+      dealerId: DEFAULT_DEALER.id,
+      dealerName: DEFAULT_DEALER.name,
+      matchType: "fallback_hq",
+      isFallback: true,
+      fallbackReason: "Vùng trắng - chưa có đại lý phủ sóng",
+    };
   } catch (error) {
     console.error("[O2O Routing] Error during routing:", error);
-    return { dealerId: null, dealerName: null, matchType: "none" };
+    // On error, fallback to HQ instead of returning null
+    return {
+      dealerId: DEFAULT_DEALER.id,
+      dealerName: DEFAULT_DEALER.name,
+      matchType: "fallback_hq",
+      isFallback: true,
+      fallbackReason: "Lỗi hệ thống - kết nối tổng đài",
+    };
   }
 }
 
@@ -421,8 +460,8 @@ export async function createLeadWithRouting(
         },
       });
 
-      // Update dealer's lastAssignedAt if dealer was assigned
-      if (routingResult.dealerId) {
+      // Update dealer's lastAssignedAt if dealer was assigned (skip for HQ fallback)
+      if (routingResult.dealerId && routingResult.dealerId !== DEFAULT_DEALER.id) {
         await tx.dealer.update({
           where: { id: routingResult.dealerId },
           data: { lastAssignedAt: now },
@@ -431,6 +470,12 @@ export async function createLeadWithRouting(
         console.log(
           `[O2O Routing] Lead ${newLead.id} created and assigned to dealer ` +
           `"${routingResult.dealerName}" (lastAssignedAt updated to ${now.toISOString()})`
+        );
+      } else if (routingResult.dealerId === DEFAULT_DEALER.id) {
+        // HQ fallback - lead is still "assigned" to HQ
+        console.log(
+          `[O2O Routing] Lead ${newLead.id} created and routed to HQ ` +
+          `(isFallback: ${routingResult.isFallback}, reason: ${routingResult.fallbackReason})`
         );
       } else {
         console.log(
@@ -461,6 +506,8 @@ export async function createLeadWithRouting(
     return {
       success: true,
       ...result,
+      isFallback: routingResult.isFallback,
+      fallbackReason: routingResult.fallbackReason,
     };
   } catch (error) {
     console.error("[O2O Routing] Error creating lead with routing:", error);

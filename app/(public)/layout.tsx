@@ -106,27 +106,76 @@ function StickyNavbar() {
           </div>
         </div>
 
-        {/* Mobile Navigation - Simple links without dropdowns */}
+        {/* Mobile Navigation - Full screen drawer with sticky CTA */}
         {mobileMenuOpen && (
-          <nav className="md:hidden border-t py-4 space-y-1">
-            {MOBILE_NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-              >
-                {item.title}
-              </Link>
-            ))}
-            <div className="pt-2 border-t mt-2">
-              <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full">
-                  Trang Admin
+          <div className="fixed inset-0 z-[100] lg:hidden">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            
+            {/* Drawer */}
+            <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between h-16 px-5 border-b shrink-0">
+                <Link 
+                  href="/" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 shadow-md">
+                    <Sprout className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-lg font-bold text-slate-900">AgriHub</span>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <X className="h-5 w-5" />
                 </Button>
-              </Link>
+              </div>
+
+              {/* Menu Items */}
+              <div className="flex-1 overflow-y-auto py-4">
+                {MOBILE_NAV_ITEMS.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-5 py-3 text-base font-medium text-slate-700 hover:text-green-600 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0"
+                  >
+                    {item.title}
+                  </Link>
+                ))}
+                <div className="pt-4 px-5">
+                  <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      Trang Admin
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Sticky CTA at bottom */}
+              <div className="sticky bottom-0 bg-white border-t p-4 z-50 safe-area-inset-bottom">
+                <Link 
+                  href="/tinh-toan" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full"
+                >
+                  <Button 
+                    className="w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold shadow-lg"
+                  >
+                    <span>🔥</span>
+                    Tính toán vật tư
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </nav>
+          </div>
         )}
       </div>
     </header>
