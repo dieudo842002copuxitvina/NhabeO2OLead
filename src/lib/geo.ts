@@ -104,6 +104,7 @@ export function findNearestDealer<T extends { id: string; latitude?: number | nu
 /**
  * Expanding radius search for finding nearby dealers
  * Starts with radius=1 and expands until maxRadius or find results
+ * @updated 2026-05-08 - Fixed exports for Vercel build
  */
 export interface ExpandingRadiusOptions<T> {
   maxRadius?: number;
