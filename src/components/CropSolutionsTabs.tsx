@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -188,48 +189,87 @@ function SolutionPanel({ solution }: { solution: CropSolution }) {
       <div>
         <div
           className={cn(
-            'relative aspect-[4/3] rounded-2xl overflow-hidden border bg-gradient-to-br group',
-            solution.videoPoster,
+            'relative aspect-[4/3] rounded-2xl overflow-hidden border group',
           )}
           role="img"
           aria-label={`Sơ đồ hệ thống tưới chuẩn cho ${solution.label}`}
         >
-          {/* Background with hover zoom effect */}
-          <div className="absolute inset-0 flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
-            <div className="text-8xl drop-shadow-lg opacity-90">{solution.emoji}</div>
+          {/* ── Real Background Image ── */}
+          <div 
+            className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+          >
+            <Image
+              src="https://images.unsplash.com/photo-1586771107445-d3af28451c11?q=80&w=1000&auto=format&fit=crop"
+              alt={`Hệ thống tưới cho ${solution.label}`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
           </div>
-          
-          {/* Grid overlay */}
-          <svg className="absolute inset-0 w-full h-full opacity-30" aria-hidden>
-            <defs>
-              <pattern id={`grid-${solution.key}`} width="32" height="32" patternUnits="userSpaceOnUse">
-                <path d="M 32 0 L 0 0 0 32" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill={`url(#grid-${solution.key})`} />
-          </svg>
 
-          {/* Play button with hover scale */}
+          {/* ── Gradient Overlay ── */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+          {/* ── Glassmorphism IoT Widgets ── */}
+          {/* Live Farm Badge - Top Left */}
+          <div className="absolute top-4 left-4 z-10">
+            <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 shadow-lg">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </span>
+              Trực tiếp từ Farm
+            </div>
+          </div>
+
+          {/* Multimedia Badge - Top Right */}
+          <div className="absolute top-4 right-4 z-10">
+            <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 shadow-lg">
+              <Film className="w-3.5 h-3.5" />
+              MULTIMEDIA
+            </div>
+          </div>
+
+          {/* Soil Moisture Widget - Bottom Right */}
+          <div className="absolute bottom-4 right-4 z-10 animate-[bounce_3s_infinite]">
+            <div className="bg-white/25 backdrop-blur-xl border border-white/40 rounded-xl px-4 py-2.5 shadow-2xl">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💧</span>
+                <div>
+                  <p className="text-[10px] text-white/80 font-medium">Độ ẩm đất</p>
+                  <p className="text-sm font-bold text-white">75%</p>
+                </div>
+              </div>
+              {/* Mini Progress Bar */}
+              <div className="mt-1.5 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div className="h-full w-3/4 bg-gradient-to-r from-blue-400 to-emerald-400 rounded-full" />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Premium Play Button with Ping Effect ── */}
           <button
             type="button"
             aria-label="Phát video hướng dẫn"
-            className="absolute inset-0 flex items-center justify-center group-focus:outline-none"
+            className="absolute inset-0 flex items-center justify-center z-20"
           >
-            <span className="w-16 h-16 rounded-full bg-white/90 group-hover:bg-white flex items-center justify-center shadow-xl transition-all duration-300 group-hover:scale-110">
-              <PlayCircle className="w-9 h-9 text-primary" />
+            {/* Ping Effect Ring */}
+            <span className="absolute w-20 h-20 rounded-full bg-white/30 backdrop-blur-sm animate-ping" />
+            
+            {/* Main Play Button */}
+            <span className="relative w-16 h-16 rounded-full bg-white/30 backdrop-blur-md border-2 border-white flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 hover:bg-white/50">
+              <PlayCircle className="w-9 h-9 text-white drop-shadow-lg" />
             </span>
           </button>
 
-          {/* Multimedia labels */}
-          <div className="absolute top-3 left-3 flex items-center gap-2">
-            <Badge className="bg-primary text-primary-foreground border-0 text-[10px] font-bold flex items-center gap-1 shadow-md">
-              <Film className="w-3 h-3" /> MULTIMEDIA
-            </Badge>
-          </div>
-          <div className="absolute bottom-3 right-3">
-            <Badge variant="secondary" className="text-[10px] backdrop-blur bg-white/80 shadow-sm">
-              Hệ thống tưới chuẩn
-            </Badge>
+          {/* Solution Label - Bottom Left */}
+          <div className="absolute bottom-4 left-4 z-10">
+            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-1.5">
+              <p className="text-xs text-white/90 font-medium flex items-center gap-1.5">
+                <Sprout className="w-3.5 h-3.5 text-emerald-400" />
+                Hệ thống tưới chuẩn cho {solution.label}
+              </p>
+            </div>
           </div>
         </div>
 

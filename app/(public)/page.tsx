@@ -8,7 +8,7 @@ import {
   Search, Droplets, Thermometer, CloudRain, Wind, Sun, 
   TrendingUp, TrendingDown, MapPin, Phone, Leaf, Calculator,
   ChevronRight, Sprout, AlertTriangle, ArrowRight,
-  Globe, Newspaper, BookOpen, Clock, User, Zap, Lightbulb, Package
+  Globe, Newspaper, BookOpen, Clock, User, Zap, Lightbulb, Package, Shield
 } from "lucide-react";
 import { 
   Card, 
@@ -143,11 +143,66 @@ const NEWS_ARTICLES = [
 ];
 
 const SUGGESTED_PRODUCTS = [
-  { id: 1, name: "Bộ Điều Khiển Tưới Smart", price: 12500000, unit: "đ/bộ" },
-  { id: 2, name: "Béc Tưới Nhỏ Giọt", price: 45000, unit: "đ/cái" },
-  { id: 3, name: "Tủ Điện Timer 8 Zone", price: 3200000, unit: "đ/tủ" },
-  { id: 4, name: "Máy Bơm Tưới 2HP", price: 4200000, unit: "đ/máy" },
-  { id: 5, name: "Phân Humic Acid 25kg", price: 1250000, unit: "đ/bao" },
+  { 
+    id: 1, 
+    name: "Bộ Điều Khiển Tưới Smart", 
+    categoryName: "Hệ thống điều khiển",
+    price: 12500000, 
+    unit: "đ/bộ",
+    slug: "bo-dieu-khien-tuoi-smart",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80",
+    badge: "hot",
+  },
+  { 
+    id: 2, 
+    name: "Béc Tưới Nhỏ Giọt", 
+    categoryName: "Béc tưới",
+    price: 45000, 
+    unit: "đ/cái",
+    slug: "bec-tuoi-nho-giot",
+    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop&q=80",
+    badge: "sale",
+  },
+  { 
+    id: 3, 
+    name: "Tủ Điện Timer 8 Zone", 
+    categoryName: "Thiết bị điện",
+    price: 3200000, 
+    unit: "đ/tủ",
+    slug: "tu-dien-timer-8-zone",
+    image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&h=400&fit=crop&q=80",
+    badge: null,
+  },
+  { 
+    id: 4, 
+    name: "Máy Bơm Tưới 2HP", 
+    categoryName: "Máy bơm",
+    price: 4200000, 
+    unit: "đ/máy",
+    slug: "may-bom-tuoi-2hp",
+    image: "https://images.unsplash.com/photo-1592982537447-6f2a6a0c5c41?w=400&h=400&fit=crop&q=80",
+    badge: "seasonal",
+  },
+  { 
+    id: 5, 
+    name: "Phân Humic Acid 25kg", 
+    categoryName: "Phân bón",
+    price: 1250000, 
+    unit: "đ/bao",
+    slug: "phan-humic-acid",
+    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop&q=80",
+    badge: null,
+  },
+  { 
+    id: 6, 
+    name: "Ống LDPE Φ20mm", 
+    categoryName: "Ống dẫn",
+    price: 85000, 
+    unit: "đ/m",
+    slug: "ong-ldpe-phi20",
+    image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&h=400&fit=crop&q=80",
+    badge: "bestseller",
+  },
 ];
 
 /* ─────────────────────────────────────────────
@@ -676,7 +731,7 @@ function NewsSection() {
 }
 
 /* ─────────────────────────────────────────────
- * Tier 5: Product Cross-sell Slider
+ * Tier 5: Product Cross-sell Slider - Enhanced
  * ───────────────────────────────────────────── */
 
 function ProductSlider() {
@@ -693,29 +748,71 @@ function ProductSlider() {
           </Link>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
+        {/* Product Grid - Mobile: scroll snap, Desktop: grid */}
+        <div className="flex gap-4 overflow-x-auto pb-4 md:overflow-visible md:grid md:grid-cols-3 lg:grid-cols-5 md:gap-5 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory scrollbar-hide">
           {SUGGESTED_PRODUCTS.map((product) => (
-            <div 
+            <Link
               key={product.id}
-              className="flex-shrink-0 w-48 bg-white rounded-xl border border-slate-100 p-4 hover:border-slate-200 hover:shadow-sm transition-all"
+              href={`/san-pham/${product.slug}`}
+              className="group flex-shrink-0 w-[260px] md:w-auto snap-start"
             >
-              <div className="w-full h-24 rounded-lg bg-gradient-to-br from-slate-100 to-slate-50 mb-3 flex items-center justify-center">
-                <Droplets className="w-8 h-8 text-slate-300" />
+              <div className="h-full bg-white rounded-xl border border-slate-100 overflow-hidden hover:border-emerald-200 hover:shadow-lg transition-all duration-300">
+                {/* Product Image Container */}
+                <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  
+                  {/* Badge - Top Right */}
+                  {product.badge && (
+                    <div className="absolute top-2 right-2">
+                      {product.badge === 'hot' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                          🔥 Bán chạy
+                        </span>
+                      )}
+                      {product.badge === 'sale' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                          ⚡ Giảm giá
+                        </span>
+                      )}
+                      {product.badge === 'seasonal' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                          💧 Mùa hạn
+                        </span>
+                      )}
+                      {product.badge === 'bestseller' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                          ⭐ Yêu thích
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+
+                {/* Product Info */}
+                <div className="p-4">
+                  <h4 className="font-semibold text-sm text-slate-900 mb-1.5 line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                    {product.name}
+                  </h4>
+                  <p className="text-sm font-bold text-emerald-600 mb-3">
+                    {new Intl.NumberFormat("vi-VN").format(product.price)}
+                    <span className="text-xs font-normal text-muted-foreground ml-1">{product.unit}</span>
+                  </p>
+
+                  {/* CTA Link */}
+                  <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 group-hover:gap-2 transition-all">
+                    Xem chi tiết
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </div>
+                </div>
               </div>
-              
-              <h4 className="font-medium text-sm text-slate-900 mb-2 line-clamp-2">
-                {product.name}
-              </h4>
-              <p className="text-sm font-bold text-emerald-600 mb-3">
-                {new Intl.NumberFormat("vi-VN").format(product.price)} 
-                <span className="text-xs font-normal text-muted-foreground ml-1">{product.unit}</span>
-              </p>
-              
-              <Button variant="outline" className="w-full h-9 text-sm gap-1.5">
-                <MapPin className="w-3.5 h-3.5" />
-                Xem Điểm Bán
-              </Button>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -724,7 +821,7 @@ function ProductSlider() {
 }
 
 /* ─────────────────────────────────────────────
- * Hero Product Showcase — Auto-rotating 3D showcase
+ * Hero Product Showcase — Premium Glassmorphism
  * ───────────────────────────────────────────── */
 
 const HERO_PRODUCTS = [
@@ -732,25 +829,34 @@ const HERO_PRODUCTS = [
     id: 1,
     name: "Béc tưới bù áp",
     tag: "💧 Phân bổ nước 100%",
+    tagBg: "bg-white",
+    tagText: "text-emerald-600",
     description: "Đảm bảo nước phân bổ đều cho mọi góc độ, phù hợp địa hình đồi",
     price: "45.000",
     unit: "đ/cái",
+    image: "https://images.unsplash.com/photo-1617696618941-cc5f25b9c5bd?w=400&h=300&fit=crop&q=80",
   },
   {
     id: 2,
     name: "Bộ trung tâm lọc",
     tag: "⚡ Chống tắc nghẽn tối đa",
+    tagBg: "bg-amber-400",
+    tagText: "text-amber-900",
     description: "Hệ thống lọc đa tầng, bảo vệ đường ống và béc khỏi cặn bẩn",
     price: "2.850.000",
     unit: "đ/bộ",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop&q=80",
   },
   {
     id: 3,
     name: "Ống LDPE nguyên sinh",
     tag: "🛡️ Độ bền trên 10 năm",
+    tagBg: "bg-white",
+    tagText: "text-blue-600",
     description: "Chịu UV, chống lão hóa, chịu áp lực cao, phù hợp khí hậu Việt Nam",
     price: "18.000",
     unit: "đ/m",
+    image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&h=300&fit=crop&q=80",
   },
 ];
 
@@ -765,7 +871,7 @@ function HeroProductShowcase() {
         setCurrentIndex((prev) => (prev + 1) % HERO_PRODUCTS.length);
         setIsAnimating(false);
       }, 300);
-    }, 4000);
+    }, 4500);
     return () => clearInterval(interval);
   }, []);
 
@@ -773,50 +879,68 @@ function HeroProductShowcase() {
 
   return (
     <div className="hidden xl:flex flex-col items-center justify-center w-full max-w-sm">
-      {/* Product Card */}
+      {/* Product Card - Premium Glassmorphism */}
       <div
         className={cn(
           "relative w-full transition-all duration-300",
-          isAnimating ? "opacity-0 translate-y-2 scale-95" : "opacity-100 translate-y-0 scale-100"
+          isAnimating ? "opacity-0 translate-y-4 scale-95" : "opacity-100 translate-y-0 scale-100"
         )}
       >
-        {/* Card Container */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl">
-          {/* Product Image Placeholder */}
-          <div className="w-full h-40 rounded-xl bg-gradient-to-br from-emerald-400/30 to-teal-400/30 flex items-center justify-center mb-4 border-2 border-dashed border-white/30">
-            <div className="text-center">
-              <Droplets className="w-16 h-16 text-white/50 mx-auto mb-2" />
-              <p className="text-white/60 text-xs">{product.name}</p>
-            </div>
+        {/* Glassmorphism Card */}
+        <div className="relative bg-white/15 backdrop-blur-xl border border-white/25 shadow-2xl rounded-3xl p-6 overflow-hidden">
+          {/* Glass Reflection Effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+          
+          {/* Floating Tag - Positioned top-left */}
+          <div className="absolute -top-1 -left-1 z-10">
+            <span className={cn(
+              "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse",
+              product.tagBg,
+              product.tagText
+            )}>
+              {product.tag}
+            </span>
+          </div>
+
+          {/* Product Image with 3D Effect */}
+          <div className="relative w-full h-44 rounded-2xl overflow-hidden mb-5 bg-gradient-to-br from-slate-100 to-slate-50">
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover drop-shadow-2xl transition-transform duration-500 hover:scale-105"
+            />
+            {/* Image Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           </div>
 
           {/* Product Info */}
-          <div className="text-center">
-            {/* Tag */}
-            <span className="inline-block px-3 py-1 rounded-full bg-amber-400/20 text-amber-200 text-xs font-medium mb-3">
-              {product.tag}
-            </span>
-
+          <div className="text-center relative z-10">
             {/* Name */}
-            <h3 className="text-xl font-bold text-white mb-2">{product.name}</h3>
+            <h3 className="text-xl font-bold text-white mb-2 drop-shadow-md">
+              {product.name}
+            </h3>
 
             {/* Description */}
-            <p className="text-sm text-emerald-100/80 mb-4 line-clamp-2">
+            <p className="text-sm text-white/80 mb-4 line-clamp-2">
               {product.description}
             </p>
 
-            {/* Price */}
-            <div className="bg-white/10 rounded-lg px-4 py-2">
-              <p className="text-xs text-emerald-200/60">Giá tham khảo</p>
-              <p className="text-lg font-bold text-white">
-                {product.price} <span className="text-sm font-normal">{product.unit}</span>
+            {/* Price Badge */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <p className="text-[10px] text-white/60 uppercase tracking-wider">Giá tham khảo</p>
+              <p className="text-xl font-bold text-white drop-shadow-md">
+                {product.price}
+                <span className="text-sm font-normal text-white/80 ml-1">{product.unit}</span>
               </p>
             </div>
           </div>
+
+          {/* Decorative Corner */}
+          <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-emerald-500/30 to-transparent rounded-tl-full" />
         </div>
 
-        {/* Dots Indicator */}
-        <div className="flex justify-center gap-2 mt-4">
+        {/* Dots Indicator with glow effect */}
+        <div className="flex justify-center gap-3 mt-5">
           {HERO_PRODUCTS.map((_, i) => (
             <button
               key={i}
@@ -828,10 +952,10 @@ function HeroProductShowcase() {
                 }, 300);
               }}
               className={cn(
-                "w-2 h-2 rounded-full transition-all duration-300",
+                "h-2.5 rounded-full transition-all duration-300",
                 i === currentIndex
-                  ? "bg-white w-6"
-                  : "bg-white/40 hover:bg-white/60"
+                  ? "bg-white w-8 shadow-lg shadow-white/50"
+                  : "bg-white/40 hover:bg-white/60 w-2.5"
               )}
             />
           ))}
@@ -842,51 +966,65 @@ function HeroProductShowcase() {
 }
 
 /* ─────────────────────────────────────────────
- * Hero Banner — Primary CTA Section
+ * Hero Banner — Premium Hero with Real Background
  * ───────────────────────────────────────────── */
 
 function HeroBanner() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <defs>
-            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)"/>
-        </svg>
-      </div>
+    <section className="relative overflow-hidden min-h-[600px] lg:min-h-[550px]">
+      {/* Background Image - Real Agriculture Photo */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1592982537447-6f2a6a0c5c41?q=80&w=2000&auto=format&fit=crop')`,
+        }}
+      />
+      
+      {/* Gradient Overlay - Dark Emerald for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/95 via-emerald-900/80 to-emerald-800/50" />
+      
+      {/* Subtle Light Rays Effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-transparent to-transparent" />
 
-      <div className="container mx-auto px-4 py-12 md:py-16 relative">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+      <div className="container mx-auto px-4 py-16 md:py-20 relative">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10">
           {/* Left: Text Content */}
-          <div className="flex-1 max-w-xl">
-            <Badge className="mb-4 bg-white/20 text-white border-0 backdrop-blur">
-              <Sprout className="w-3 h-3 mr-1" />
-              Hệ thống tưới tiêu thông minh #1 Việt Nam
-            </Badge>
+          <div className="flex-1 max-w-xl relative z-10">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-sm font-medium text-white/90">
+                🌱 Hệ thống tưới tiêu thông minh #1 Việt Nam
+              </span>
+            </div>
 
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
-              Tưới tiết kiệm 60% nước.<br />
-              <span className="text-emerald-200">Tính vật tư chỉ 3 giây.</span>
+            {/* Headline */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5 drop-shadow-2xl">
+              Tưới tiết kiệm<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-emerald-100">
+                60% nước.
+              </span>
+              <br />
+              <span className="text-3xl md:text-4xl lg:text-5xl">
+                Tính vật tư chỉ 3 giây.
+              </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-emerald-100 mb-8">
+            {/* Subheadline */}
+            <p className="text-lg md:text-xl text-white/80 mb-8 max-w-lg">
               Hệ thống tưới tự động cho sầu riêng, cà phê, cây ăn trái —
-              Báo giá trọn gói, lắp đặt tại farm.
+              <span className="text-emerald-300 font-medium"> Báo giá trọn gói</span>, lắp đặt tại farm.
             </p>
 
+            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 asChild
                 size="lg"
-                className="h-12 px-8 bg-white text-emerald-700 hover:bg-emerald-50 font-bold shadow-lg hover:shadow-xl transition-all rounded-lg"
+                className="h-14 px-10 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-white font-bold shadow-xl shadow-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/40 transition-all duration-300 rounded-xl"
               >
                 <Link href="/tinh-toan" className="gap-2">
-                  <span>🔥</span>
+                  <span className="text-xl">🔥</span>
                   Tính Toán Vật Tư
                 </Link>
               </Button>
@@ -895,7 +1033,7 @@ function HeroBanner() {
                 asChild
                 variant="outline"
                 size="lg"
-                className="h-12 px-8 bg-transparent border-2 border-white/40 text-white hover:bg-white/10 font-semibold backdrop-blur rounded-lg"
+                className="h-14 px-10 bg-white/10 hover:bg-white/20 border-2 border-white/30 text-white font-semibold backdrop-blur-md transition-all duration-300 rounded-xl"
               >
                 <Link href="/giai-phap" className="gap-2">
                   <Lightbulb className="w-5 h-5" />
@@ -904,20 +1042,26 @@ function HeroBanner() {
               </Button>
             </div>
 
-            {/* Stats Badge */}
-            <div className="mt-8 flex flex-wrap gap-4 text-sm text-emerald-100">
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
-                500+ đại lý toàn quốc
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
-                Lắp đặt trong 48h
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
-                Bảo hành 2 năm
-              </span>
+            {/* Trust Badges */}
+            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-white/70">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                  <MapPin className="w-4 h-4 text-emerald-400" />
+                </div>
+                <span>500+ đại lý</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                  <Clock className="w-4 h-4 text-emerald-400" />
+                </div>
+                <span>Lắp đặt 48h</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                  <Shield className="w-4 h-4 text-emerald-400" />
+                </div>
+                <span>Bảo hành 2 năm</span>
+              </div>
             </div>
           </div>
 
@@ -926,7 +1070,7 @@ function HeroBanner() {
         </div>
       </div>
 
-      {/* Decorative Wave */}
+      {/* Bottom Wave Decoration */}
       <div className="absolute bottom-0 left-0 right-0">
         <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
           <path d="M0 50L48 45C96 40 192 30 288 35C384 40 480 60 576 65C672 70 768 60 864 50C960 40 1056 30 1152 35C1248 40 1344 60 1392 70L1440 80V100H0V50Z" fill="#f8fafc"/>
@@ -965,29 +1109,79 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
+          {/* Product Grid - Mobile: scroll snap, Desktop: grid */}
+          <div className="flex gap-4 overflow-x-auto pb-4 md:overflow-visible md:grid md:grid-cols-3 lg:grid-cols-5 md:gap-5 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory scrollbar-hide">
             {SUGGESTED_PRODUCTS.map((product) => (
-              <div 
+              <Link
                 key={product.id}
-                className="flex-shrink-0 w-48 bg-white rounded-xl border border-slate-100 p-4 hover:border-slate-200 hover:shadow-sm transition-all"
+                href={`/san-pham/${product.slug}`}
+                className="group flex-shrink-0 w-[260px] md:w-auto snap-start"
               >
-                <div className="w-full h-24 rounded-lg bg-gradient-to-br from-slate-100 to-slate-50 mb-3 flex items-center justify-center">
-                  <Droplets className="w-8 h-8 text-slate-300" />
+                <div className="h-full bg-white rounded-xl border border-slate-100 overflow-hidden hover:border-emerald-200 hover:shadow-lg transition-all duration-300">
+                  {/* Product Image Container */}
+                  <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    
+                    {/* Badge - Top Right */}
+                    {product.badge && (
+                      <div className="absolute top-2 right-2">
+                        {product.badge === 'hot' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                            🔥 Bán chạy
+                          </span>
+                        )}
+                        {product.badge === 'sale' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                            ⚡ Giảm giá
+                          </span>
+                        )}
+                        {product.badge === 'seasonal' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                            💧 Mùa hạn
+                          </span>
+                        )}
+                        {product.badge === 'bestseller' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                            ⭐ Yêu thích
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="p-4">
+                    {/* Category Tag */}
+                    <span className="inline-block px-2 py-1 mb-2 text-[10px] uppercase tracking-wider font-semibold text-gray-500 bg-gray-100 rounded-md">
+                      {product.categoryName}
+                    </span>
+                    
+                    {/* Product Name */}
+                    <h4 className="font-semibold text-sm text-slate-900 mb-1.5 line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                      {product.name}
+                    </h4>
+                    
+                    {/* Price */}
+                    <p className="text-sm font-bold text-emerald-600 mb-3">
+                      {new Intl.NumberFormat("vi-VN").format(product.price)}
+                      <span className="text-xs font-normal text-muted-foreground ml-1">{product.unit}</span>
+                    </p>
+
+                    {/* CTA Link */}
+                    <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 group-hover:gap-2 transition-all">
+                      Xem chi tiết
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
                 </div>
-                
-                <h4 className="font-medium text-sm text-slate-900 mb-2 line-clamp-2">
-                  {product.name}
-                </h4>
-                <p className="text-sm font-bold text-emerald-600 mb-3">
-                  {new Intl.NumberFormat("vi-VN").format(product.price)} 
-                  <span className="text-xs font-normal text-muted-foreground ml-1">{product.unit}</span>
-                </p>
-                
-                <Button variant="outline" className="w-full h-9 text-sm gap-1.5">
-                  <MapPin className="w-3.5 h-3.5" />
-                  Xem Điểm Bán
-                </Button>
-              </div>
+              </Link>
             ))}
           </div>
           

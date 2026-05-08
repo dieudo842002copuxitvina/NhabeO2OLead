@@ -91,12 +91,17 @@ export default function ProductMegaMenu({ isMobile = false, onMobileClose }: Pro
       onMouseLeave={() => setIsOpen(false)}
     >
       {/* Trigger Button */}
-      <button className={cn(
-        "flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-all duration-200",
-        isOpen 
-          ? "text-emerald-600 bg-emerald-50" 
-          : "text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50"
-      )}>
+      <button 
+        className={cn(
+          "flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-all duration-200",
+          isOpen 
+            ? "text-emerald-600 bg-emerald-50" 
+            : "text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50"
+        )}
+        onMouseEnter={() => setIsOpen(true)}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+      >
         <Package className="w-4 h-4" />
         Sản phẩm
         <ChevronDown className={cn(
@@ -107,9 +112,9 @@ export default function ProductMegaMenu({ isMobile = false, onMobileClose }: Pro
 
       {/* Mega Menu Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 pt-2 z-[60]">
+        <div className="absolute top-full left-0 pt-2 z-[70]">
           <div 
-            className="bg-white rounded-xl shadow-2xl border border-slate-200 w-[900px] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+            className="bg-white rounded-xl shadow-2xl border border-slate-200 w-[900px] max-w-[95vw] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
             onMouseEnter={() => setIsOpen(true)}
           >
             
