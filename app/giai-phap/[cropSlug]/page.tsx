@@ -150,23 +150,18 @@ export default function SolutionDetailPage({ params }: Props) {
             </div>
           </div>
           
-          {/* Diagram Visualization */}
-          <div className="relative">
-            <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+          {/* Diagram Visualization - Horizontal scroll on mobile */}
+          <div className="overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide snap-x">
+            <div className="flex items-center justify-center gap-3 md:gap-4 min-w-max">
               {IRRIGATION_DIAGRAM.components.map((comp, idx) => (
-                <div key={comp.label} className="flex items-center gap-3">
+                <div key={comp.label} className="flex items-center gap-3 snap-start">
                   <div className="flex flex-col items-center p-4 bg-slate-50 rounded-xl border border-slate-200 min-w-[120px] text-center hover:border-emerald-300 hover:bg-emerald-50 transition-colors">
                     <comp.icon className="w-8 h-8 text-emerald-600 mb-2" />
                     <span className="font-semibold text-sm text-gray-900">{comp.label}</span>
                     <span className="text-xs text-gray-500 mt-1">{comp.sub}</span>
                   </div>
                   {idx < IRRIGATION_DIAGRAM.components.length - 1 && (
-                    <ArrowRight className="w-5 h-5 text-gray-400 hidden md:block" />
-                  )}
-                  {idx < IRRIGATION_DIAGRAM.components.length - 1 && (
-                    <div className="md:hidden w-full h-6 flex items-center justify-center">
-                      <ArrowRight className="w-4 h-4 text-gray-400 rotate-90" />
-                    </div>
+                    <ArrowRight className="w-5 h-5 text-gray-400 shrink-0" />
                   )}
                 </div>
               ))}
@@ -278,19 +273,12 @@ export default function SolutionDetailPage({ params }: Props) {
 
       {/* ── STICKY CTA (Mobile Only) ── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 p-3 shadow-lg lg:hidden safe-area-inset-bottom">
-        <div className="flex gap-2">
-          <Button asChild className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 font-semibold">
-            <Link href={`/tinh-toan?crop=${solution.cropSlug}`} className="gap-2">
-              <Calculator className="w-5 h-5" />
-              Tính vật tư cho {solution.name}
-            </Link>
+        <Link href={`/tinh-toan?crop=${solution.cropSlug}`}>
+          <Button className="w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 font-bold shadow-lg gap-2">
+            <span>🔥</span>
+            Tính Toán Vật Tư Cho Rẫy Của Bạn
           </Button>
-          <Button asChild variant="outline" size="icon" className="h-12 w-12 shrink-0 border-emerald-600">
-            <a href="tel:0900000000">
-              <Phone className="w-5 h-5 text-emerald-600" />
-            </a>
-          </Button>
-        </div>
+        </Link>
       </div>
     </main>
   );

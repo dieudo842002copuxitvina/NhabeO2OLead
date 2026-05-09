@@ -125,6 +125,20 @@ export default function TopNav() {
                   Giải pháp
                 </Link>
 
+                {/* 3. Giá Nông Sản */}
+                <Link
+                  href="/prices"
+                  className={cn(
+                    'flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-colors',
+                    isActivePath('/prices') || isActivePath('/gia-nong-san')
+                      ? 'text-emerald-600 bg-emerald-50'
+                      : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50',
+                  )}
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  Giá Nông Sản
+                </Link>
+
                 {/* 3. Sản phẩm — Mega Menu Dropdown */}
                 <div className="relative">
                   <ProductMegaMenu />
@@ -335,6 +349,20 @@ export default function TopNav() {
                     >
                       <MapPin className="w-5 h-5" />
                       Hệ thống Đại lý
+                    </Link>
+                    
+                    <Link
+                      href="/prices"
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors',
+                        isActivePath('/prices') || isActivePath('/gia-nong-san')
+                          ? 'bg-emerald-50 text-emerald-600'
+                          : 'text-slate-700 hover:bg-emerald-50',
+                      )}
+                    >
+                      <TrendingUp className="w-5 h-5" />
+                      Giá Nông Sản
                     </Link>
                     
                     <Link

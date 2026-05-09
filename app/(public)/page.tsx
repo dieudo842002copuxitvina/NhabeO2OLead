@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import AgriPriceWidget from "@/components/AgriPriceWidget";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -1090,6 +1091,9 @@ export default function HomePage() {
       
       {/* ── VỊ TRÍ 1: Hero Banner ── */}
       <HeroBanner />
+
+      {/* ── VỊ TRÍ 1.5: Agri Price Widget ── */}
+      <AgriPriceWidget />
 
       {/* ── VỊ TRÍ 2: Giải Pháp (Solutions) ── */}
       <section className="bg-white border-b border-slate-100">
