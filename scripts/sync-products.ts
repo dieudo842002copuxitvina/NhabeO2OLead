@@ -975,9 +975,9 @@ function extractSeoKeywords(name: string, description: string): string[] {
 async function fetchProductDetail(url: string): Promise<ScrapedProduct | null> {
   console.log(`\n  🌐 Đang cào: ${url}`);
 
-  let data: ReturnType<typeof cheerio.load>;
   try {
-    data = cheerio.load(await fetchWithRetry<string>(url));
+    const htmlData = await fetchWithRetry<string>(url);
+    const $ = cheerio.load(htmlData);
 
     // ── A) Tên sản phẩm — WooCommerce standard ──
     const nameSelectors = [
@@ -1771,9 +1771,12 @@ async function main() {
   console.log("─".repeat(50));
 
   const categoryUrls = [
-    `${SOURCE_URL}/san-pham`,
-    `${SOURCE_URL}/product`,
     `${SOURCE_URL}/cua-hang`,
+    `${SOURCE_URL}/danh-muc/tuoi-phun-mua/`,
+    `${SOURCE_URL}/danh-muc/tuoi-nuoc-nho-giot/`,
+    `${SOURCE_URL}/danh-muc/bo-loc/`,
+    `${SOURCE_URL}/danh-muc/ong-tuoi-nho-giot/`,
+    `${SOURCE_URL}/danh-muc/van-dien-tu/`,
   ];
 
   let allLinks: string[] = [];
@@ -1885,28 +1888,33 @@ async function main() {
       const { url, slug } = toScrape[i];
       process.stdout.write(`\n  [${i + 1}/${toScrape.length}] ${url}`);
 
-      const scraped = await fetchProductDetail(url);
-      if (!scraped) {
-        process.stdout.write(" — ⚠️ scrape thất bại\n");
+      try {
+        const scraped = await fetchProductDetail(url);
+        if (!scraped) {
+          process.stdout.write(" — ⚠️ scrape thất bại\n");
+          continue;
+        }
+
+        const normalized = await normalizeProduct(scraped, i);
+        const hash = await computeSyncHash(normalized);
+
+        // Hash unchanged → content really didn't change, skip upsert
+        const dbProduct = existing.find((p) => p.slug === slug);
+        if (dbProduct && dbProduct.sync_hash === hash) {
+          process.stdout.write(" = không đổi, bỏ qua");
+          // Update last_synced_at anyway (touch)
+          await prisma.products.updateMany({
+            where: { slug },
+            data: { last_synced_at: new Date(), updated_at: new Date() },
+          }).catch(() => {});
+          continue;
+        }
+
+        normalizedProducts.push(normalized);
+      } catch (error) {
+        console.warn(`\n  ⚠️ Bỏ qua sản phẩm lỗi: ${(error as Error).message}`);
         continue;
       }
-
-      const normalized = await normalizeProduct(scraped, i);
-      const hash = await computeSyncHash(normalized);
-
-      // Hash unchanged → content really didn't change, skip upsert
-      const dbProduct = existing.find((p) => p.slug === slug);
-      if (dbProduct && dbProduct.sync_hash === hash) {
-        process.stdout.write(" = không đổi, bỏ qua");
-        // Update last_synced_at anyway (touch)
-        await prisma.products.updateMany({
-          where: { slug },
-          data: { last_synced_at: new Date(), updated_at: new Date() },
-        }).catch(() => {});
-        continue;
-      }
-
-      normalizedProducts.push(normalized);
 
       if (i < toScrape.length - 1) {
         await new Promise((r) => setTimeout(r, DELAY_MS));
@@ -1952,11 +1960,16 @@ async function main() {
     const url = limitedLinks[i];
     process.stdout.write(`\n  [${i + 1}/${limitedLinks.length}] `);
 
-    const scraped = await fetchProductDetail(url);
-    if (!scraped) continue;
+    try {
+      const scraped = await fetchProductDetail(url);
+      if (!scraped) continue;
 
-    const normalized = await normalizeProduct(scraped, i);
-    normalizedProducts.push(normalized);
+      const normalized = await normalizeProduct(scraped, i);
+      normalizedProducts.push(normalized);
+    } catch (err) {
+      console.warn(`\n  ⚠️ Bỏ qua sản phẩm lỗi: ${(err as Error).message}`);
+      continue;
+    }
 
     if (i < limitedLinks.length - 1) {
       await new Promise((r) => setTimeout(r, DELAY_MS));
