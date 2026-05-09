@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -81,13 +82,24 @@ export function useNearbyDealers({
   radiusMeters = 50_000,
   limit = 20,
 }: UseNearbyDealersOptions): UseNearbyDealersResult {
-  const queryKey = ["nearby-dealers", lat, lng, radiusMeters, limit];
+  const [debouncedLat, setDebouncedLat] = useState(lat);
+  const [debouncedLng, setDebouncedLng] = useState(lng);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedLat(lat);
+      setDebouncedLng(lng);
+    }, 1000);
+    return () => clearTimeout(handler);
+  }, [lat, lng]);
+
+  const queryKey = ["nearby-dealers", debouncedLat, debouncedLng, radiusMeters, limit];
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey,
     // Only run when we have valid coordinates
     queryFn: async (): Promise<DealerWithDistance[]> => {
-      if (!lat || !lng) return [];
+      if (!debouncedLat || !debouncedLng) return [];
 
       // ── Call RPC ────────────────────────────────────────────────────────────
       // Falls back to PostGIS ST_DWithin + ST_Distance if RPC not yet deployed
@@ -97,8 +109,8 @@ export function useNearbyDealers({
         const { data: rpcData, error: rpcError } = await supabase.rpc(
           "get_nearby_dealers",
           {
-            user_lat: lat,
-            user_lng: lng,
+            user_lat: debouncedLat,
+            user_lng: debouncedLng,
             radius_meters: radiusMeters,
           }
         );
@@ -110,10 +122,10 @@ export function useNearbyDealers({
       } catch {
         // RPC not found or errored — fall back to bounding-box pre-filter
         const approxDegPerKm = radiusMeters / 111_320;
-        const minLat = lat - approxDegPerKm;
-        const maxLat = lat + approxDegPerKm;
-        const minLng = lng - approxDegPerKm / Math.cos(toRad(lat));
-        const maxLng = lng + approxDegPerKm / Math.cos(toRad(lat));
+        const minLat = debouncedLat - approxDegPerKm;
+        const maxLat = debouncedLat + approxDegPerKm;
+        const minLng = debouncedLng - approxDegPerKm / Math.cos(toRad(debouncedLat));
+        const maxLng = debouncedLng + approxDegPerKm / Math.cos(toRad(debouncedLat));
 
         const { data: boxData, error: boxError } = await supabase
           .from("dealers")
@@ -150,7 +162,7 @@ export function useNearbyDealers({
         .filter((d) => d.latitude != null && d.longitude != null)
         .map((d) => ({
           ...d,
-          distance_km: haversineDistance(lat, lng, d.latitude!, d.longitude!),
+          distance_km: haversineDistance(debouncedLat, debouncedLng, d.latitude!, d.longitude!),
         }))
         .sort((a, b) => a.distance_km - b.distance_km)
         .slice(0, limit);
@@ -159,7 +171,7 @@ export function useNearbyDealers({
     },
 
     // Guard: skip entirely if no GPS coordinates
-    enabled: lat !== null && lng !== null,
+    enabled: debouncedLat !== null && debouncedLng !== null,
     staleTime: 5 * 60 * 1000,   // 5 minutes — GPS won't change fast
     gcTime: 10 * 60 * 1000,      // 10 minutes cache
     retry: 1,

@@ -8,11 +8,56 @@
  * and pump requirement estimation for agricultural irrigation systems.
  */
 
-import { calculateFrictionLoss } from "@/lib/calculators/pumpCalculator";
+/* ─────────────────────────────────────────────────────────────────────────────
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * TYPES
  * ───────────────────────────────────────────────────────────────────────────── */
+
+export interface HydraulicResult {
+  headLossMeters: number;
+  pressureDropBar: number;
+}
+
+/**
+ * Tính toán tổn thất áp lực trong đường ống sử dụng công thức Hazen-Williams
+ * @param flowRateLph Lưu lượng nước (Lít/giờ)
+ * @param lengthM Chiều dài đường ống (Mét)
+ * @param innerDiameterMm Đường kính trong của ống (Milimét)
+ * @param cCoefficient Hệ số nhám Hazen-Williams (mặc định 140 cho ống nhựa PVC/HDPE)
+ */
+export function calculateFrictionLoss(
+  flowRateLph: number,
+  lengthM: number,
+  innerDiameterMm: number,
+  cCoefficient: number = 140
+): HydraulicResult {
+  if (Number.isNaN(flowRateLph) || Number.isNaN(lengthM) || Number.isNaN(innerDiameterMm)) {
+    throw new Error("Vui lòng nhập số liệu hợp lệ");
+  }
+  if (innerDiameterMm <= 0) throw new Error("Đường kính ống phải lớn hơn 0");
+  if (flowRateLph < 0) throw new Error("Lưu lượng không được âm");
+  if (lengthM < 0) throw new Error("Chiều dài ống không được âm");
+  
+  if (flowRateLph === 0 || lengthM === 0) {
+    return { headLossMeters: 0, pressureDropBar: 0 };
+  }
+
+  // Quy đổi L/h -> m³/s
+  const flowRateM3s = flowRateLph / 3600000;
+  // Quy đổi mm -> m
+  const diameterM = innerDiameterMm / 1000;
+
+  // Công thức Hazen-Williams
+  const qOverC = flowRateM3s / cCoefficient;
+  const headLossMeters = 10.67 * lengthM * Math.pow(qOverC, 1.852) / Math.pow(diameterM, 4.8704);
+  const pressureDropBar = headLossMeters / 10.197;
+
+  return {
+    headLossMeters: Number(headLossMeters.toFixed(3)),
+    pressureDropBar: Number(pressureDropBar.toFixed(3)),
+  };
+}
 
 /**
  * Input parameters for hydraulic calculation
@@ -177,7 +222,7 @@ export function calculatePumpRequirement(input: HydraulicInput): HydraulicOutput
       input.pipeLengthM,
       input.pipeDiameterMm,
       HAZEN_WILLIAMS_C
-    );
+    ).headLossMeters;
   } catch {
     // If friction calculation fails, use simplified estimate
     frictionLossM = (input.pipeLengthM / 100) * 2; // ~2m per 100m for small pipes

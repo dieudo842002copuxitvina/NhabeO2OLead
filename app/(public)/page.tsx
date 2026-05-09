@@ -50,7 +50,7 @@ const DealerMap = dynamic(
  * Mock Data
  * ───────────────────────────────────────────── */
 
-const PRICE_TICKERS = [
+const NEWS_ARTICLES = [
   {
     id: 1,
     title: "Giá cà phê Robusta tăng mạnh sau tin đồn mất mùa ở Brazil",
@@ -78,6 +78,13 @@ const PRICE_TICKERS = [
     date: "2026-04-25",
     slug: "sau-rieng-r6-dak-lak-duoc-mua"
   },
+];
+
+const PRICE_TICKERS = [
+  { id: 1, name: "Cà phê Robusta", price: 105000, change: 2.5 },
+  { id: 2, name: "Sầu riêng Ri6", price: 85000, change: -1.2 },
+  { id: 3, name: "Tiêu đen", price: 95000, change: 0.5 },
+  { id: 4, name: "Gạo ST25", price: 35000, change: 0 },
 ];
 
 const SUGGESTED_PRODUCTS = [
