@@ -803,6 +803,30 @@ function extractTechnicalParams(html: string): Record<string, string> {
     }
   }
 
+  // ── E) Bóc tách thô (Fallback raw text) ──
+  // Tìm các vùng chứa từ khóa thông số kỹ thuật
+  const specKeywords = ["thông số kỹ thuật", "đặc tính", "specification", "thông số"];
+  let rawSpecsText = "";
+
+  $("div, section, p, ul").each((_, el) => {
+    const text = $(el).text().trim();
+    if (text.length > 20 && text.length < 2000) {
+      const lower = text.toLowerCase();
+      for (const kw of specKeywords) {
+        if (lower.includes(kw)) {
+          const cleanText = text.replace(/\s+/g, ' ');
+          if (cleanText.length > rawSpecsText.length) {
+            rawSpecsText = cleanText;
+          }
+        }
+      }
+    }
+  });
+
+  if (rawSpecsText && Object.keys(specs).length === 0) {
+    specs["raw_specs"] = rawSpecsText.substring(0, 1000); // Lưu tạm dạng raw text
+  }
+
   return specs;
 }
 
@@ -1362,7 +1386,7 @@ async function normalizeProduct(
   index: number
 ): Promise<NormalizedProduct> {
   const slug = toSlug(scraped.name) || `product-${index + 1}`;
-  const sku = scraped.sku || generateSku(scraped.name, index + 1);
+  const sku = scraped.sku || `NB-${slug.substring(0, 8).toUpperCase()}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
   const { cropTags, terrainTags, geoTags } = extractTags(scraped.name, scraped.description);
 
   // ── Category Mapping — Priority: URL path > breadcrumb/title → CATEGORY_MAP ──
@@ -1372,8 +1396,8 @@ async function normalizeProduct(
   const fromBreadcrumb = extractCategoryFromName(rawCategory);
 
   // Priority: URL > Breadcrumb > Name > fallback
-  const categorySlug = fromUrl || fromBreadcrumb || fromName || "san-pham-khac";
-  const categoryName = getCategoryName(categorySlug);
+  const categorySlug = fromUrl || fromBreadcrumb || fromName || "chua-phan-loai";
+  const categoryName = categorySlug === "chua-phan-loai" ? "Chưa phân loại" : getCategoryName(categorySlug);
 
   // ── Brand Extraction ──
   // Resolve rawBrand (string from HTML/specs) → brandSlug in DB
@@ -1506,7 +1530,6 @@ async function upsertProduct(
           sku: product.sku,
           specifications: product.specifications as object,
           brand_id: brandId,
-          brand: product.brandSlug || null,
           features: {
             ...product.features,
             instructions: product.instructions,
@@ -1527,7 +1550,6 @@ async function upsertProduct(
           sku: product.sku,
           specifications: product.specifications as object,
           brand_id: brandId,
-          brand: product.brandSlug || null,
           features: {
             crop_tags: product.cropTags,
             terrain_tags: product.terrainTags,
@@ -1550,7 +1572,7 @@ async function upsertProduct(
         },
       })
       .catch((err) => {
-        process.stdout.write(`\n  ❌ LỖI PRODUCT: ${err.message}`);
+        console.error(`\n  ❌ Lỗi lưu DB tại sản phẩm [${product.name}]:`, err.message || err);
         throw err; // Rethrow — transaction sẽ rollback
       });
 
@@ -1594,43 +1616,52 @@ async function upsertProduct(
 
 // ─── STEP 9: Lấy danh sách link ─────────────────────────────────────────────
 
-async function fetchProductLinks(baseUrl: string): Promise<string[]> {
-  console.log(`\n🌐 Lấy danh sách từ: ${baseUrl}`);
+async function fetchProductLinksFromSitemap(): Promise<string[]> {
+  console.log(`\n🌐 BƯỚC 1: QUÉT SITEMAP XML...`);
   const links: string[] = [];
+  
+  const sitemaps = [
+    `${SOURCE_URL}/product-sitemap.xml`,
+    `${SOURCE_URL}/sitemap_index.xml`,
+    `${SOURCE_URL}/sitemap.xml`
+  ];
 
-  try {
-    const html = await fetchWithRetry<string>(baseUrl);
-
-    const $ = cheerio.load(html, { decodeEntities: false });
-    const selectors = [
-      'a[href*="/san-pham/"]',
-      'a[href*="/product/"]',
-      ".product-item a",
-      ".product-card a",
-      ".woocommerce-loop-product__link",
-      '[class*="product"] a[href]',
-    ];
-
-    for (const sel of selectors) {
-      $(sel).each((_, el) => {
-        const href = $(el).attr("href");
-        if (href) {
-          // Chỉ lấy link sản phẩm (chứa /product/), loại bỏ category links
-          if (!href.includes("/product/") && !href.includes("/san-pham/")) return;
-          const fullUrl = href.startsWith("http") ? href : `${SOURCE_URL}${href}`;
-          if (!links.includes(fullUrl)) links.push(fullUrl);
+  for (const sm of sitemaps) {
+    try {
+      console.log(`  👉 Thử quét sitemap: ${sm}`);
+      const xml = await fetchWithRetry<string>(sm);
+      const $ = cheerio.load(xml, { xmlMode: true });
+      
+      let count = 0;
+      $("loc").each((_, el) => {
+        const url = $(el).text();
+        if (url.includes("/product/") || url.includes("/san-pham/") || url.includes("/cua-hang/")) {
+          // Tránh lấy các url category
+          if (url.includes("/danh-muc/")) return;
+          links.push(url);
+          count++;
         }
       });
-      if (links.length > 0) {
-        console.log(`  ✅ Tìm thấy ${links.length} link`);
-        break;
+      
+      if (count > 0) {
+        console.log(`  ✅ Thành công! Lấy được ${count} link từ ${sm}`);
+      } else {
+        // Tìm sitemap con nếu đây là index
+        $("loc").each((_, el) => {
+           const url = $(el).text();
+           if (url.includes("product-sitemap") && !sitemaps.includes(url)) {
+              sitemaps.push(url);
+           }
+        });
       }
+    } catch (e) {
+      console.log(`  ⚠️ Lỗi đọc ${sm}: ${(e as Error).message}`);
     }
-  } catch (err) {
-    console.error(`  ❌ Lỗi: ${(err as Error).message}`);
   }
 
-  return [...new Set(links)];
+  const uniqueLinks = [...new Set(links)];
+  console.log(`\n📍 Tìm thấy tổng cộng [${uniqueLinks.length}] sản phẩm duy nhất trong Sitemap. Bắt đầu vét sạch dữ liệu...\n`);
+  return uniqueLinks;
 }
 
 // ─── PREVIEW MODE: Test 1-2 URL ──────────────────────────────────────────────
@@ -1667,6 +1698,10 @@ async function previewUrl(url: string): Promise<void> {
   } else {
     console.log("      ⚠️  Không tìm thấy bảng thông số. Cần kiểm tra lại selector!");
   }
+  
+  // Hiển thị toàn bộ JSON productData để test theo yêu cầu BƯỚC 3
+  console.log(`\n  🔎 RAW PRODUCT DATA JSON:`);
+  console.log(JSON.stringify(scraped, null, 2));
 
   console.log(`\n  4️⃣  MÔ TẢ (${scraped.description.length} ký tự):`);
   const descPreview = scraped.description.substring(0, 200);
@@ -1722,19 +1757,8 @@ async function main() {
 
   // ── MAP5 MODE: Preview mapping 5 sản phẩm đầu tiên ──
   if (args.mode === "map5") {
-    console.log("\n📋 BƯỚC 0: Tìm danh sách sản phẩm để preview...");
-    const categoryUrls = [
-      `${SOURCE_URL}/danh-muc/tuoi-phun-mua/bec-phun-mua/`,
-      `${SOURCE_URL}/danh-muc/tuoi-phun-mua/`,
-      `${SOURCE_URL}/product`,
-    ];
-    let allLinks: string[] = [];
-    for (const catUrl of categoryUrls) {
-      const links = await fetchProductLinks(catUrl);
-      allLinks = [...new Set([...allLinks, ...links])];
-      if (allLinks.length >= 5) break;
-      await new Promise((r) => setTimeout(r, DELAY_MS));
-    }
+    console.log("\n📋 BƯỚC 0: Tìm danh sách sản phẩm qua Sitemap để preview...");
+    let allLinks = await fetchProductLinksFromSitemap();
     if (allLinks.length === 0) {
       console.log("  ⚠️  Không tìm thấy sản phẩm nào!");
     } else {
@@ -1770,22 +1794,7 @@ async function main() {
   console.log("\n📋 BƯỚC 1: Lấy danh sách sản phẩm");
   console.log("─".repeat(50));
 
-  const categoryUrls = [
-    `${SOURCE_URL}/cua-hang`,
-    `${SOURCE_URL}/danh-muc/tuoi-phun-mua/`,
-    `${SOURCE_URL}/danh-muc/tuoi-nuoc-nho-giot/`,
-    `${SOURCE_URL}/danh-muc/bo-loc/`,
-    `${SOURCE_URL}/danh-muc/ong-tuoi-nho-giot/`,
-    `${SOURCE_URL}/danh-muc/van-dien-tu/`,
-  ];
-
-  let allLinks: string[] = [];
-  for (const catUrl of categoryUrls) {
-    const links = await fetchProductLinks(catUrl);
-    allLinks = [...new Set([...allLinks, ...links])];
-    if (allLinks.length > 0) break;
-    await new Promise((r) => setTimeout(r, DELAY_MS));
-  }
+  let allLinks = await fetchProductLinksFromSitemap();
 
   if (allLinks.length === 0) {
     console.log("  ⚠️  Không tìm thấy link. Thử preview URL trực tiếp:");
@@ -1883,55 +1892,54 @@ async function main() {
     }
 
     // Scrape + upsert
+    console.log(`\n📋 BƯỚC 2: Cào chi tiết & lưu DB (Concurrency: 5)`);
+    console.log("─".repeat(50));
+
     const normalizedProducts: NormalizedProduct[] = [];
-    for (let i = 0; i < toScrape.length; i++) {
-      const { url, slug } = toScrape[i];
-      process.stdout.write(`\n  [${i + 1}/${toScrape.length}] ${url}`);
-
-      try {
-        const scraped = await fetchProductDetail(url);
-        if (!scraped) {
-          process.stdout.write(" — ⚠️ scrape thất bại\n");
-          continue;
-        }
-
-        const normalized = await normalizeProduct(scraped, i);
-        const hash = await computeSyncHash(normalized);
-
-        // Hash unchanged → content really didn't change, skip upsert
-        const dbProduct = existing.find((p) => p.slug === slug);
-        if (dbProduct && dbProduct.sync_hash === hash) {
-          process.stdout.write(" = không đổi, bỏ qua");
-          // Update last_synced_at anyway (touch)
-          await prisma.products.updateMany({
-            where: { slug },
-            data: { last_synced_at: new Date(), updated_at: new Date() },
-          }).catch(() => {});
-          continue;
-        }
-
-        normalizedProducts.push(normalized);
-      } catch (error) {
-        console.warn(`\n  ⚠️ Bỏ qua sản phẩm lỗi: ${(error as Error).message}`);
-        continue;
-      }
-
-      if (i < toScrape.length - 1) {
-        await new Promise((r) => setTimeout(r, DELAY_MS));
-      }
-    }
-
-    console.log(`\n\n  📦 Sản phẩm cần update: ${normalizedProducts.length}`);
-
-    // Upsert the changed/new products
+    const CONCURRENCY = 5;
     let successCount = 0;
-    for (let i = 0; i < normalizedProducts.length; i++) {
-      const hash = await computeSyncHash(normalizedProducts[i]);
-      try {
-        await upsertProduct(normalizedProducts[i], i + 1, normalizedProducts.length, hash);
-        successCount++;
-      } catch (err) {
-        console.error(`\n  ❌ Upsert thất bại [${normalizedProducts[i].slug}]:`, (err as Error).message);
+
+    for (let i = 0; i < toScrape.length; i += CONCURRENCY) {
+      const chunk = toScrape.slice(i, i + CONCURRENCY);
+      
+      const promises = chunk.map(async (item, chunkIndex) => {
+        const { url, slug } = item;
+        const globalIndex = i + chunkIndex;
+        process.stdout.write(`\n  [${globalIndex + 1}/${toScrape.length}] ${url}`);
+
+        try {
+          const scraped = await fetchProductDetail(url);
+          if (!scraped) {
+            process.stdout.write(" — ⚠️ scrape thất bại\n");
+            return;
+          }
+
+          const normalized = await normalizeProduct(scraped, globalIndex);
+          const hash = await computeSyncHash(normalized);
+
+          // Hash unchanged → content really didn't change, skip upsert
+          const dbProduct = existing.find((p) => p.slug === slug);
+          if (dbProduct && dbProduct.sync_hash === hash) {
+            process.stdout.write(" = không đổi, bỏ qua");
+            await prisma.products.updateMany({
+              where: { slug },
+              data: { last_synced_at: new Date(), updated_at: new Date() },
+            }).catch(() => {});
+            return;
+          }
+
+          normalizedProducts.push(normalized);
+          await upsertProduct(normalized, globalIndex + 1, toScrape.length, hash);
+          successCount++;
+        } catch (error) {
+          console.warn(`\n  ⚠️ Bỏ qua sản phẩm lỗi: ${(error as Error).message}`);
+        }
+      });
+
+      await Promise.all(promises);
+
+      if (i + CONCURRENCY < toScrape.length) {
+        await new Promise((r) => setTimeout(r, DELAY_MS));
       }
     }
 
@@ -1950,60 +1958,48 @@ async function main() {
   // ── FULL BATCH MODE ────────────────────────────────────────────────────
   console.log("\n  📋 Mode: FULL SYNC (scrape lại toàn bộ)");
 
-  // 2. Cào chi tiết + normalize
-  console.log("\n📋 BƯỚC 2: Cào chi tiết & bóc tách thông số");
+  // 2. Cào chi tiết + normalize + upsert
+  console.log("\n📋 BƯỚC 2: Cào chi tiết & lưu DB (Concurrency: 5)");
   console.log("─".repeat(50));
 
   const normalizedProducts: NormalizedProduct[] = [];
-
-  for (let i = 0; i < limitedLinks.length; i++) {
-    const url = limitedLinks[i];
-    process.stdout.write(`\n  [${i + 1}/${limitedLinks.length}] `);
-
-    try {
-      const scraped = await fetchProductDetail(url);
-      if (!scraped) continue;
-
-      const normalized = await normalizeProduct(scraped, i);
-      normalizedProducts.push(normalized);
-    } catch (err) {
-      console.warn(`\n  ⚠️ Bỏ qua sản phẩm lỗi: ${(err as Error).message}`);
-      continue;
-    }
-
-    if (i < limitedLinks.length - 1) {
-      await new Promise((r) => setTimeout(r, DELAY_MS));
-    }
-  }
-
-  console.log(`\n  ✅ Đã xử lý: ${normalizedProducts.length} sản phẩm`);
-
-  if (normalizedProducts.length === 0) {
-    console.log("\n  ⚠️  Không có sản phẩm nào được cào.");
-    console.log("     Thử chạy preview trước:");
-    console.log('     npx tsx scripts/sync-products.ts --url "https://nhabeagri.com/..."');
-    await prisma.$disconnect();
-    return;
-  }
-
-  // 3. Upsert vào DB
-  console.log("\n📋 BƯỚC 3: Upsert vào Database");
-  console.log("─".repeat(50));
-
+  const CONCURRENCY = 5;
   let successCount = 0;
   let errorCount = 0;
 
-  for (let i = 0; i < normalizedProducts.length; i++) {
-    const { createHash } = await import("crypto");
-    const p = normalizedProducts[i];
-    const content = JSON.stringify({ name: p.name, description: p.description, price: p.basePrice, specs: p.specifications });
-    const hash = createHash("sha256").update(content).digest("hex").slice(0, 32);
+  for (let i = 0; i < limitedLinks.length; i += CONCURRENCY) {
+    const chunk = limitedLinks.slice(i, i + CONCURRENCY);
+    
+    const promises = chunk.map(async (url, chunkIndex) => {
+      const globalIndex = i + chunkIndex;
+      process.stdout.write(`\n  [${globalIndex + 1}/${limitedLinks.length}] ${url}`);
 
-    try {
-      await upsertProduct(normalizedProducts[i], i + 1, normalizedProducts.length, hash);
-      successCount++;
-    } catch {
-      errorCount++;
+      try {
+        const scraped = await fetchProductDetail(url);
+        if (!scraped) {
+          errorCount++;
+          return;
+        }
+
+        const normalized = await normalizeProduct(scraped, globalIndex);
+        normalizedProducts.push(normalized);
+        
+        const { createHash } = await import("crypto");
+        const content = JSON.stringify({ name: normalized.name, description: normalized.description, price: normalized.basePrice, specs: normalized.specifications });
+        const hash = createHash("sha256").update(content).digest("hex").slice(0, 32);
+
+        await upsertProduct(normalized, globalIndex + 1, limitedLinks.length, hash);
+        successCount++;
+      } catch (err) {
+        console.warn(`\n  ⚠️ Bỏ qua sản phẩm lỗi: ${(err as Error).message}`);
+        errorCount++;
+      }
+    });
+
+    await Promise.all(promises);
+    
+    if (i + CONCURRENCY < limitedLinks.length) {
+      await new Promise((r) => setTimeout(r, DELAY_MS));
     }
   }
 
