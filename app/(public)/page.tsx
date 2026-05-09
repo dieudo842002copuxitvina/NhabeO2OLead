@@ -399,14 +399,6 @@ function NutritionEngineerCard() {
  * Tier 3: O2O Dealer Map Section
  * ───────────────────────────────────────────── */
 
-interface DealerItemProps {
-  dealer: typeof DEALERS[0];
-  isSelected: boolean;
-  onSelect: () => void;
-  onHover: () => void;
-  onLeave: () => void;
-}
-
 /* ─────────────────────────────────────────────────────────────────────────────
  * DEALER CARD COMPONENT — works with real DB shape (DealerWithDistance)
  * ───────────────────────────────────────────────────────────────────────────── */
@@ -541,6 +533,13 @@ function DealerMapSection() {
     radiusMeters: 50_000,
     limit: 20,
   });
+
+  // Log theo yêu cầu
+  useEffect(() => {
+    if (dealers.length > 0) {
+      console.log("Danh sách đại lý trả về từ RPC get_nearby_dealers:", dealers);
+    }
+  }, [dealers]);
 
   // Adapter: convert DB shape to DealerLocation for DealerMap
   const mapDealers = dealers.map((d): import("@/components/DealerMap").DealerLocation => ({

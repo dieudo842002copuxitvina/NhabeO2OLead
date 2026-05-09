@@ -3,9 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
-import { PRODUCTS_DATA } from "@/data/products";
+import { prisma } from "@/lib/prisma";
 import InvestmentRoiWidget from "./_components/InvestmentRoiWidget";
-import ProductCard from "../../store/ProductCard";
 
 type PageProps = {
   params: {
@@ -21,16 +20,10 @@ function formatVnd(value: number) {
   }).format(value);
 }
 
-function findProductBySlug(slug: string) {
-  return PRODUCTS_DATA.find((product) => product.slug === slug);
-}
-
-export function generateStaticParams() {
-  return PRODUCTS_DATA.map((product) => ({ slug: product.slug }));
-}
-
-export function generateMetadata({ params }: PageProps): Metadata {
-  const product = findProductBySlug(params.slug);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const product = await prisma.products.findUnique({
+    where: { slug: params.slug },
+  });
 
   if (!product) {
     return {
@@ -41,23 +34,42 @@ export function generateMetadata({ params }: PageProps): Metadata {
 
   return {
     title: `${product.name} | Nhà Bè Agri`,
-    description: product.description.slice(0, 160),
+    description: product.description?.slice(0, 160) || "",
     alternates: {
       canonical: `/san-pham/${product.slug}`,
     },
   };
 }
 
-export default function ProductDetailPage({ params }: PageProps) {
-  const product = findProductBySlug(params.slug);
+export default async function ProductDetailPage({ params }: PageProps) {
+  const product = await prisma.products.findUnique({
+    where: { slug: params.slug },
+    include: {
+      categories: true,
+      brand: true,
+    },
+  });
 
   if (!product) {
     notFound();
   }
 
-  const relatedProducts = product.relatedSlugs
-    .map((slug) => findProductBySlug(slug))
-    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  const relatedProducts = await prisma.products.findMany({
+    where: { category_id: product.category_id, NOT: { id: product.id } },
+    take: 4,
+  });
+
+  // Safe parsing of JSON specifications
+  let specs: Record<string, string> = {};
+  if (product.specifications) {
+    try {
+      specs = typeof product.specifications === 'string' 
+        ? JSON.parse(product.specifications) 
+        : product.specifications as Record<string, string>;
+    } catch (e) {
+      specs = {};
+    }
+  }
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
@@ -78,7 +90,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
             <div className="relative h-[320px] w-full sm:h-[460px]">
               <Image
-                src={product.images?.[0] ?? "/placeholder.svg"}
+                src={product.image_url ?? "/placeholder.svg"}
                 alt={product.name}
                 fill
                 priority
@@ -89,37 +101,24 @@ export default function ProductDetailPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-5">
-            <p className="text-sm font-medium uppercase tracking-wide text-gray-500">{product.brand}</p>
+            <p className="text-sm font-medium uppercase tracking-wide text-gray-500">{product.brand?.name || ""}</p>
 
             <h1 className="text-3xl font-extrabold leading-tight text-gray-900 md:text-4xl">{product.name}</h1>
 
-            {product.badges.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {product.badges.map((badge) => (
-                  <span
-                    key={`${product.id}-${badge}`}
-                    className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700"
-                  >
-                    {badge}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-
             <p className="text-4xl font-black text-[#064E3B]">
-              {formatVnd(product.price)}
-              <span className="ml-2 text-base font-semibold text-gray-500">/ {product.unit}</span>
+              {product.base_price ? formatVnd(product.base_price) : "Liên hệ"}
+              <span className="ml-2 text-base font-semibold text-gray-500">/ Sản phẩm</span>
             </p>
 
             <p className="text-base leading-7 text-gray-600">{product.description}</p>
 
             <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm leading-6 text-green-900">
-              <span className="font-semibold">📍 Sẵn sàng triển khai tại: </span>
-              {product.geoAvailability.join(", ")}
+              <span className="font-semibold">📍 Tình trạng: </span>
+              {product.in_stock ? "Sẵn hàng tại các điểm bán" : "Liên hệ để đặt hàng"}
             </div>
 
             <a
-              href="https://zalo.me/YOUR_ZALO_NUMBER"
+              href="https://zalo.me/0342322301"
               target="_blank"
               rel="noopener noreferrer"
               data-tracking="last-click"
@@ -137,47 +136,35 @@ export default function ProductDetailPage({ params }: PageProps) {
           <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
             <table className="w-full text-left text-sm">
               <tbody className="divide-y divide-gray-200 bg-white">
-                {Object.entries(product.specs).map(([specName, specValue]) => (
-                  <tr key={specName}>
-                    <th className="w-[40%] bg-gray-50 px-4 py-3 font-semibold text-gray-700">{specName}</th>
-                    <td className="px-4 py-3 text-gray-900">{specValue}</td>
+                {Object.keys(specs).length > 0 ? (
+                  Object.entries(specs).map(([specName, specValue]) => (
+                    <tr key={specName}>
+                      <th className="w-[40%] bg-gray-50 px-4 py-3 font-semibold text-gray-700">{specName}</th>
+                      <td className="px-4 py-3 text-gray-900">{String(specValue)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="px-4 py-3 text-gray-500 italic">Chưa có thông số kỹ thuật chi tiết.</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </section>
 
-        {(product.category === "DRONE" || product.category === "SOLAR") && (
+        {(product.categories?.slug === "drone" || product.categories?.slug === "solar") && (
           <>
             <div className="my-8 h-px w-full bg-gray-200" />
-            <InvestmentRoiWidget productPrice={product.price} />
+            <InvestmentRoiWidget productPrice={product.base_price || 0} />
           </>
         )}
-
-        <div className="my-8 h-px w-full bg-gray-200" />
-
-        <section>
-          <h2 className="text-2xl font-extrabold text-gray-900">Thiết bị & Vật tư thường mua cùng</h2>
-          {relatedProducts.length > 0 ? (
-            <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {relatedProducts.map((related) => (
-                <ProductCard key={related.id} product={related} />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-5 py-10 text-center text-sm text-gray-500">
-              Đang cập nhật thêm gợi ý sản phẩm phù hợp.
-            </div>
-          )}
-        </section>
       </div>
-
       <div className="fixed bottom-0 z-50 w-full border-t bg-white p-3 lg:hidden">
         <div className="mx-auto flex w-full max-w-7xl items-center gap-3">
           <p className="line-clamp-1 flex-1 text-sm font-semibold text-gray-900">{product.name}</p>
           <a
-            href="https://zalo.me/YOUR_ZALO_NUMBER"
+            href="https://zalo.me/0342322301"
             target="_blank"
             rel="noopener noreferrer"
             data-tracking="last-click"

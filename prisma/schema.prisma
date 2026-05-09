@@ -29,18 +29,12 @@ model Profile {
 /// Quản lý thương hiệu (Nhà Bè Agri, Rivulis, Azud, Netafim, Ducar...)
 /// Mỗi Brand có nhiều Product thông qua relation brandId → products.brand_id
 model Brand {
-  id              String     @id @default(cuid())
-  name            String                  // Tên thương hiệu: "Rivulis", "Ducar"
-  slug            String     @unique      // URL slug: "rivulis", "ducar"
-  logo_url        String?                // URL logo: /images/brands/rivulis.png
-  description     String?                // Mô tả ngắn về thương hiệu
-  website         String?                // Website: https://www.rivulis.com
-  origin_country  String?                // Xuất xứ: Israel, Turkey, Australia...
-  is_active       Boolean    @default(true)
-  created_at      DateTime   @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime?  @updatedAt @db.Timestamptz(6)
-
-  // Relation: 1 Brand → N Products
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  slug            String     @unique
+  logo_url        String?
+  description     String?
+  origin_country  String?
   products        products[]
 
   @@index([slug])
@@ -819,7 +813,7 @@ model posts {
 model products {
   id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   category_id    String     @db.Uuid
-  brand_id      String?    @db.Cuid               // FK → brands.id (nullable: sản phẩm không thương hiệu)
+  brand_id       String?    @db.Uuid
   name           String
   slug           String     @unique
   description    String?
@@ -833,7 +827,6 @@ model products {
   stock_quantity Int?      @default(0)
   base_price     Int?      @default(0)
   sku            String     @unique @db.VarChar(100)
-  brand          String?                              // Tên brand (string — giữ tạm cho backward compat)
   specifications Json       @default("{}")
   in_stock       Boolean    @default(true)
   pdf_url        String?
@@ -845,7 +838,7 @@ model products {
   sync_hash     String?    @db.VarChar(64)           // SHA-256 of normalized content → detect changes
 
   categories     categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  brands        Brand?     @relation(fields: [brand_id], references: [id], onDelete: SetNull)
+  brand          Brand?     @relation(fields: [brand_id], references: [id], onDelete: SetNull)
   inventories   DealerInventory[]
 
   @@index([brand_id])

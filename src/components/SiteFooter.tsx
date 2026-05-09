@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Facebook, Mail, MapPin, Phone, Sprout, ShieldCheck, FileText, RefreshCw, Youtube, Building2, Calendar, MapPinned, CreditCard, Undo2 } from "lucide-react";
 import { trackEvent } from "@/lib/tracking";
 
+import { usePathname } from "next/navigation";
+
 /**
  * Global Footer - Vietnamese E-commerce Legal Compliance
  * 
@@ -15,6 +17,9 @@ import { trackEvent } from "@/lib/tracking";
  * - SEO-friendly internal links
  */
 export default function SiteFooter() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/dealer-admin')) return null;
+
   return (
     <footer className="border-t border-slate-800 bg-slate-900 text-slate-300">
       <div className="container py-10">

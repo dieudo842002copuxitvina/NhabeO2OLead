@@ -75,13 +75,16 @@ export default function TopNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isCustomer = role === 'customer';
 
+  // Không hiển thị TopNav trên các trang admin vì đã có layout riêng
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/dealer-admin')) return null;
+
   const isActivePath = (path: string) => pathname?.startsWith(path);
 
   return (
     <>
-      <div data-app-header="true" className="sticky top-0 z-50" style={{ paddingTop: 'var(--safe-top, 0px)' }}>
+      <div data-app-header="true" className="sticky top-0 z-[100] w-full" style={{ paddingTop: 'var(--safe-top, 0px)' }}>
         <TickerTape />
-        <header className="backdrop-blur-xl bg-white/80 border-b border-border/60 shadow-sm">
+        <header className="bg-white border-b border-gray-100 shadow-sm">
           <div className="container flex items-center justify-between h-16 gap-4">
             
             {/* Logo — Nhà Bè Agri */}
@@ -96,18 +99,17 @@ export default function TopNav() {
 
             {/* Desktop Navigation — Customer Mode */}
             {isCustomer ? (
-              <nav className="hidden lg:flex items-center gap-0.5">
+              <nav className="hidden lg:flex items-center h-full gap-8 mx-auto">
                 {/* 1. Trang chủ */}
                 <Link
                   href="/"
                   className={cn(
-                    'flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-colors',
+                    'flex items-center h-full text-sm font-semibold transition-colors border-b-2',
                     pathname === '/'
-                      ? 'text-emerald-600 bg-emerald-50'
-                      : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50',
+                      ? 'text-emerald-600 border-emerald-600'
+                      : 'text-slate-600 border-transparent hover:text-emerald-600 hover:border-emerald-200',
                   )}
                 >
-                  <Home className="w-4 h-4" />
                   Trang chủ
                 </Link>
 
@@ -115,13 +117,12 @@ export default function TopNav() {
                 <Link
                   href="/giai-phap"
                   className={cn(
-                    'flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-colors',
+                    'flex items-center h-full text-sm font-semibold transition-colors border-b-2',
                     isActivePath('/giai-phap')
-                      ? 'text-emerald-600 bg-emerald-50'
-                      : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50',
+                      ? 'text-emerald-600 border-emerald-600'
+                      : 'text-slate-600 border-transparent hover:text-emerald-600 hover:border-emerald-200',
                   )}
                 >
-                  <Lightbulb className="w-4 h-4" />
                   Giải pháp
                 </Link>
 
@@ -129,18 +130,17 @@ export default function TopNav() {
                 <Link
                   href="/prices"
                   className={cn(
-                    'flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-colors',
+                    'flex items-center h-full text-sm font-semibold transition-colors border-b-2',
                     isActivePath('/prices') || isActivePath('/gia-nong-san')
-                      ? 'text-emerald-600 bg-emerald-50'
-                      : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50',
+                      ? 'text-emerald-600 border-emerald-600'
+                      : 'text-slate-600 border-transparent hover:text-emerald-600 hover:border-emerald-200',
                   )}
                 >
-                  <TrendingUp className="w-4 h-4" />
                   Giá Nông Sản
                 </Link>
 
                 {/* 3. Sản phẩm — Mega Menu Dropdown */}
-                <div className="relative">
+                <div className="relative flex items-center h-full">
                   <ProductMegaMenu />
                 </div>
 
@@ -148,13 +148,12 @@ export default function TopNav() {
                 <Link
                   href="/dai-ly"
                   className={cn(
-                    'flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-colors',
+                    'flex items-center h-full text-sm font-semibold transition-colors border-b-2',
                     isActivePath('/dai-ly')
-                      ? 'text-emerald-600 bg-emerald-50'
-                      : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50',
+                      ? 'text-emerald-600 border-emerald-600'
+                      : 'text-slate-600 border-transparent hover:text-emerald-600 hover:border-emerald-200',
                   )}
                 >
-                  <MapPin className="w-4 h-4" />
                   Hệ thống Đại lý
                 </Link>
 
@@ -162,13 +161,12 @@ export default function TopNav() {
                 <Link
                   href="/blog"
                   className={cn(
-                    'flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-colors',
+                    'flex items-center h-full text-sm font-semibold transition-colors border-b-2',
                     isActivePath('/blog') || isActivePath('/kien-thuc')
-                      ? 'text-emerald-600 bg-emerald-50'
-                      : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50',
+                      ? 'text-emerald-600 border-emerald-600'
+                      : 'text-slate-600 border-transparent hover:text-emerald-600 hover:border-emerald-200',
                   )}
                 >
-                  <Newspaper className="w-4 h-4" />
                   Kinh nghiệm & Kỹ thuật
                 </Link>
               </nav>
@@ -194,28 +192,27 @@ export default function TopNav() {
             )}
 
             {/* Right Actions */}
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Đại lý đăng nhập — Outline/Text style (giảm chú ý) */}
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Đại lý đăng nhập — Outline style */}
               {isCustomer && (
                 <Button
                   asChild
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  className="hidden md:inline-flex text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50 transition-colors"
+                  className="hidden md:inline-flex border-slate-200 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors font-semibold h-9 rounded-md"
                 >
                   <Link href="/auth?role=dealer">
-                    <LogIn className="w-4 h-4 mr-1.5" />
                     Đăng nhập Đại lý
                   </Link>
                 </Button>
               )}
 
-              {/* CTA Cốt lõi — Solid Emerald, nổi bật nhất */}
+              {/* CTA Cốt lõi — Solid Emerald */}
               {isCustomer && (
                 <Button
                   asChild
                   size="sm"
-                  className="hidden lg:inline-flex bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold shadow-md hover:shadow-lg transition-all duration-200 rounded-lg"
+                  className="hidden lg:inline-flex bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm hover:shadow-md transition-all h-9 rounded-lg px-4"
                 >
                   <Link href="/tinh-toan" className="gap-1.5">
                     <span>🔥</span>
@@ -308,18 +305,17 @@ export default function TopNav() {
               {isCustomer && (
                 <>
                   {/* Navigation Links */}
-                  <nav className="px-4 space-y-1">
+                  <nav className="px-4 py-2 space-y-1">
                     <Link
                       href="/"
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors',
+                        'block px-4 py-3 rounded-lg text-base font-semibold transition-colors',
                         pathname === '/'
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'text-slate-700 hover:bg-emerald-50',
+                          ? 'text-emerald-600 bg-emerald-50/50'
+                          : 'text-slate-700 hover:text-emerald-600 hover:bg-emerald-50/50',
                       )}
                     >
-                      <Home className="w-5 h-5" />
                       Trang chủ
                     </Link>
                     
@@ -327,13 +323,12 @@ export default function TopNav() {
                       href="/giai-phap"
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors',
+                        'block px-4 py-3 rounded-lg text-base font-semibold transition-colors',
                         isActivePath('/giai-phap')
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'text-slate-700 hover:bg-emerald-50',
+                          ? 'text-emerald-600 bg-emerald-50/50'
+                          : 'text-slate-700 hover:text-emerald-600 hover:bg-emerald-50/50',
                       )}
                     >
-                      <Lightbulb className="w-5 h-5" />
                       Giải pháp
                     </Link>
                     
@@ -341,13 +336,12 @@ export default function TopNav() {
                       href="/dai-ly"
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors',
+                        'block px-4 py-3 rounded-lg text-base font-semibold transition-colors',
                         isActivePath('/dai-ly')
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'text-slate-700 hover:bg-emerald-50',
+                          ? 'text-emerald-600 bg-emerald-50/50'
+                          : 'text-slate-700 hover:text-emerald-600 hover:bg-emerald-50/50',
                       )}
                     >
-                      <MapPin className="w-5 h-5" />
                       Hệ thống Đại lý
                     </Link>
                     
@@ -355,13 +349,12 @@ export default function TopNav() {
                       href="/prices"
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors',
+                        'block px-4 py-3 rounded-lg text-base font-semibold transition-colors',
                         isActivePath('/prices') || isActivePath('/gia-nong-san')
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'text-slate-700 hover:bg-emerald-50',
+                          ? 'text-emerald-600 bg-emerald-50/50'
+                          : 'text-slate-700 hover:text-emerald-600 hover:bg-emerald-50/50',
                       )}
                     >
-                      <TrendingUp className="w-5 h-5" />
                       Giá Nông Sản
                     </Link>
                     
@@ -369,19 +362,18 @@ export default function TopNav() {
                       href="/blog"
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors',
+                        'block px-4 py-3 rounded-lg text-base font-semibold transition-colors',
                         isActivePath('/blog')
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'text-slate-700 hover:bg-emerald-50',
+                          ? 'text-emerald-600 bg-emerald-50/50'
+                          : 'text-slate-700 hover:text-emerald-600 hover:bg-emerald-50/50',
                       )}
                     >
-                      <Newspaper className="w-5 h-5" />
                       Kinh nghiệm & Kỹ thuật
                     </Link>
                   </nav>
 
                   {/* Mega Menu Mobile */}
-                  <div className="mt-2 px-4">
+                  <div className="mt-1 px-4">
                     <ProductMegaMenu isMobile={true} onMobileClose={() => setMobileOpen(false)} />
                   </div>
 
@@ -390,9 +382,8 @@ export default function TopNav() {
                     <Link
                       href="/auth?role=dealer"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 px-4 py-3 text-slate-600 hover:text-emerald-600 transition-colors"
+                      className="block px-4 py-3 text-slate-600 font-semibold hover:text-emerald-600 transition-colors"
                     >
-                      <LogIn className="w-5 h-5" />
                       Đăng nhập Đại lý
                     </Link>
                   </div>

@@ -31,9 +31,8 @@ export default function ProductMegaMenu({ isMobile = false, onMobileClose }: Pro
       <div className="w-full">
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="mega-menu" className="border-none">
-            <AccordionTrigger className="flex items-center gap-3 px-4 min-h-[52px] rounded-lg text-base font-medium hover:bg-emerald-50 py-0 hover:no-underline [&[data-state=open]]:bg-emerald-50 [&[data-state=open]]:text-emerald-600 transition-colors">
+            <AccordionTrigger className="flex items-center gap-3 px-4 min-h-[52px] rounded-lg text-base font-semibold hover:text-emerald-600 py-0 hover:no-underline [&[data-state=open]]:bg-emerald-50/50 [&[data-state=open]]:text-emerald-600 transition-colors">
               <span className="flex items-center gap-3">
-                <Package className="w-5 h-5" />
                 Danh Mục Sản Phẩm
               </span>
             </AccordionTrigger>
@@ -116,16 +115,15 @@ export default function ProductMegaMenu({ isMobile = false, onMobileClose }: Pro
       {/* Trigger Button */}
       <button
         className={cn(
-          "flex items-center gap-1.5 h-10 px-3 text-sm font-medium rounded-md transition-all duration-200",
+          "flex items-center gap-1.5 h-full text-sm font-semibold transition-all duration-200 border-b-2",
           isOpen
-            ? "text-emerald-600 bg-emerald-50"
-            : "text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50"
+            ? "text-emerald-600 border-emerald-600"
+            : "text-slate-600 border-transparent hover:text-emerald-600 hover:border-emerald-200"
         )}
         onMouseEnter={() => setIsOpen(true)}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <Package className="w-4 h-4" />
         Sản phẩm
         <ChevronDown className={cn(
           "w-3 h-3 transition-transform duration-200",
@@ -135,7 +133,7 @@ export default function ProductMegaMenu({ isMobile = false, onMobileClose }: Pro
 
       {/* Mega Menu Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 pt-2 z-[70]">
+        <div className="absolute top-full left-0 pt-2 z-[110]">
           <div
             className="bg-white rounded-xl shadow-2xl border border-slate-200 w-[980px] max-w-[95vw] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
             onMouseEnter={() => setIsOpen(true)}
