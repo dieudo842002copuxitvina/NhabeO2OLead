@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { MapPin, Phone, Navigation, Loader2 } from 'lucide-react';
+import { MapPin, Phone, Navigation, Loader2, MapPinned } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,8 +7,9 @@ import { dealers as allDealers } from '@/data/mock';
 import { trackEvent } from '@/lib/tracking';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Default user location: Ho Chi Minh City center (fallback before geolocation)
-const DEFAULT_USER: [number, number] = [10.7769, 106.7009];
+// FALLBACK: Tỉnh trọng điểm nông nghiệp Tây Nguyên (không phải TP.HCM)
+// Bình Phước - vùng trồng cao su, hồ tiêu, mắc ca
+const FALLBACK_PROVINCE: [number, number] = [11.45, 106.95];
 
 // Lazy-load the heavy Leaflet inner component only when the section enters viewport.
 const LeafletInner = lazy(() => import('./geo/LeafletInner'));
@@ -35,7 +36,7 @@ export default function GeoLocatorMap() {
   const isMobile = useIsMobile();
   const sectionRef = useRef<HTMLElement | null>(null);
   const [shouldLoadMap, setShouldLoadMap] = useState(false);
-  const [userPos, setUserPos] = useState<[number, number]>(DEFAULT_USER);
+  const [userPos, setUserPos] = useState<[number, number] | null>(null); // null = chưa xác định
   const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'ok' | 'denied'>('idle');
 
   // 1) Lazy-load map only when near viewport (saves ~150KB Leaflet on first paint).
@@ -61,19 +62,42 @@ export default function GeoLocatorMap() {
 
   // 2) Geolocate (cheap, no map dep) — runs once.
   useEffect(() => {
-    if (!('geolocation' in navigator)) return;
+    // Kiểm tra trình duyệt có hỗ trợ Geolocation không
+    if (!('geolocation' in navigator)) {
+      console.warn('Geolocation không được hỗ trợ. Sử dụng vị trí mặc định.');
+      setUserPos(FALLBACK_PROVINCE);
+      setGeoStatus('denied');
+      return;
+    }
+
     setGeoStatus('loading');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserPos([pos.coords.latitude, pos.coords.longitude]);
-        setGeoStatus('ok');
-      },
-      () => setGeoStatus('denied'),
-      { timeout: 6000, maximumAge: 5 * 60 * 1000 },
-    );
+
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          // Thành công: dùng tọa độ thực
+          setUserPos([pos.coords.latitude, pos.coords.longitude]);
+          setGeoStatus('ok');
+        },
+        (error) => {
+          // Từ chối hoặc lỗi: fallback về Bình Phước
+          console.warn('Geolocation error:', error.message);
+          setUserPos(FALLBACK_PROVINCE);
+          setGeoStatus('denied');
+        },
+        { timeout: 6000, maximumAge: 5 * 60 * 1000 }
+      );
+    } catch (error) {
+      // Crash protection: không crash app nếu có lỗi bất ngờ
+      console.error('Geolocation crash protection:', error);
+      setUserPos(FALLBACK_PROVINCE);
+      setGeoStatus('denied');
+    }
   }, []);
 
+  // Tính Top 3 dealers gần nhất (chỉ khi có vị trí)
   const top3 = useMemo(() => {
+    if (!userPos) return [];
     return [...allDealers]
       .map((d) => ({ ...d, distance: distanceKm(userPos, [d.lat, d.lng]) }))
       .sort((a, b) => a.distance - b.distance)
@@ -102,9 +126,9 @@ export default function GeoLocatorMap() {
           Tìm điểm hỗ trợ gần nhất
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          {geoStatus === 'loading' && 'Đang xác định vị trí của bạn…'}
-          {geoStatus === 'ok' && 'Đã định vị bạn — hiển thị Top 3 đại lý gần nhất.'}
-          {geoStatus === 'denied' && 'Bạn chưa chia sẻ vị trí — đang dùng vị trí mặc định TP.HCM.'}
+          {geoStatus === 'loading' && '📍 Đang dò tìm đại lý gần rẫy của bạn...'}
+          {geoStatus === 'ok' && '✅ Đã xác định vị trí — hiển thị Top 3 đại lý gần nhất.'}
+          {geoStatus === 'denied' && '📍 Vui lòng chọn Tỉnh/Thành phố rẫy của bạn để xem đại lý phù hợp.'}
           {geoStatus === 'idle' && 'Bản đồ hiển thị mạng lưới đại lý và thợ kỹ thuật toàn quốc.'}
         </p>
       </header>
@@ -128,13 +152,22 @@ export default function GeoLocatorMap() {
                     </div>
                   }
                 >
-                  <LeafletInner userPos={userPos} isMobile={isMobile} />
+                  <LeafletInner userPos={userPos ?? FALLBACK_PROVINCE} isMobile={isMobile} />
                 </Suspense>
               )}
 
               {geoStatus === 'loading' && (
-                <div className="absolute top-3 right-3 z-[400] bg-background/90 backdrop-blur rounded-md px-2 py-1 text-xs flex items-center gap-1.5 shadow">
-                  <Loader2 className="w-3 h-3 animate-spin" /> Đang định vị…
+                <div className="absolute top-3 right-3 z-[400] bg-emerald-600/90 backdrop-blur rounded-lg px-3 py-1.5 text-xs flex items-center gap-2 text-white font-medium shadow-lg">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Đang định vị...</span>
+                </div>
+              )}
+
+              {/* Fallback Banner - Khi không có quyền định vị */}
+              {geoStatus === 'denied' && (
+                <div className="absolute bottom-3 left-3 right-3 z-[400] bg-amber-500/95 backdrop-blur rounded-lg px-4 py-3 text-xs text-white shadow-lg flex items-center gap-2">
+                  <MapPinned className="w-4 h-4 shrink-0" />
+                  <span>Hiển thị đại lý gần Bình Phước — vùng trọng điểm nông nghiệp Tây Nguyên</span>
                 </div>
               )}
             </div>
@@ -160,8 +193,28 @@ export default function GeoLocatorMap() {
           <h3 className="font-display font-bold text-base mb-3 flex items-center gap-2">
             🏆 Top 3 đại lý gần nhất
           </h3>
-          <div className="space-y-3">
-            {top3.map((d, i) => (
+          
+          {/* Loading state */}
+          {geoStatus === 'loading' && (
+            <div className="bg-slate-50 rounded-xl p-6 text-center">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
+              <p className="text-sm text-muted-foreground">Đang dò tìm đại lý gần rẫy của bạn...</p>
+            </div>
+          )}
+          
+          {/* Empty state - Chưa xác định vị trí */}
+          {geoStatus !== 'loading' && top3.length === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+              <MapPinned className="w-6 h-6 mx-auto mb-2 text-amber-600" />
+              <p className="text-sm text-amber-800 font-medium">Chưa xác định được vị trí</p>
+              <p className="text-xs text-amber-600 mt-1">Hãy bật định vị hoặc chọn khu vực của bạn</p>
+            </div>
+          )}
+          
+          {/* Top 3 dealers list */}
+          {top3.length > 0 && (
+            <div className="space-y-3">
+              {top3.map((d, i) => (
               <Card key={d.id} className="hover:shadow-md hover:border-primary/40 transition-all">
                 <CardContent className="p-3 flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-display font-extrabold flex items-center justify-center shrink-0">
@@ -188,7 +241,8 @@ export default function GeoLocatorMap() {
                 </CardContent>
               </Card>
             ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

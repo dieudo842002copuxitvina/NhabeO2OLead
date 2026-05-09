@@ -23,6 +23,30 @@ model Profile {
   @@schema("public")
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// BRAND — Thương hiệu sản phẩm
+// ═══════════════════════════════════════════════════════════════════════════════
+/// Quản lý thương hiệu (Nhà Bè Agri, Rivulis, Azud, Netafim, Ducar...)
+/// Mỗi Brand có nhiều Product thông qua relation brandId → products.brand_id
+model Brand {
+  id              String     @id @default(cuid())
+  name            String                  // Tên thương hiệu: "Rivulis", "Ducar"
+  slug            String     @unique      // URL slug: "rivulis", "ducar"
+  logo_url        String?                // URL logo: /images/brands/rivulis.png
+  description     String?                // Mô tả ngắn về thương hiệu
+  website         String?                // Website: https://www.rivulis.com
+  origin_country  String?                // Xuất xứ: Israel, Turkey, Australia...
+  is_active       Boolean    @default(true)
+  created_at      DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?  @updatedAt @db.Timestamptz(6)
+
+  // Relation: 1 Brand → N Products
+  products        products[]
+
+  @@index([slug])
+  @@schema("public")
+}
+
 model UserRole {
   id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   user_id    String?   @db.Uuid
@@ -795,6 +819,7 @@ model posts {
 model products {
   id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   category_id    String     @db.Uuid
+  brand_id      String?    @db.Cuid               // FK → brands.id (nullable: sản phẩm không thương hiệu)
   name           String
   slug           String     @unique
   description    String?
@@ -804,18 +829,29 @@ model products {
   created_at     DateTime   @default(now()) @db.Timestamptz(6)
   gallery_images String[]   @default([])
   variants       Json?      @default("[]")
-  shipping_info  Json?      @default("{}")
-  stock_quantity Int?       @default(0)
-  base_price     Int?       @default(0)
+  shipping_info  Json?     @default("{}")
+  stock_quantity Int?      @default(0)
+  base_price     Int?      @default(0)
   sku            String     @unique @db.VarChar(100)
-  brand          String?
+  brand          String?                              // Tên brand (string — giữ tạm cho backward compat)
   specifications Json       @default("{}")
   in_stock       Boolean    @default(true)
   pdf_url        String?
-  updated_at     DateTime?  @default(now()) @db.Timestamptz(6)
-  categories     categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  inventories    DealerInventory[]
+  updated_at     DateTime? @default(now()) @db.Timestamptz(6)
 
+  // ── Sync tracking ──────────────────────────────────────────
+  source_url    String?                              // URL gốc từ nhabeagri.com
+  last_synced_at DateTime?  @db.Timestamptz(6)       // Lần cuối scrape thành công
+  sync_hash     String?    @db.VarChar(64)           // SHA-256 of normalized content → detect changes
+
+  categories     categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  brands        Brand?     @relation(fields: [brand_id], references: [id], onDelete: SetNull)
+  inventories   DealerInventory[]
+
+  @@index([brand_id])
+  @@index([brand_id, category_id])                   // ← composite: lọc brand + category
+  @@index([category_id])
+  @@index([last_synced_at(sort: Desc)])              // ← stale detection
   @@schema("public")
 }
 

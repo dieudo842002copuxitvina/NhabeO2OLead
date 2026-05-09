@@ -4,17 +4,17 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { 
-  Search, Droplets, Thermometer, CloudRain, Wind, Sun, 
+import {
+  Search, Droplets, Thermometer, CloudRain, Wind, Sun,
   TrendingUp, TrendingDown, MapPin, Phone, Leaf, Calculator,
   ChevronRight, Sprout, AlertTriangle, ArrowRight,
-  Globe, Newspaper, BookOpen, Clock, User, Zap, Lightbulb, Package, Shield
+  Globe, Newspaper, BookOpen, Clock, User, Zap, Lightbulb, Package, Shield, Loader2
 } from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import CropSolutionsTabs from "@/components/CropSolutionsTabs";
+import { useNearbyDealers, type DealerWithDistance } from "@/hooks/useNearbyDealers";
+import { useApp } from "@/contexts/AppContext";
 
 /* ─────────────────────────────────────────────
  * Dynamic Import - SSR Disabled for Leaflet
@@ -49,71 +51,6 @@ const DealerMap = dynamic(
  * ───────────────────────────────────────────── */
 
 const PRICE_TICKERS = [
-  { id: "ca-phe", name: "Cà Phê Robusta", price: 107500, change: 1.8, unit: "đ/kg" },
-  { id: "ho-tieu", name: "Hồ Tiêu Đen", price: 149800, change: -0.5, unit: "đ/kg" },
-  { id: "sau-rieng", name: "Sầu Riêng Ri6", price: 76500, change: 2.4, unit: "đ/kg" },
-  { id: "gao", name: "Gạo ST25", price: 35000, change: 0.0, unit: "đ/kg" },
-];
-
-const DEALERS = [
-  {
-    id: 1,
-    name: "Vật Tư Nông Nghiệp Minh Quân",
-    address: "123 QL14, P. Nhơn Bình, TP. Quy Nhơn, Bình Định",
-    phone: "0935 123 456",
-    isOpen: true,
-    distance: "2.5 km",
-    lat: 13.7565,
-    lng: 109.2384,
-    products: ["Máy bơm", "Ống tưới", "Béc tưới"]
-  },
-  {
-    id: 2,
-    name: "Điện Nước Nhựt Hưng",
-    address: "456 Lê Duẩn, P. Thắng Lợi, TP. Pleiku, Gia Lai",
-    phone: "0978 654 321",
-    isOpen: true,
-    distance: "5.8 km",
-    lat: 13.9699,
-    lng: 108.0024,
-    products: ["Tủ điện", "Máy bơm", "Van các loại"]
-  },
-  {
-    id: 3,
-    name: "VTN Nông Lâm Nguyễn Văn Thành",
-    address: "789 Trần Hưng Đạo, P. Tân Tiến, TX. Buôn Hồ, Đắk Lắk",
-    phone: "0912 345 678",
-    isOpen: false,
-    distance: "12.3 km",
-    lat: 12.7833,
-    lng: 108.4167,
-    products: ["Phân bón", "Thuốc BVTV", "Hạt giống"]
-  },
-  {
-    id: 4,
-    name: "Thiết Bị Tưới Cao Nguyên",
-    address: "234 Nguyễn Chí Thanh, P. 6, Đà Lạt, Lâm Đồng",
-    phone: "0909 888 777",
-    isOpen: true,
-    distance: "8.2 km",
-    lat: 11.9364,
-    lng: 108.4403,
-    products: ["Béc tưới", "Ống PE", "Bộ lọc"]
-  },
-  {
-    id: 5,
-    name: "Vật Tư Hùng Thắng",
-    address: "567 Hùng Vương, P. An Tây, TX. An Nhơn, Bình Định",
-    phone: "0945 111 222",
-    isOpen: true,
-    distance: "15.7 km",
-    lat: 13.9033,
-    lng: 109.1333,
-    products: ["Phân bón", "Máy bơm", "Dây tưới"]
-  },
-];
-
-const NEWS_ARTICLES = [
   {
     id: 1,
     title: "Giá cà phê Robusta tăng mạnh sau tin đồn mất mùa ở Brazil",
@@ -463,7 +400,28 @@ interface DealerItemProps {
   onLeave: () => void;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * DEALER CARD COMPONENT — works with real DB shape (DealerWithDistance)
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+interface DealerItemProps {
+  dealer: DealerWithDistance;
+  isSelected: boolean;
+  onSelect: () => void;
+  onHover: () => void;
+  onLeave: () => void;
+}
+
+function formatDistance(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)}m`;
+  if (km < 10) return `${km.toFixed(1)}km`;
+  return `${Math.round(km)}km`;
+}
+
 function DealerItem({ dealer, isSelected, onSelect, onHover, onLeave }: DealerItemProps) {
+  const distanceLabel = dealer.distance_km != null ? formatDistance(dealer.distance_km) : null;
+  const phoneHref = dealer.phone ? `tel:${dealer.phone.replace(/\D/g, "")}` : undefined;
+
   return (
     <div
       onClick={onSelect}
@@ -477,80 +435,251 @@ function DealerItem({ dealer, isSelected, onSelect, onHover, onLeave }: DealerIt
       )}
     >
       <div className="flex items-start justify-between mb-2">
-        <div>
+        <div className="min-w-0 flex-1 mr-2">
           <h4 className={cn("font-semibold text-sm", isSelected ? "text-emerald-800" : "text-slate-900")}>
             {dealer.name}
           </h4>
-          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-            <MapPin className="w-3 h-3" />
-            {dealer.distance}
-          </p>
-        </div>
-        <Badge
-          variant="outline"
-          className={cn(
-            "text-[10px]",
-            dealer.isOpen
-              ? "text-green-600 border-green-200 bg-green-50"
-              : "text-slate-500"
+          {distanceLabel && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+              <MapPin className="w-3 h-3" />
+              Cách bạn {distanceLabel}
+            </p>
           )}
-        >
-          {dealer.isOpen ? "Đang mở" : "Đóng cửa"}
-        </Badge>
+        </div>
+        {dealer.region && (
+          <Badge variant="outline" className="text-[10px] shrink-0">
+            {dealer.region}
+          </Badge>
+        )}
       </div>
 
-      <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{dealer.address}</p>
+      {dealer.address && (
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{dealer.address}</p>
+      )}
+
+      {dealer.province && !dealer.address && (
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{dealer.province}</p>
+      )}
 
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <a
-          href={`tel:${dealer.phone.replace(/\s/g, "")}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button
-            size="sm"
-            className={cn(
-              "h-7 text-xs gap-1",
-              dealer.isOpen
-                ? "bg-orange-500 hover:bg-orange-600"
-                : "bg-slate-200 hover:bg-slate-300 text-slate-500"
-            )}
-            disabled={!dealer.isOpen}
-          >
+        {dealer.phone ? (
+          <a href={phoneHref}>
+            <Button
+              size="sm"
+              className={cn(
+                "h-7 text-xs gap-1",
+                "bg-orange-500 hover:bg-orange-600"
+              )}
+            >
+              <Phone className="w-3 h-3" />
+              Gọi ngay
+            </Button>
+          </a>
+        ) : (
+          <Button size="sm" className="h-7 text-xs gap-1" disabled>
             <Phone className="w-3 h-3" />
             Gọi ngay
           </Button>
-        </a>
-        <a
-          href={`https://maps.google.com/maps?q=${dealer.lat},${dealer.lng}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
-            <MapPin className="w-3 h-3" />
-            Chỉ đường
-          </Button>
-        </a>
+        )}
+        {dealer.latitude != null && dealer.longitude != null && (
+          <a
+            href={`https://maps.google.com/maps?q=${dealer.latitude},${dealer.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
+              <MapPin className="w-3 h-3" />
+              Chỉ đường
+            </Button>
+          </a>
+        )}
       </div>
     </div>
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * GPS PERMISSION GATE
+ * ───────────────────────────────────────────────────────────────────────────── */
+
 function DealerMapSection() {
   const router = useRouter();
-  const [hoveredDealer, setHoveredDealer] = useState<number | null>(null);
-  const [selectedDealer, setSelectedDealer] = useState<number | null>(null);
+  const { userLocation, geoDetected, requestGeo } = useApp();
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [gpsDenied, setGpsDenied] = useState(false);
 
-  const handleDealerSelect = (dealer: typeof DEALERS[0]) => {
-    // Navigate to dealer public profile
-    const slug = `dealer-${dealer.id}`;
+  // Trigger GPS on mount
+  useEffect(() => {
+    if (!geoDetected && !gpsDenied) {
+      const timer = setTimeout(() => requestGeo(), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [geoDetected, gpsDenied, requestGeo]);
+
+  // Capture GPS denial
+  useEffect(() => {
+    if (userLocation.lat !== 10.8231 || userLocation.lng !== 106.6297) return;
+    // Still default location after a delay → likely denied
+    const timer = setTimeout(() => {
+      if (!geoDetected) setGpsDenied(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [geoDetected, userLocation]);
+
+  const { dealers, isLoading, isError } = useNearbyDealers({
+    lat: geoDetected ? userLocation.lat : null,
+    lng: geoDetected ? userLocation.lng : null,
+    radiusMeters: 50_000,
+    limit: 20,
+  });
+
+  // Adapter: convert DB shape to DealerLocation for DealerMap
+  const mapDealers = dealers.map((d): import("@/components/DealerMap").DealerLocation => ({
+    id: d.id,
+    name: d.name,
+    slug: d.slug ?? undefined,
+    address: d.address ?? d.province ?? "",
+    phone: d.phone ?? "",
+    isOpen: d.is_active ?? false,
+    lat: d.latitude ?? 0,
+    lng: d.longitude ?? 0,
+  }));
+
+  const handleSelect = (dealer: DealerWithDistance) => {
+    const slug = dealer.slug ?? `dai-ly/${dealer.id}`;
     router.push(`/dai-ly/${slug}`);
   };
 
+  const center: [number, number] =
+    dealers.length > 0 && dealers[0].latitude && dealers[0].longitude
+      ? [dealers[0].latitude, dealers[0].longitude]
+      : [12.6667, 108.0383];
+
+  // ── GPS DENIED STATE ────────────────────────────────────────────────────
+  if (gpsDenied || (!geoDetected && !isLoading)) {
+    return (
+      <section className="py-16 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <Sprout className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900">Mạng Lưới Điểm Bán</h2>
+              </div>
+              <p className="text-muted-foreground">
+                500+ đại lý ủy quyền toàn quốc • Tìm đại lý gần bạn nhất
+              </p>
+            </div>
+            <Link href="/dai-ly">
+              <Button variant="outline" className="gap-2">
+                Xem tất cả đại lý
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+
+          <Card>
+            <CardContent className="py-16 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <MapPin className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                Vui lòng chọn tỉnh/thành để tìm đại lý phân phối Nhà Bè Agri gần nhất
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                Bật định vị GPS hoặc chọn khu vực của bạn để xem các đại lý ủy quyền trong bán kính 50km.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    setGpsDenied(false);
+                    requestGeo();
+                  }}
+                  className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <MapPin className="w-4 h-4" />
+                  Bật định vị GPS
+                </Button>
+                <Link href="/dai-ly">
+                  <Button variant="outline" className="gap-2">
+                    Chọn tỉnh/thành
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  // ── LOADING SKELETON ────────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <section className="py-16 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <Sprout className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900">Mạng Lưới Điểm Bán</h2>
+              </div>
+              <p className="text-muted-foreground">
+                Đang tìm đại lý gần vị trí của bạn...
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="overflow-hidden">
+              <div className="h-[400px] lg:h-[450px] bg-slate-100 animate-pulse" />
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="h-4 w-32 bg-slate-100 rounded animate-pulse mb-4" />
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-24 bg-slate-100 rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // ── ERROR STATE ─────────────────────────────────────────────────────────
+  if (isError) {
+    return (
+      <section className="py-16 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <Alert variant="destructive">
+            <AlertDescription>
+              Không thể tải danh sách đại lý. Vui lòng thử lại sau.
+            </AlertDescription>
+          </Alert>
+          <Link href="/dai-ly" className="mt-4 inline-block">
+            <Button variant="outline" className="gap-2">
+              Xem tất cả đại lý <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  // ── REAL DATA ──────────────────────────────────────────────────────────
   return (
     <section className="py-16 bg-slate-50">
       <div className="container mx-auto px-4">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -560,7 +689,9 @@ function DealerMapSection() {
               <h2 className="text-2xl font-bold text-slate-900">Mạng Lưới Điểm Bán</h2>
             </div>
             <p className="text-muted-foreground">
-              500+ đại lý ủy quyền toàn quốc • Tìm đại lý gần bạn nhất
+              {dealers.length > 0
+                ? `${dealers.length} đại lý trong bán kính 50km từ vị trí của bạn`
+                : "Tìm đại lý gần bạn nhất"}
             </p>
           </div>
           <Link href="/dai-ly">
@@ -571,47 +702,46 @@ function DealerMapSection() {
           </Link>
         </div>
 
-        {/* 2-Column Grid: Map + List */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left: Real Leaflet Map */}
+          {/* Map */}
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Globe className="w-4 h-4 text-emerald-600" />
-                Bản Đồ Vệ Tinh
+                Bản đồ đại lý
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="h-[400px] lg:h-[450px]">
                 <DealerMap
-                  dealers={DEALERS}
-                  center={[12.6667, 108.0383]}
-                  zoom={8}
-                  activeId={hoveredDealer}
+                  dealers={mapDealers}
+                  center={center}
+                  zoom={dealers.length > 0 ? 9 : 7}
+                  activeId={hoveredId}
                 />
               </div>
             </CardContent>
           </Card>
 
-          {/* Right: Scrollable Dealer List */}
+          {/* List */}
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Danh sách Đại lý</CardTitle>
-                <Badge variant="outline" className="text-xs">{DEALERS.length} đại lý</Badge>
+                <Badge variant="outline" className="text-xs">{dealers.length} đại lý</Badge>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[400px] lg:h-[450px] px-4 pb-4">
                 <div className="space-y-3 pr-4">
-                  {DEALERS.map((dealer) => (
+                  {dealers.map((dealer) => (
                     <DealerItem
                       key={dealer.id}
                       dealer={dealer}
-                      isSelected={hoveredDealer === dealer.id || selectedDealer === dealer.id}
-                      onSelect={() => handleDealerSelect(dealer)}
-                      onHover={() => setHoveredDealer(dealer.id)}
-                      onLeave={() => setHoveredDealer(null)}
+                      isSelected={hoveredId === dealer.id || selectedId === dealer.id}
+                      onSelect={() => handleSelect(dealer)}
+                      onHover={() => setHoveredId(dealer.id)}
+                      onLeave={() => setHoveredId(null)}
                     />
                   ))}
                 </div>

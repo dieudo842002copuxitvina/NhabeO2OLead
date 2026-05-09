@@ -5,7 +5,7 @@ import { TrendingUp, TrendingDown, Minus, ArrowRight, BarChart3 } from "lucide-r
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────
- * Types & Mock Data
+ * Types & Mock Data - 10 Nông sản chính
  * ───────────────────────────────────────────── */
 
 interface AgriPriceItem {
@@ -38,15 +38,6 @@ const AGRI_PRICES: AgriPriceItem[] = [
     icon: "☕",
   },
   {
-    id: "hat-dieu-kho",
-    name: "Hạt Điều Khô",
-    price: 28000,
-    change: 0,
-    changeAmount: 0,
-    unit: "đ/kg",
-    icon: "🥜",
-  },
-  {
     id: "ho-tieu",
     name: "Hồ Tiêu",
     price: 95000,
@@ -55,135 +46,204 @@ const AGRI_PRICES: AgriPriceItem[] = [
     unit: "đ/kg",
     icon: "🌶️",
   },
+  {
+    id: "mac-ca",
+    name: "Mắc Ca",
+    price: 168000,
+    change: 1.2,
+    changeAmount: 1990,
+    unit: "đ/kg",
+    icon: "🥜",
+  },
+  {
+    id: "cao-su",
+    name: "Cao Su",
+    price: 28500,
+    change: -0.8,
+    changeAmount: -230,
+    unit: "đ/kg",
+    icon: "🌳",
+  },
+  {
+    id: "chanh-day",
+    name: "Chanh Dây",
+    price: 32000,
+    change: 5.3,
+    changeAmount: 1611,
+    unit: "đ/kg",
+    icon: "🍋",
+  },
+  {
+    id: "buoi-da-xanh",
+    name: "Bưởi Da Xanh",
+    price: 45000,
+    change: 0,
+    changeAmount: 0,
+    unit: "đ/kg",
+    icon: "🍊",
+  },
+  {
+    id: "hat-dieu-kho",
+    name: "Hạt Điều Khô",
+    price: 28000,
+    change: 0.5,
+    changeAmount: 140,
+    unit: "đ/kg",
+    icon: "🫘",
+  },
+  {
+    id: "cam-can",
+    name: "Cam Cao Cấp",
+    price: 38000,
+    change: 3.1,
+    changeAmount: 1142,
+    unit: "đ/kg",
+    icon: "🍊",
+  },
+  {
+    id: "xoai-cat",
+    name: "Xoài Cát",
+    price: 55000,
+    change: -1.5,
+    changeAmount: -842,
+    unit: "đ/kg",
+    icon: "🥭",
+  },
 ];
 
 /* ─────────────────────────────────────────────
- * Price Card Component
+ * Ticker Item Component
  * ───────────────────────────────────────────── */
 
-interface PriceCardProps {
+interface TickerItemProps {
   item: AgriPriceItem;
 }
 
-function PriceCard({ item }: PriceCardProps) {
+function TickerItem({ item }: TickerItemProps) {
   const isUp = item.change > 0;
   const isDown = item.change < 0;
   const isNeutral = item.change === 0;
 
   return (
-    <div className="flex-shrink-0 w-[200px] md:w-[240px]">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 hover:shadow-md hover:border-emerald-200 transition-all duration-300 group cursor-pointer">
-        {/* Header: Icon + Name */}
-        <div className="flex items-center gap-3 mb-3">
-          <span className="text-2xl">{item.icon}</span>
-          <div className="min-w-0">
-            <h4 className="font-semibold text-sm text-slate-900 truncate group-hover:text-emerald-600 transition-colors">
-              {item.name}
-            </h4>
-            <p className="text-[10px] text-muted-foreground">Giá thị trường hôm nay</p>
-          </div>
-        </div>
-
+    <Link
+      href={`/gia-nong-san/${item.id}`}
+      className="group flex-shrink-0"
+    >
+      <div className="flex items-center gap-3 px-5 py-3 bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-full hover:bg-white hover:border-emerald-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+        {/* Icon */}
+        <span className="text-xl">{item.icon}</span>
+        
+        {/* Name */}
+        <span className="font-medium text-sm text-slate-700 group-hover:text-emerald-600 transition-colors whitespace-nowrap">
+          {item.name}
+        </span>
+        
         {/* Price */}
-        <div className="mb-3">
-          <p className="text-xl md:text-2xl font-bold text-slate-900">
-            {new Intl.NumberFormat("vi-VN").format(item.price)}
-          </p>
-          <p className="text-xs text-muted-foreground">{item.unit}</p>
-        </div>
-
+        <span className="font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
+          {new Intl.NumberFormat("vi-VN").format(item.price)}
+        </span>
+        
         {/* Change Badge */}
-        <div className="flex items-center justify-between">
-          <div
-            className={cn(
-              "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold",
-              isUp && "bg-emerald-100 text-emerald-700",
-              isDown && "bg-rose-100 text-rose-700",
-              isNeutral && "bg-amber-100 text-amber-700"
-            )}
-          >
-            {isUp && <TrendingUp className="w-3.5 h-3.5" />}
-            {isDown && <TrendingDown className="w-3.5 h-3.5" />}
-            {isNeutral && <Minus className="w-3.5 h-3.5" />}
-            <span>
-              {isUp && "+"}
-              {item.change > 0 ? "+" : ""}
-              {item.change}%
-            </span>
-          </div>
-
-          {/* Change Amount */}
-          <span
-            className={cn(
-              "text-xs font-medium",
-              isUp && "text-emerald-600",
-              isDown && "text-rose-600",
-              isNeutral && "text-amber-600"
-            )}
-          >
-            {item.changeAmount > 0 ? "+" : ""}
-            {new Intl.NumberFormat("vi-VN").format(item.changeAmount)}đ
+        <div
+          className={cn(
+            "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold",
+            isUp && "bg-emerald-100 text-emerald-700",
+            isDown && "bg-rose-100 text-rose-700",
+            isNeutral && "bg-amber-100 text-amber-700"
+          )}
+        >
+          {isUp && <TrendingUp className="w-3 h-3" />}
+          {isDown && <TrendingDown className="w-3 h-3" />}
+          {isNeutral && <Minus className="w-3 h-3" />}
+          <span>
+            {item.change > 0 ? "+" : ""}
+            {item.change}%
           </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
+
+/* ─────────────────────────────────────────────
+ * CSS Animation for Marquee
+ * ───────────────────────────────────────────── */
+
+const TICKER_ANIMATION = `
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-track {
+  animation: ticker-scroll 60s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+`;
 
 /* ─────────────────────────────────────────────
  * AgriPriceWidget Component
  * ───────────────────────────────────────────── */
 
 export default function AgriPriceWidget() {
+  // Duplicate items for seamless loop
+  const duplicatedItems = [...AGRI_PRICES, ...AGRI_PRICES];
+
   return (
-    <section className="py-8 bg-gradient-to-b from-slate-50 to-white border-y border-slate-100">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
-              <BarChart3 className="w-5 h-5 text-white" />
+    <>
+      {/* Inject CSS */}
+      <style dangerouslySetInnerHTML={{ __html: TICKER_ANIMATION }} />
+      
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white">
+        {/* Top Border Accent */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600" />
+        
+        <div className="container mx-auto px-0">
+          {/* Header */}
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
+                <BarChart3 className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-sm font-semibold text-slate-700 hidden sm:block">
+                Giá thị trường hôm nay
+              </span>
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">
-                Bảng Giá Nông Sản Hôm Nay
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Cập nhật real-time · Thị trường Tây Nguyên & Đông Nam Bộ
-              </p>
+
+            <Link
+              href="/prices"
+              className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors group"
+            >
+              <span>Xem thêm</span>
+              <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          {/* Ticker Track - Marquee Animation */}
+          <div className="relative py-3 bg-slate-50/50 border-y border-slate-100">
+            {/* Fade gradients for smooth edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-50/50 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50/50 to-transparent z-10 pointer-events-none" />
+            
+            {/* Scrolling Track */}
+            <div className="ticker-track flex items-center">
+              {duplicatedItems.map((item, idx) => (
+                <TickerItem key={`${item.id}-${idx}`} item={item} />
+              ))}
             </div>
           </div>
 
-          {/* CTA Link */}
-          <Link
-            href="/gia-nong-san"
-            className="hidden sm:flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors group"
-          >
-            <span>Xem chi tiết biến động thị trường</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
+          {/* Mobile: Hint to scroll */}
+          <div className="sm:hidden text-center py-2 bg-slate-50/30">
+            <span className="text-[10px] text-muted-foreground">
+              ← Vuốt ngang để xem thêm →
+            </span>
+          </div>
         </div>
-
-        {/* Price Cards - Horizontal Scroll */}
-        <div className="flex gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-4 md:overflow-visible md:gap-5 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory">
-          {AGRI_PRICES.map((item) => (
-            <div key={item.id} className="snap-start">
-              <PriceCard item={item} />
-            </div>
-          ))}
-        </div>
-
-        {/* Mobile CTA Link */}
-        <div className="mt-4 text-center sm:hidden">
-          <Link
-            href="/gia-nong-san"
-            className="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors group"
-          >
-            <span>Xem chi tiết biến động thị trường</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

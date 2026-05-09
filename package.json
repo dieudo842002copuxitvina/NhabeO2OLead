@@ -9,7 +9,16 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sync:products": "npx tsx scripts/sync-products.ts",
+    "sync:products:preview": "npx tsx scripts/sync-products.ts --preview",
+    "sync:products:map5": "npx tsx scripts/sync-products.ts --map5",
+    "seed:brands": "npx tsx scripts/seed-brands.ts",
+    "db:migrate": "npx prisma migrate dev --name add_brands",
+    "db:migrate:prod": "npx prisma migrate deploy",
+    "db:studio": "npx prisma studio",
+    "db:generate": "npx prisma generate",
+    "db:push": "npx prisma db push"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -1,0 +1,111 @@
+/**
+ * prisma/seed-brands.json
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Dữ liệu seed cho bảng Brand — Thương hiệu nông nghiệp chủ lực
+ * Thương hiệu được scrape từ nhabeagri.com và từ phân tích SEO
+ *
+ * Chạy: npx tsx scripts/seed-brands.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+[
+  {
+    "name": "Nhà Bè Agri",
+    "slug": "nha-be-agri",
+    "logo_url": "/images/brands/nha-be-agri.png",
+    "description": "Nhà Phân Phối & Nhập Khẩu thiết bị tưới tiêu hàng đầu Việt Nam. Ủy quyền chính hãng Rivulis, Driptec, Bermad, Ducar.",
+    "website": "https://nhabeagri.com",
+    "origin_country": "Việt Nam",
+    "is_active": true
+  },
+  {
+    "name": "Rivulis",
+    "slug": "rivulis",
+    "logo_url": "/images/brands/rivulis.png",
+    "description": "Thương hiệu Israel — Chuyên gia hệ thống tưới nhỏ giọt và phun mưa. S2000, Rondo, Tornado, Manta là các sản phẩm bán chạy nhất Đông Nam Á.",
+    "website": "https://www.rivulis.com",
+    "origin_country": "Israel",
+    "is_active": true
+  },
+  {
+    "name": "Driptec",
+    "slug": "driptec",
+    "logo_url": "/images/brands/driptec.png",
+    "description": "Thương hiệu ống PE, LDPE, HDPE chống UV cao cấp. Sản phẩm béc tưới DR07, DR09 được nông dân Việt Nam ưa chuộng vì giá thành hợp lý, độ bền trên 10 năm.",
+    "website": "https://www.driptec.com",
+    "origin_country": "Việt Nam",
+    "is_active": true
+  },
+  {
+    "name": "Ducar",
+    "slug": "ducar",
+    "logo_url": "/images/brands/ducar.png",
+    "description": "Thương hiệu súng tưới bán kính lớn từ Turkey. Dòng Atom (Atom 14, Atom 15, Atom 22, Atom 28, Atom 35, Atom 40) nổi tiếng với độ phủ đồng đều, bán kính lên đến 30m.",
+    "website": "https://www.ducar.com.tr",
+    "origin_country": "Turkey",
+    "is_active": true
+  },
+  {
+    "name": "Azud",
+    "slug": "azud",
+    "logo_url": "/images/brands/azud.png",
+    "description": "Thương hiệu Spain — Chuyên gia bộ lọc đĩa (disc filter) và hệ thống lọc cho tưới nhỏ giọt. Lọc sạch tối đa, chống tắc nghẽn hiệu quả.",
+    "website": "https://www.azud.com",
+    "origin_country": "Spain",
+    "is_active": true
+  },
+  {
+    "name": "Netafim",
+    "slug": "netafim",
+    "logo_url": "/images/brands/netafim.png",
+    "description": "Thương hiệu Israel — Tiên phong công nghệ tưới nhỏ giọt toàn cầu. Cung cấp giải pháp tưới滴灌 toàn diện cho nông nghiệp công nghệ cao.",
+    "website": "https://www.netafim.com",
+    "origin_country": "Israel",
+    "is_active": true
+  },
+  {
+    "name": "Bermad",
+    "slug": "bermad",
+    "logo_url": "/images/brands/bermad.png",
+    "description": "Thương hiệu Australia — Van điện từ và van điều khiển thủy lực chuyên nghiệp. Model IR-11T được sử dụng rộng rãi trong hệ thống tưới tự động quy mô lớn.",
+    "website": "https://www.bermad.com",
+    "origin_country": "Australia",
+    "is_active": true
+  },
+  {
+    "name": "ArkA",
+    "slug": "arka",
+    "logo_url": "/images/brands/arka.png",
+    "description": "Thương hiệu Israel — Bộ lọc đĩa và van điện từ chất lượng cao, giá cạnh tranh. Phù hợp hệ thống tưới vừa và nhỏ.",
+    "website": "https://www.arkaflow.com",
+    "origin_country": "Israel",
+    "is_active": true
+  },
+  {
+    "name": "Rain Bird",
+    "slug": "rain-bird",
+    "logo_url": "/images/brands/rain-bird.png",
+    "description": "Thương hiệu Mỹ — Hệ thống tưới cảnh quan và nông nghiệp. Controller ESP-TM2, van điện từ dòng PEB được tin dùng toàn cầu.",
+    "website": "https://www.rainbird.com",
+    "origin_country": "USA",
+    "is_active": true
+  },
+  {
+    "name": "Hunter",
+    "slug": "hunter",
+    "logo_url": "/images/brands/hunter.png",
+    "description": "Thương hiệu Mỹ — Bộ điều khiển tưới thông minh (smart controller), béc tưới rotor. Ứng dụng trong tưới cảnh quan sân golf, công viên.",
+    "website": "https://www.hunterindustries.com",
+    "origin_country": "USA",
+    "is_active": true
+  },
+  {
+    "name": "Dekko",
+    "slug": "dekko",
+    "logo_url": "/images/brands/dekko.png",
+    "description": "Thương hiệu Đài Loan — Phụ kiện đường ống (co, cút, van) và thiết bị tưới giá rẻ. Phổ biến trong hệ thống tưới quy mô nhỏ.",
+    "website": null,
+    "origin_country": "Taiwan",
+    "is_active": true
+  }
+]

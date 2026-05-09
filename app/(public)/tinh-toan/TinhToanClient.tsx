@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useApp } from "@/contexts/AppContext";
 import Image from "next/image";
 import { 
   Calculator, 
@@ -694,7 +695,20 @@ export default function TinhToanClient() {
   const [contact, setContact] = useState<ContactInfo>(DEFAULT_CONTACT);
   const [contactErrors, setContactErrors] = useState<ContactErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
+  // Ref for the form section — used for auto-scroll on crop param detection
+  const formSectionRef = useRef<HTMLDivElement>(null);
+
+  // Capture geo from context (already resolved by AppProvider on mount)
+  const { userLocation, geoDetected, requestGeo } = useApp();
+
+  // Trigger GPS resolution early if not yet detected
+  useEffect(() => {
+    if (!geoDetected) {
+      requestGeo();
+    }
+  }, [geoDetected, requestGeo]);
+
   // URL params state
   const [urlParams, setUrlParams] = useState<UrlParams>({
     assignedDealer: null,
@@ -709,9 +723,20 @@ export default function TinhToanClient() {
     },
   });
 
+  // Auto-calculate when ?crop= param detected (Step 1 → show results immediately)
+  const [hasAutoCalculated, setHasAutoCalculated] = useState(false);
+  useEffect(() => {
+    if (!urlParams.crop || hasAutoCalculated || isCalculating || result) return;
+    const timer = setTimeout(() => {
+      setHasAutoCalculated(true);
+      handleCalculate();
+      formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [urlParams.crop]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleUrlParamsCapture = (params: UrlParams) => {
     setUrlParams(params);
-    console.log("[URL Params] Captured:", params);
   };
   
   const handleContactChange = (field: keyof ContactInfo, value: string) => {
@@ -799,8 +824,20 @@ export default function TinhToanClient() {
     setIsSubmitting(true);
 
     try {
-      // Get province coordinates for geo-matching
-      const provinceCoords = contact.province ? getProvinceCoords(contact.province) : null;
+      // Resolve coordinates: GPS (highest priority) → province name fallback
+      let lat: number | undefined;
+      let lon: number | undefined;
+
+      if (geoDetected && userLocation.lat && userLocation.lng) {
+        // Real GPS coordinates from browser
+        lat = userLocation.lat;
+        lon = userLocation.lng;
+      } else if (contact.province) {
+        // Fallback: geocode province name
+        const provinceCoords = getProvinceCoords(contact.province);
+        lat = provinceCoords?.lat;
+        lon = provinceCoords?.lon;
+      }
 
       // Call the O2O routing action with assigned_dealer support
       const actionResult = await submitCalculatorLeadWithRouting({
@@ -809,8 +846,8 @@ export default function TinhToanClient() {
         province: contact.province || undefined,
         cropType: urlParams.crop || undefined,
         areaM2: input.areaHa * 10000,
-        latitude: provinceCoords?.lat,
-        longitude: provinceCoords?.lon,
+        latitude: lat,
+        longitude: lon,
         calculatorType: 'pump',
         calculatorData: {
           areaHa: input.areaHa,
@@ -966,7 +1003,7 @@ export default function TinhToanClient() {
           
           {/* Left Column - Input Form */}
           <div className="space-y-6">
-            <Card>
+            <Card ref={formSectionRef}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Droplets className="w-5 h-5 text-emerald-600" />

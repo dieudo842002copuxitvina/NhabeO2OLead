@@ -95,16 +95,18 @@
     },
     {
       "id": "thuong-hieu",
-      "name": "BRAND (THƯƠNG HIỆU TƯỚI)",
+      "name": "THƯƠNG HIỆU TƯỚI",
       "isScrollable": true,
       "subcategories": [
-        { "name": "ARKA", "slug": "thuong-hieu-arka" },
-        { "name": "AZUD", "slug": "thuong-hieu-azud" },
-        { "name": "BERMAD", "slug": "thuong-hieu-bermad" },
-        { "name": "CND", "slug": "thuong-hieu-cnd" },
-        { "name": "DUCAR", "slug": "thuong-hieu-ducar" },
-        { "name": "RIVULIS", "slug": "thuong-hieu-rivulis" },
-        { "name": "NETAFIM", "slug": "thuong-hieu-netafim" }
+        { "name": "Tất cả thương hiệu", "slug": "thuong-hieu", "isHighlighted": true },
+        { "name": "Rivulis 🇮🇱", "slug": "thuong-hieu/rivulis" },
+        { "name": "Ducar 🇹🇷", "slug": "thuong-hieu/ducar" },
+        { "name": "Azud 🇪🇸", "slug": "thuong-hieu/azud" },
+        { "name": "Bermad 🇦🇺", "slug": "thuong-hieu/bermad" },
+        { "name": "Netafim 🇮🇱", "slug": "thuong-hieu/netafim" },
+        { "name": "Driptec 🇻🇳", "slug": "thuong-hieu/driptec" },
+        { "name": "ArkA 🇮🇱", "slug": "thuong-hieu/arka" },
+        { "name": "Rain Bird 🇺🇸", "slug": "thuong-hieu/rain-bird" }
       ]
     }
   ]

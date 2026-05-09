@@ -241,7 +241,7 @@ export default function TopNav() {
               )}
 
               {/* Role switcher — QA only */}
-              <div className="hidden xl:flex items-center gap-1">
+              <div className="hidden">
                 {roles.map((r) => (
                   <button
                     key={r}
