@@ -136,7 +136,7 @@ export default async function ProductsPage() {
                           </p>
                           {product.brand && (
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              {product.brand}
+                              {product.brand.name}
                             </p>
                           )}
                           <div className="flex items-center gap-2 mt-1">

@@ -38,7 +38,12 @@ export interface ProductWithCategory {
   shipping_info: Prisma.JsonValue | null;
   stock_quantity: number | null;
   base_price: number | null;
-  brand: string | null;
+  brand_id: string | null;
+  brand: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   categories: {
     id: string;
     name: string;
@@ -94,6 +99,13 @@ export async function getProducts(options?: {
               slug: true,
             },
           },
+          brand: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
         },
         orderBy: { created_at: 'desc' },
         take: options?.limit,
@@ -130,6 +142,13 @@ export async function getProductById(id: string): Promise<{
       where: { id },
       include: {
         categories: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        brand: {
           select: {
             id: true,
             name: true,
@@ -211,7 +230,7 @@ export async function createProduct(data: {
   pdf_url?: string;
   specifications?: Record<string, unknown>;
   base_price?: number;
-  brand?: string;
+  brand_id?: string;
 }): Promise<{ success: boolean; data?: ProductWithCategory; error?: string }> {
   try {
     const slug = data.name
@@ -233,12 +252,19 @@ export async function createProduct(data: {
         pdf_url: data.pdf_url || null,
         specifications: data.specifications || {},
         base_price: data.base_price || 0,
-        brand: data.brand || null,
+        brand_id: data.brand_id || null,
         is_active: true,
         in_stock: true,
       },
       include: {
         categories: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        brand: {
           select: {
             id: true,
             name: true,
@@ -287,7 +313,7 @@ export async function updateProduct(
     is_active: boolean;
     in_stock: boolean;
     base_price: number;
-    brand: string;
+    brand_id: string;
   }>
 ): Promise<{ success: boolean; data?: ProductWithCategory; error?: string }> {
   try {
@@ -302,6 +328,13 @@ export async function updateProduct(
       data: updateData,
       include: {
         categories: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        brand: {
           select: {
             id: true,
             name: true,
@@ -392,7 +425,7 @@ export async function createProductFromForm(
     const image_url = formData.get('image_url') as string | null;
     const pdf_url = formData.get('pdf_url') as string | null;
     const base_price = formData.get('base_price') as string | null;
-    const brand = formData.get('brand') as string | null;
+    const brand_id = formData.get('brand_id') as string | null;
     const specificationsStr = formData.get('specifications') as string | null;
 
     if (!sku || !name || !category_id) {
@@ -421,12 +454,19 @@ export async function createProductFromForm(
         pdf_url: pdf_url || null,
         specifications,
         base_price: base_price ? parseInt(base_price, 10) : 0,
-        brand: brand || null,
+        brand_id: brand_id || null,
         is_active: true,
         in_stock: true,
       },
       include: {
         categories: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        brand: {
           select: {
             id: true,
             name: true,
@@ -474,7 +514,7 @@ export async function updateProductFromForm(
     const image_url = formData.get('image_url') as string | null;
     const pdf_url = formData.get('pdf_url') as string | null;
     const base_price = formData.get('base_price') as string | null;
-    const brand = formData.get('brand') as string | null;
+    const brand_id = formData.get('brand_id') as string | null;
     const is_active = formData.get('is_active') as string | null;
     const in_stock = formData.get('in_stock') as string | null;
     const specificationsStr = formData.get('specifications') as string | null;
@@ -490,7 +530,7 @@ export async function updateProductFromForm(
     if (base_price !== null) {
       updateData.base_price = base_price ? parseInt(base_price, 10) : null;
     }
-    if (brand !== null) updateData.brand = brand || null;
+    if (brand_id !== null) updateData.brand_id = brand_id || null;
     if (is_active !== null) updateData.is_active = is_active === 'true';
     if (in_stock !== null) updateData.in_stock = in_stock === 'true';
 
@@ -507,6 +547,13 @@ export async function updateProductFromForm(
       data: updateData,
       include: {
         categories: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        brand: {
           select: {
             id: true,
             name: true,

@@ -214,7 +214,7 @@ async function seedProducts() {
         image_url: product.image_url,
         specifications: product.specifications,
         base_price: product.base_price,
-        brand: product.brand,
+        // brand_id: null, // Bỏ qua brand ở đây, sẽ seed riêng bằng seed-brands.ts
         is_active: product.is_active,
         in_stock: product.in_stock,
       },
